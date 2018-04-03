@@ -1,0 +1,32 @@
+{
+  "name": "sh.orchestration-tools",
+  "version": "1.2.0",
+  "description": "A collection of tools that help building infrastructures or to orchestrate resources.",
+  "main": "index.js",
+  "scripts": {
+    "test": "./node_modules/.bin/mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrShoenel/orchestration-tools.git"
+  },
+  "keywords": [
+    "nodejs",
+    "infrastructure",
+    "orchestrate",
+    "job",
+    "jobqueue",
+    "parallel",
+    "processing"
+  ],
+  "author": "Sebastian Hönel <development@hoenel.net>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/MrShoenel/orchestration-tools/issues"
+  },
+  "homepage": "https://github.com/MrShoenel/orchestration-tools#readme",
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "mocha": "^5.0.5"
+  }
+}
