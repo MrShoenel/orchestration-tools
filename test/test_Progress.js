@@ -1,5 +1,5 @@
 const { assert, expect } = require('chai')
-, { deferMocha, timeout } = require('../tools/Defer')
+, { timeout } = require('../tools/Defer')
 , { Job, JobQueue } = require('../lib/JobQueue')
 , { ProgressNumeric } = require('../lib/Progress');
 
@@ -30,7 +30,7 @@ describe('Progress', () => {
 
     const jobPromise = j.run();
 
-    await timeout(10);
+    await timeout(20);
     assert.equal(j.progress, 0);
     await timeout(60);
     assert.approximately(j.progress, 0.5, 1e-12);
