@@ -6,6 +6,12 @@ const { assert, expect } = require('chai')
 describe('JobQueue', () => {
   it('should throw if given invalid parameters', () => {
     assert.throws(() => {
+      new Job();
+    });
+    assert.throws(() => {
+      new Job(() => new Promise((r1,r2) => {}), "ASD");
+    });
+    assert.throws(() => {
       new Job('foo');
     });
     assert.throws(() => {
