@@ -6,6 +6,8 @@ Collection of `orchestratrion-tools` that help building an infrastructure or to 
 * `JobQueue` - a queue that supports parallel jobs with free degree of parallelism.
 * `JobWithCost` - a extension to `Job` which defines the cost to execute this job. This kind of job should be used with a compatible queue.
 * `JobQueueCapabilities` - an extension to the `JobQueue` that can manage and run jobs based on their cost, rather than on plain parallelism.
+* `Progress` - a class used to report any kind of (generic) progress. Supports, callbacks, events and `Observables` through __RxJS__.
+* `ProgressNumeric` - an extension (and simplification) of `Progress` especially for numeric progress.
 
 ## Build Status
 `Master`-branch: [![Build Status](https://api.travis-ci.org/MrShoenel/orchestration-tools.svg?branch=master)](https://travis-ci.org/MrShoenel/orchestration-tools)
