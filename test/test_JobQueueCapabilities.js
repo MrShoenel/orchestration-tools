@@ -53,18 +53,18 @@ describe('JobQueueCapabilities', () => {
       setTimeout(resolve, 100);
     }), 1.5);
     const j2 = new JobWithCost(() => new Promise((resolve, reject) => {
-      setTimeout(resolve, 125);
+      setTimeout(resolve, 150);
     }), 1.5);
     const j3 = new JobWithCost(() => new Promise((resolve, reject) => {
       setTimeout(resolve, 250);
     }), 3.55);
 
     q.addJob(j1).addJob(j2).addJob(j3);
-    await timeout(50);
+    await timeout(25);
     assert.isTrue(j1.isRunning && j2.isRunning && !j3.isRunning && !j3.isDone);
-    await timeout(60);
+    await timeout(100);
     assert.isTrue(j1.isDone && j2.isRunning && !j3.isRunning && !j3.isDone);
-    await timeout(50)
+    await timeout(150)
     assert.isTrue(j1.isDone && j2.isDone && j3.isRunning);
   });
 
