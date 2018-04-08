@@ -1,6 +1,4 @@
 # OrchestrationTools
-
-[![Greenkeeper badge](https://badges.greenkeeper.io/MrShoenel/orchestration-tools.svg)](https://greenkeeper.io/)
 Collection of `orchestratrion-tools` that help building an infrastructure or to orchestrate resources through NodeJS.
 
 ## Current list of included tools
@@ -14,3 +12,5 @@ Collection of `orchestratrion-tools` that help building an infrastructure or to 
 
 ## Build Status
 __`Master`__-branch: [![Build Status](https://api.travis-ci.org/MrShoenel/orchestration-tools.svg?branch=master)](https://travis-ci.org/MrShoenel/orchestration-tools)
+
+[![Greenkeeper badge](https://badges.greenkeeper.io/MrShoenel/orchestration-tools.svg)](https://greenkeeper.io/)
