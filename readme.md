@@ -1,5 +1,5 @@
 # OrchestrationTools
-Collection of `orchestratrion-tools` that help building an infrastructure or to orchestrate resources through NodeJS.
+Collection of `orchestration-tools` that help building an infrastructure or to orchestrate resources through NodeJS.
 
 ## Current list of included tools
 * __Job__ - a class that can encapsulate and represent any (asynchronous) work. Supports `Promise`-based work, enhanced states, simple eventing and progress.
