@@ -3,6 +3,7 @@ const { Job, JobQueue, symbolRun, symbolDone, symbolFailed } = require('./lib/Jo
 , { Progress, ProgressNumeric, symbolProgress } = require('./lib/Progress')
 , { CalendarScheduler, Calendar, CalendarEventSimple, symbolCalendarEvent } = require('./lib/CalendarScheduler')
 , { Scheduler } = require('./lib/Scheduler')
+, { Schedule} = require('./lib/Schedule')
 , { Interval, IntervalScheduler, symbolIntervalEvent } = require('./lib/IntervalScheduler');
 
 module.exports = {
