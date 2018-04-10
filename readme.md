@@ -1,6 +1,9 @@
 # OrchestrationTools
 Collection of `orchestration-tools` that help building an infrastructure or to orchestrate resources through NodeJS.
 
+## Install from npm
+This package can be installed using the following command: `npm install sh.orchestration-tools`.
+
 ## Current list of included tools
 * __Job__ - a class that can encapsulate and represent any (asynchronous) work. Supports `Promise`-based work, enhanced states, simple eventing and progress.
 * __JobQueue__ - a queue that supports parallel jobs with free degree of parallelism.
