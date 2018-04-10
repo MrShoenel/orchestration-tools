@@ -5,3 +5,55 @@
  * @property {(any) => any} resolve the resolve function
  * @property {(any) => any} reject the reject function
  */
+
+
+/**
+ * @typedef iCalTimeZone
+ * @type {Object}
+ * @property {Array} changes
+ * @property {number} expandedUntilYear
+ * @property {string} tzid
+ */
+
+/**
+ * @typedef iCalTime
+ * @type {Object}
+ * @property {number} hour
+ * @property {number} minute
+ * @property {number} second
+ * @property {number} day
+ * @property {number} month
+ * @property {number} year
+ * @property {string} icaltype
+ * @property {string} timezone
+ * @property {boolean} isDate
+ */
+
+/**
+ * @typedef iCalDuration
+ * @type {Object}
+ * @property {number} days
+ * @property {number} hours
+ * @property {number} minutes
+ * @property {number} seconds
+ * @property {number} weeks
+ * @property {boolean} isNegative
+ */
+
+/**
+ * @typedef iCalEvent
+ * @type {Object}
+ * @property {Array} attendees
+ * @property {string|null} description
+ * @property {string} uid
+ * @property {string|null} summary
+ * @property {string|null} location
+ * @property {string|null} organizer
+ * @property {string|number|null} recurrenceId
+ * @property {number} sequence
+ * @property {iCalDuration} duration
+ * @property {iCalTime} endDate
+ * @property {iCalTime} startDate
+ * @property {Object.<string, Error>} exceptions
+ * @property {Array} rangeExceptions
+ */
