@@ -195,4 +195,33 @@ describe('CalendarScheduler', () => {
 
     cs.removeCalendar(c);
   });
+
+  it('should un-schedule events from disabled calendars', async function() {
+    this.timeout(10000);
+    const cs = new CalendarScheduler(5);
+
+    const occurred = [];
+    cs.observable.subscribe(v => {
+      if (v.isBeginOfEvent) {
+        occurred.push(v);
+      }
+    });
+
+    const c = new Calendar('foo', () => {
+      return createVCalendar([
+        createVEvent(new Date((+new Date) + 2.5e3), 'e1'),
+        createVEvent(new Date((+new Date) + 6.0e3), 'e2')
+      ]);
+    }, 25000);
+
+    await cs.addCalendar(c);
+    await timeout(3000);
+
+    assert.strictEqual(occurred.length, 1);
+    c.isEnabled = false;
+    await timeout(3500);
+
+    assert.isTrue(Object.keys(cs._scheduledEvents.foo).length === 0);
+    cs.removeCalendar(c);
+  });
 });
