@@ -79,11 +79,11 @@ describe('CalendarScheduler', () => {
   it('should not allow duplicate calendars or removing of unknown calendars', async() => {
     const cs = new CalendarScheduler();
     const c1 = createEmptyCalendar('a');
-    const c2 = createEmptyCalendar('b');
+    const c2 = createEmptyCalendar('a');
     
     await cs.addCalendar(c1, true);
 
-    assertThrowsAsync(async () => {
+    await assertThrowsAsync(async () => {
       await cs.addCalendar(c2);
     });
 
@@ -91,10 +91,24 @@ describe('CalendarScheduler', () => {
       const c3 = createEmptyCalendar('xx');
       cs.removeCalendar(c3);
     });
+
+    cs.removeCalendar(c1);
   });
 
   it('should unschedule updates of a calendar that was removed in the meantime', async() => {
+    const cs = new CalendarScheduler(5); // lookahead is 2*5=10
 
+    const c = new Calendar('foo', () => {
+      return createVCalendar([
+        createVEvent(new Date((+new Date) + 2e3), 'e1', 5e3)
+      ]);
+    }, 5000);
+
+    await cs.addCalendar(c, true);
+    assert.isTrue(cs._scheduledCalendarUpdates.hasOwnProperty('foo'));
+
+    cs.removeCalendar(c);
+    assert.isFalse(cs._scheduledCalendarUpdates.hasOwnProperty('foo'));
   });
 
   it('should schedule events that are in the future', async function() {
@@ -178,5 +192,7 @@ describe('CalendarScheduler', () => {
     assert.isTrue(cs._scheduledEvents.hasOwnProperty('foo'));
     assert.isTrue(cs._scheduledEvents.foo.hasOwnProperty('e1.start'));
     assert.isTrue(cs._scheduledEvents.foo.hasOwnProperty('e1.end'));
+
+    cs.removeCalendar(c);
   });
 });
