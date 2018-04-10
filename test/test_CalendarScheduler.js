@@ -21,8 +21,8 @@ END:VCALENDAR`;
  * @param {string} id
  * @return {string}
  */
-const createVEvent = (start, id) => {
-  const end = new Date(+start + 60 * 1e3),
+const createVEvent = (start, id, durationMSecs = 60*1e3) => {
+  const end = new Date(+start + durationMSecs),
     toVEventTime = date => {
       return date.toISOString().replace(/[-:]/g, '').replace(/\.[0-9]+[a-z]+$/i, '') + 'Z';
     }
@@ -37,6 +37,14 @@ STATUS:CONFIRMED
 TRANSP:OPAQUE
 END:VEVENT
 `.trim();
+};
+
+/**
+ * @param {string} nameOrId 
+ * @returns {Calendar}
+ */
+const createEmptyCalendar = nameOrId => {
+  return new Calendar(nameOrId, () => createVCalendar([]));
 };
 
 /**
@@ -62,6 +70,31 @@ describe('CalendarScheduler', () => {
     await assertThrowsAsync(async () => {
       const c = new Calendar('bla', () => '', 4900);
     });
+
+    assert.throws(() => {
+      new CalendarScheduler(4.9);
+    });
+  });
+
+  it('should not allow duplicate calendars or removing of unknown calendars', async() => {
+    const cs = new CalendarScheduler();
+    const c1 = createEmptyCalendar('a');
+    const c2 = createEmptyCalendar('b');
+    
+    await cs.addCalendar(c1, true);
+
+    assertThrowsAsync(async () => {
+      await cs.addCalendar(c2);
+    });
+
+    assert.throws(() => {
+      const c3 = createEmptyCalendar('xx');
+      cs.removeCalendar(c3);
+    });
+  });
+
+  it('should unschedule updates of a calendar that was removed in the meantime', async() => {
+
   });
 
   it('should schedule events that are in the future', async function() {
@@ -87,17 +120,19 @@ describe('CalendarScheduler', () => {
     await cs.addCalendar(c);
 
     // access internal property for this test:
-    assert.isTrue(cs._scheduledEvents.hasOwnProperty('foo.e1'));
-    assert.isTrue(cs._scheduledEvents.hasOwnProperty('foo.e2'));
+    assert.isTrue(cs._scheduledEvents.hasOwnProperty('foo'));
+    assert.isTrue(cs._scheduledEvents.foo.hasOwnProperty('e1.start'));
+    assert.isTrue(cs._scheduledEvents.foo.hasOwnProperty('e2.start'));
 
     await timeout(3000); // both events should have triggered in the meantime
 
     assert.strictEqual(numEventsOcurred, 2);
-    assert.strictEqual(Object.keys(cs._scheduledEvents).length, 0);
+    assert.strictEqual(Object.keys(cs._scheduledEvents.foo).length, 0);
 
     // Important, otherwise it will keep setting timeout to update itself.
     // This would lead to mocha hanging.
     cs.removeCalendar(c);
+    assert.isFalse(cs._scheduledEvents.hasOwnProperty('foo'));
   });
 
   it('should un-schedule events if they get cancelled', async function() {
@@ -116,14 +151,32 @@ describe('CalendarScheduler', () => {
 
     await cs.addCalendar(c);
     // access internal property for this test:
-    assert.isTrue(cs._scheduledEvents.hasOwnProperty('foo.e1'));
-    assert.isTrue(cs._scheduledEvents.hasOwnProperty('foo.e2'));
+    assert.isTrue(cs._scheduledEvents.hasOwnProperty('foo'));
+    assert.isTrue(cs._scheduledEvents.foo.hasOwnProperty('e1.start'));
+    assert.isTrue(cs._scheduledEvents.foo.hasOwnProperty('e2.start'));
 
     await timeout(200);
     cs.removeCalendar(c);
     await timeout(2000); // Redundant, but this gives the subscriber
-    // the potential chance to be triggered
+    // the potential chance to be triggered (which it should not!)
 
-    assert.strictEqual(Object.keys(cs._scheduledEvents).length, 0);
+    assert.isFalse(cs._scheduledEvents.hasOwnProperty('foo'));
+  });
+
+  it('should schedule also end-events, if within lookahead', async function() {
+    this.timeout(10000);
+    const cs = new CalendarScheduler(5); // lookahead is 2*5=10
+
+    const c = new Calendar('foo', () => {
+      return createVCalendar([
+        createVEvent(new Date((+new Date) + 2e3), 'e1', 5e3)
+      ]);
+    }, 5000);
+
+    await cs.addCalendar(c, true);
+    // access internal property for this test:
+    assert.isTrue(cs._scheduledEvents.hasOwnProperty('foo'));
+    assert.isTrue(cs._scheduledEvents.foo.hasOwnProperty('e1.start'));
+    assert.isTrue(cs._scheduledEvents.foo.hasOwnProperty('e1.end'));
   });
 });
