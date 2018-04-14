@@ -88,7 +88,7 @@ describe('IntervalScheduler', () => {
       obs_all.push(i);
     }, e => { throw e; }, () => { throw 'should never complete!'; });
 
-    await timeout(970); // i1 = 3, i2 = 12
+    await timeout(1050); // i1 = 3x, i2 = 12-14x
 
     assert.isAbove(obs_all.length, 14); // 15 or more
     assert.strictEqual(obs_i1.length, 3);
