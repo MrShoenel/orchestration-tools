@@ -10,6 +10,8 @@ const Rx = require('rxjs')
 , { Schedule, ScheduleEvent } = require('./lib/Schedule')
 , { Interval, IntervalEventSimple, IntervalScheduler, symbolIntervalEvent
   } = require('./lib/IntervalScheduler')
+, { defer, deferMocha, timeout} = require('./tools/Defer')
+, { assertThrowsAsync } = require('./tools/AssertAsync')
 , docs = require('./docs');
 
 module.exports = {
@@ -20,5 +22,7 @@ module.exports = {
   Progress, ProgressNumeric, symbolProgress,
   CalendarScheduler, Calendar, CalendarEventSimple, symbolCalendarEvent,
   Scheduler, Schedule, ScheduleEvent,
-  Interval, IntervalEventSimple, IntervalScheduler, symbolIntervalEvent
+  Interval, IntervalEventSimple, IntervalScheduler, symbolIntervalEvent,
+  defer, deferMocha, timeout,
+  assertThrowsAsync
 };
