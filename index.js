@@ -10,8 +10,11 @@ const Rx = require('rxjs')
 , { Schedule, ScheduleEvent } = require('./lib/Schedule')
 , { Interval, IntervalEventSimple, IntervalScheduler, symbolIntervalEvent
   } = require('./lib/IntervalScheduler')
+, { ProcessResult, ProcessErrorResult, ProcessExit,
+  ProcessOutput, ProcessWrapper, symbolProcessOutput } = require('./lib/ProcessWrapper')
 , { defer, deferMocha, timeout} = require('./tools/Defer')
 , { assertThrowsAsync } = require('./tools/AssertAsync')
+, { deepCloneObject, mergeObjects } = require('./tools/Objects')
 , docs = require('./docs');
 
 module.exports = {
@@ -23,6 +26,9 @@ module.exports = {
   CalendarScheduler, Calendar, CalendarEventSimple, symbolCalendarEvent,
   Scheduler, Schedule, ScheduleEvent,
   Interval, IntervalEventSimple, IntervalScheduler, symbolIntervalEvent,
+  ProcessResult, ProcessErrorResult, ProcessExit,
+  ProcessOutput, ProcessWrapper, symbolProcessOutput,
   defer, deferMocha, timeout,
-  assertThrowsAsync
+  assertThrowsAsync,
+  deepCloneObject, mergeObjects
 };
