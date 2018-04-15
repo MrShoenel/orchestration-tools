@@ -26,16 +26,17 @@ describe('Progress', () => {
       p.reportProgress(1);
 
       resolve();
-    }), p);
+    }));
+    j.progress = p;
 
     const jobPromise = j.run();
 
     await timeout(20);
-    assert.equal(j.progress, 0);
+    assert.equal(j.progress.last, 0);
     await timeout(60);
-    assert.approximately(j.progress, 0.5, 1e-12);
+    assert.approximately(j.progress.last, 0.5, 1e-12);
     await jobPromise;
     await timeout(5);
-    assert.equal(j.progress, 1);
+    assert.equal(j.progress.last, 1);
   });
 });
