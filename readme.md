@@ -15,7 +15,9 @@ This package can be installed using the following command: `npm install sh.orche
 * __IntervalScheduler__ and __Interval__ provide a scheduling mechanism to schedule using timeouts or intervals (new in `v1.6.0`). Also, the schedulers now have a common base-class (`Scheduler`) and their schedules have one, too (`Schedule`).
 * __ProcessWrapper__ and related classes (such as `ProcessResult` and `ProcessOutput`) to encapsulate child processes and let them run as `Promises` or `Obervable`s (since `v1.8.0`).
 
-## Build Status
-__`Master`__-branch: [![Build Status](https://api.travis-ci.org/MrShoenel/orchestration-tools.svg?branch=master)](https://travis-ci.org/MrShoenel/orchestration-tools)
-
-[![Greenkeeper badge](https://badges.greenkeeper.io/MrShoenel/orchestration-tools.svg)](https://greenkeeper.io/)
+## Build Status and Healthiness
+| Branch/Health | Status |
+|-|-|
+|__`Master`__|[![Build Status](https://api.travis-ci.org/MrShoenel/orchestration-tools.svg?branch=master)](https://travis-ci.org/MrShoenel/orchestration-tools)|
+|__`Master-pre-v2.0.0`__|[![Build Status](https://api.travis-ci.org/MrShoenel/orchestration-tools.svg?branch=master-pre-v2.0.0)](https://travis-ci.org/MrShoenel/orchestration-tools)|
+|__`Greenkeeper`__|[![Greenkeeper badge](https://badges.greenkeeper.io/MrShoenel/orchestration-tools.svg)](https://greenkeeper.io/)|
