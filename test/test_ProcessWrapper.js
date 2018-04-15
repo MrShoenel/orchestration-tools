@@ -86,4 +86,19 @@ if (idx >= 0) {
     assert.isTrue(pw.result.hasOwnProperty('error') && pw.result.error instanceof Error);
     assert.strictEqual(pw.result.error.code, 'ENOENT');
   });
+
+  it('should be perfectly fine to represent a process as a Job', async() => {
+    const pw = new ProcessWrapper('node', [thisFile, 'proctest1']);
+    const job = JobWithCost.fromJob(JobWithCost.fromProcess(pw), 2.5);
+
+    const arr = [];
+    pw.observable.subscribe(output => arr.push(output));
+
+    await job.run();
+
+    assert.isTrue(job.result instanceof ProcessExit);
+    assert.isTrue(arr.length === 1 && arr[0] instanceof ProcessOutput);
+    assert.isTrue(arr[0].isStdOut);
+    assert.strictEqual(arr[0].asString, "hi\n");
+  });
 });

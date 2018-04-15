@@ -4,6 +4,8 @@ Collection of `orchestration-tools` that help building an infrastructure or to o
 ## Install from npm
 This package can be installed using the following command: `npm install sh.orchestration-tools`.
 
+Please note that between `v1.8.0` and `v2.0.0` there were breaking changes regarding `Progress` itself and how it is handled in conjunction with `Job`. If you therefore need to stick with `v1.x.x`, please use the latest stable from the `master-pre-v2.0.0`-branch.
+
 ## Current list of included tools
 * __Job__ - a class that can encapsulate and represent any (asynchronous) work. Supports `Promise`-based work, enhanced states, simple eventing and progress.
 * __JobQueue__ - a queue that supports parallel jobs with free degree of parallelism.

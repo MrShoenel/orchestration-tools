@@ -9,10 +9,7 @@ describe('JobQueue', () => {
       new Job();
     });
     assert.throws(() => {
-      new Job(() => new Promise((r1,r2) => {}), "ASD");
-    });
-    assert.throws(() => {
-      new Job('foo');
+      new Job("ASD");
     });
     assert.throws(() => {
       new JobQueue(0);
