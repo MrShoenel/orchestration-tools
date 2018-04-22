@@ -7,9 +7,8 @@ This package can be installed using the following command: `npm install sh.orche
 Please note that between `v1.8.0` and `v2.0.0` there were breaking changes regarding `Progress` itself and how it is handled in conjunction with `Job`. If you therefore need to stick with `v1.x.x`, please use the latest stable from the `master-pre-v2.0.0`-branch.
 
 ## Current list of included tools
-* __Job__ - a class that can encapsulate and represent any (asynchronous) work. Supports `Promise`-based work, enhanced states, simple eventing and progress.
+* __Job__ - a class that can encapsulate and represent any (asynchronous) work. Supports `Promise`-based work, enhanced states, simple eventing and progress. As of `v2.1.0`, __JobWithCost__ has been removed and cost is now supported by Job.
 * __JobQueue__ - a queue that supports parallel jobs with free degree of parallelism.
-* __JobWithCost__ - an extension to `Job` which defines the cost to execute this job. This kind of job should be used with a compatible queue.
 * __JobQueueCapabilities__ - an extension to the `JobQueue` that can manage and run jobs based on their cost, rather than on plain parallelism.
 * __Progress__ - a class used to report any kind of (generic) progress. Supports callbacks, events and `Observables` through `RxJS`.
 * __ProgressNumeric__ - an extension (and simplification) of `Progress` especially for numeric progress.
