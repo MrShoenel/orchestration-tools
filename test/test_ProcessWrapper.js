@@ -3,8 +3,8 @@ const { assert, expect } = require('chai')
 , { timeout, defer } = require('../tools/Defer')
 , { assertThrowsAsync } = require('../tools/AssertAsync')
 , { ProcessOutput, ProcessWrapper, ProcessResult, ProcessExit, ProcessErrorResult, symbolProcessOutput } = require('../lib/ProcessWrapper')
-, { JobWithCost } = require('../lib/JobQueueCapabilities')
-, { Progress } = require('../lib/Progress');
+, { Progress } = require('../lib/Progress')
+, { Job } = require('../lib/JobQueue');
 
 
 let idx = process.argv.findIndex(a => a.startsWith('proctest'));
@@ -89,7 +89,8 @@ if (idx >= 0) {
 
   it('should be perfectly fine to represent a process as a Job', async() => {
     const pw = new ProcessWrapper('node', [thisFile, 'proctest1']);
-    const job = JobWithCost.fromJob(JobWithCost.fromProcess(pw), 2.5);
+    const job = Job.fromProcess(pw);
+    job.cost = 2.5;
 
     const arr = [];
     pw.observable.subscribe(output => arr.push(output));

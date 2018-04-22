@@ -1,6 +1,7 @@
 const { assert, expect } = require('chai')
 , { deferMocha, timeout } = require('../tools/Defer')
-, { JobWithCost, JobQueueCapabilities } = require('../lib/JobQueueCapabilities')
+, { Job } = require('../lib/JobQueue')
+, { JobQueueCapabilities } = require('../lib/JobQueueCapabilities')
 , { symbolRun, symbolDone, symbolFailed } = require('../lib/JobQueue');
 
 
@@ -8,7 +9,8 @@ const { assert, expect } = require('chai')
 describe('JobQueueCapabilities', () => {
   it('should throw if given invalid parameters', () => {
     assert.throws(() => {
-      new JobWithCost(() => { throw 'Bla'; }, 0);
+      const j = new Job(() => { throw 'Bla'; });
+      j.cost = 0;
     });
     assert.throws(() => {
       new JobQueueCapabilities(0);
@@ -18,7 +20,9 @@ describe('JobQueueCapabilities', () => {
     });
     assert.throws(() => {
       const q = new JobQueueCapabilities(1, false);
-      q.addJob(new JobWithCost(() => 'BLA', 1.1));
+      const j = new Job(() => 'BLA');
+      j.cost =  1.1;
+      q.addJob(j);
     });
   });
 
@@ -27,15 +31,18 @@ describe('JobQueueCapabilities', () => {
     assert.isTrue(!q.allowExclusiveJobs && !q.isBusy && !q.isWorking);
     assert.approximately(q.capabilitiesFree, 2.5, 1e-12);
 
-    const j1 = new JobWithCost(() => new Promise((resolve, reject) => {
+    const j1 = new Job(() => new Promise((resolve, reject) => {
       setTimeout(resolve, 100);
-    }), 0.9);
-    const j2 = new JobWithCost(() => new Promise((resolve, reject) => {
+    }));
+    j1.cost = 0.9;
+    const j2 = new Job(() => new Promise((resolve, reject) => {
       setTimeout(resolve, 250);
-    }), 0.9);
-    const j3 = new JobWithCost(() => new Promise((resolve, reject) => {
+    }));
+    j2.cost = 0.9;
+    const j3 = new Job(() => new Promise((resolve, reject) => {
       setTimeout(resolve, 250);
-    }), 0.8);
+    }));
+    j3.cost = 0.8;
 
     q.addJob(j1);
     q.addJob(j2);
@@ -49,15 +56,18 @@ describe('JobQueueCapabilities', () => {
   it('should finish other jobs until there is enough capacity for an expensive job', async function() {
     const q = new JobQueueCapabilities(3.6, false);
 
-    const j1 = new JobWithCost(() => new Promise((resolve, reject) => {
+    const j1 = new Job(() => new Promise((resolve, reject) => {
       setTimeout(resolve, 100);
-    }), 1.5);
-    const j2 = new JobWithCost(() => new Promise((resolve, reject) => {
+    }));
+    j1.cost = 1.5;
+    const j2 = new Job(() => new Promise((resolve, reject) => {
       setTimeout(resolve, 150);
-    }), 1.5);
-    const j3 = new JobWithCost(() => new Promise((resolve, reject) => {
+    }));
+    j2.cost = 1.5;
+    const j3 = new Job(() => new Promise((resolve, reject) => {
       setTimeout(resolve, 250);
-    }), 3.55);
+    }));
+    j3.cost = 3.55;
 
     q.addJob(j1).addJob(j2).addJob(j3);
     await timeout(25);
@@ -71,12 +81,14 @@ describe('JobQueueCapabilities', () => {
   it('should be able to run exclusive jobs that require the full capabilities', async function() {
     const q = new JobQueueCapabilities(3, true);
 
-    const j1 = new JobWithCost(() => new Promise((resolve, reject) => {
+    const j1 = new Job(() => new Promise((resolve, reject) => {
       setTimeout(resolve, 100);
-    }), 2.5);
-    const j2 = new JobWithCost(() => new Promise((resolve, reject) => {
+    }));
+    j1.cost = 2.5;
+    const j2 = new Job(() => new Promise((resolve, reject) => {
       setTimeout(resolve, 125);
-    }), 10);
+    }));
+    j2.cost = 10;
 
     q.addJob(j1).addJob(j2);
     await timeout(50);

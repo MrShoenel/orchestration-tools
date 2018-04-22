@@ -1,8 +1,8 @@
 const Rx = require('rxjs')
 , Observable = Rx.Observable
-, { Job, JobQueue, symbolRun, symbolDone, symbolFailed
+, { Job, JobEvent, JobQueue, JobQueueEvent, symbolRun, symbolDone, symbolFailed
   } = require('./lib/JobQueue')
-, { JobWithCost, JobQueueCapabilities } = require('./lib/JobQueueCapabilities')
+, { JobQueueCapabilities } = require('./lib/JobQueueCapabilities')
 , { Progress, ProgressNumeric, symbolProgress } = require('./lib/Progress')
 , { CalendarScheduler, Calendar, CalendarEventSimple, symbolCalendarEvent
   } = require('./lib/CalendarScheduler')
@@ -17,11 +17,11 @@ const Rx = require('rxjs')
 , { deepCloneObject, mergeObjects } = require('./tools/Objects')
 , docs = require('./docs');
 
+
 module.exports = {
-  docs,
   Rx, Observable,
-  Job, JobQueue, symbolRun, symbolDone, symbolFailed,
-  JobWithCost, JobQueueCapabilities,
+  Job, JobEvent, JobQueue, JobQueueEvent, symbolRun, symbolDone, symbolFailed,
+  JobQueueCapabilities,
   Progress, ProgressNumeric, symbolProgress,
   CalendarScheduler, Calendar, CalendarEventSimple, symbolCalendarEvent,
   Scheduler, Schedule, ScheduleEvent,
@@ -30,5 +30,6 @@ module.exports = {
   ProcessOutput, ProcessWrapper, symbolProcessOutput,
   defer, deferMocha, timeout,
   assertThrowsAsync,
-  deepCloneObject, mergeObjects
+  deepCloneObject, mergeObjects,
+  docs
 };
