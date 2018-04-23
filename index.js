@@ -15,6 +15,7 @@ const Rx = require('rxjs')
 , { defer, deferMocha, timeout} = require('./tools/Defer')
 , { assertThrowsAsync } = require('./tools/AssertAsync')
 , { deepCloneObject, mergeObjects } = require('./tools/Objects')
+, { getRandomNumber } = require('./tools/Random')
 , docs = require('./docs');
 
 
@@ -31,5 +32,6 @@ module.exports = {
   defer, deferMocha, timeout,
   assertThrowsAsync,
   deepCloneObject, mergeObjects,
+  getRandomNumber,
   docs
 };
