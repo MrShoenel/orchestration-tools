@@ -260,4 +260,40 @@ describe('CalendarScheduler', () => {
 
     cs.removeCalendar(c_derived);
   });
+
+  it('should work with filtered calendars (new method using filters)', async function() {
+    this.timeout(8000);
+
+    const cs = new CalendarScheduler();
+
+    const c_all = new Calendar('all', () => {
+      const now = (+new Date);
+      return createVCalendar([
+        createVEvent(new Date(now + 0.75e3), 'e1'),
+        createVEvent(new Date(now + 1.00e3), 'e2a'),
+        createVEvent(new Date(now + 1.25e3), 'e1'),
+        createVEvent(new Date(now + 1.50e3), 'e1'),
+        createVEvent(new Date(now + 1.75e3), 'e1'),
+        createVEvent(new Date(now + 2.00e3), 'e2b')
+      ]);
+    });
+    c_all.setFilter(evt => evt.uid.startsWith('e2'));
+
+    /** @type {Array.<String>} */
+    let occurred = [];
+    cs.observable.subscribe(v => {
+      if (v.isBeginOfEvent) {
+        occurred.push(v.id);
+      }
+    });
+
+    await cs.addCalendar(c_all);
+
+    await timeout(3000);
+
+    assert.strictEqual(occurred.length, 2);
+    assert.isTrue(occurred[0] === 'e2a' && occurred[1] === 'e2b');
+
+    cs.removeCalendar(c_all);
+  });
 });
