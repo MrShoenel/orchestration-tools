@@ -47,6 +47,8 @@ describe('JobQueue', () => {
     await timeout(50);
     assert.isTrue(!firstJobFinished && !secondJobStarted,
       'The first Job should not be finished and the second must not have started');
+    assert.isTrue(q.backlog > 0, 'The backlog of the queue should not be empty.');
+    assert.isTrue(q.load > 1, 'The load should be greater one, since there are jobs waiting.');
 
     await secondJob.donePromise;
   });

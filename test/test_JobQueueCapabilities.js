@@ -49,6 +49,9 @@ describe('JobQueueCapabilities', () => {
     q.addJob(j3);
     await timeout(50);
     assert.isTrue(j1.isRunning && j2.isRunning && !j3.isRunning);
+    assert.isTrue(q.load > 1);
+    assert.isTrue(q.backlogCost > 0);
+    assert.isTrue(q.backlog > 0);
     await timeout(75);
     assert.isTrue(j1.isDone && !j2.isDone && j2.isRunning && !j3.isDone && j3.isRunning);
   });
