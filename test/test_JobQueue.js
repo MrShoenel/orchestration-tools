@@ -74,4 +74,50 @@ describe('JobQueue', () => {
     await timeout(250);
     assert.isTrue(!q.isWorking && j1.isDone && j2.isDone);
   });
+
+  it('should not do work on queues that are paused', async() => {
+    const q = new JobQueue(1);
+
+    let idleReceived = false;
+    q.observableIdle.subscribe(next => {
+      idleReceived = true;
+    });
+
+    assert.isFalse(idleReceived);
+    q.pause();
+    await timeout(10);
+    assert.isTrue(idleReceived);
+  });
+
+  it('should respect pausing and resuming a queue', async() => {
+
+    const q = new JobQueue(1);
+    const j1 = new Job(() => new Promise((resolve, reject) => {
+      setTimeout(resolve, 100);
+    }));
+    const j2 = new Job(() => new Promise((resolve, reject) => {
+      setTimeout(resolve, 100);
+    }));
+
+    let idleReceived = false;
+    q.observableIdle.subscribe(next => {
+      idleReceived = true;
+    });
+
+    q.addJob(j1);
+    q.addJob(j2);
+    await timeout(50);
+    assert.isTrue(q.isBusy && !j1.isDone && !j2.isDone);
+
+    q.pause();
+    await timeout(125);
+    assert.isTrue(idleReceived);
+    assert.isTrue(q.isPaused && q.isIdle && j1.isDone && !j2.isDone);
+
+    assert.isTrue(q.backlog > 0); // j2 is still there and waiting
+
+    q.resume();
+    await timeout(150);
+    assert.isTrue(!q.isBusy && q.isIdle && !q.isPaused && j2.isDone);
+  });
 });
