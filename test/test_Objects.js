@@ -92,4 +92,23 @@ describe('Tools', () => {
 
     done();
   });
+
+  it('should preserve all kinds of functions', done => {
+    const obj = {
+      a: () => {},
+      b: function() {},
+      c: function foo(){},
+      d: async() => {},
+      e: async function() {},
+      f: async function bar(){}
+    };
+
+    const result = mergeObjects({}, obj);
+
+    for (const prop in result) {
+      assert.strictEqual(result[prop], obj[prop]);
+    }
+
+    done();
+  })
 });
