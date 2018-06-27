@@ -67,4 +67,29 @@ describe('Tools', () => {
 
     done();
   });
+
+  it('should copy references when objects are class-instances', done => {
+    class X {
+      constructor() { this.b = 1 };
+    };
+
+    const obj = {
+      a: {
+        b: 1
+      },
+      b: new X()
+    };
+
+    const result = mergeObjects({}, obj);
+
+    assert.isTrue(result.b instanceof X);
+    assert.isFalse(result.a instanceof X);
+
+    assert.strictEqual(result.a.b, 1);
+    assert.strictEqual(result.b.b, 1);
+
+    assert.isTrue(obj.b === result.b);
+
+    done();
+  });
 });
