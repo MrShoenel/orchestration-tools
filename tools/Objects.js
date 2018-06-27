@@ -42,6 +42,7 @@ const mergeObjects = (...objects) => {
         case '[object String]':
         case '[object Boolean]':
         case '[object Function]':
+        case '[object AsyncFunction]':
         case '[object Undefined]':
         case '[object RegExp]':
           prev[key] = next[key];
