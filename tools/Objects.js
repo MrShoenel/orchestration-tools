@@ -65,6 +65,11 @@ const mergeObjects = (...objects) => {
           break;
 
         default:
+          // Unfortunately, nodejs does not yet support /\[object\s\p{Letter}[a-z0-9_\-]*\]/iu
+          if (/\[object\s[a-z_\-][a-z0-9_\-]*\]/i.test(nextType)) {
+            // This will match all other built-in types.
+            prev[key] = next[key];
+          }
           continue;
       }
     }

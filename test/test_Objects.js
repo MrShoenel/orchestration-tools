@@ -100,7 +100,8 @@ describe('Tools', () => {
       c: function foo(){},
       d: async() => {},
       e: async function() {},
-      f: async function bar(){}
+      f: async function bar(){},
+      g: new Date()
     };
 
     const result = mergeObjects({}, obj);
