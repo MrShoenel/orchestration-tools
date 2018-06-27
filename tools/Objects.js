@@ -15,7 +15,9 @@ const deepCloneObject = obj => JSON.parse(JSON.stringify(obj));
  * key is present in the next object as well, it will overwrite the value
  * of the previous object. Atomic properties and arrays are replaced in
  * the resulting object. Passing two objects with the first being an empty
- * new object, you may use this function to clone objects as well.
+ * new object, you may use this function to clone objects as well. Object-
+ * properties that are actually Class-instances will be copied (i.e. it
+ * will point to the same instance in the merged object).
  * 
  * @param {...Object} objects Two or more Objects to merge.
  * @returns {Object} the result of the merge
@@ -46,6 +48,15 @@ const mergeObjects = (...objects) => {
           break;
 
         case '[object Object]':
+          // Check if the current value is a class instance (ctor different from Object):
+          try {
+            const proto = Object.getPrototypeOf(next[key]);
+            if (proto.constructor !== Object) {
+              prev[key] = next[key];
+              break;
+            }
+          } catch (e) { } // just move on
+
           if (Object.prototype.toString.call(prev[key]) !== '[object Object]') {
             prev[key] = {};
           }
