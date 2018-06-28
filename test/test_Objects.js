@@ -5,6 +5,19 @@ const { assert, expect } = require('chai')
 
 
 describe('Tools', () => {
+  it('should behave consistently if called with invalid parameters', done => {
+    assert.throws(() => {
+      mergeObjects();
+    }, /No objects were given/i);
+
+    const testObj = { foo: 1 };
+    const result = mergeObjects(testObj);
+    expect(result).to.deep.equal(testObj);
+    assert.strictEqual(result, testObj);
+
+    done();
+  });
+
   it('should deep-clone objects with literal values accordingly', done => {
     const org = {
       a: 5.6, b: true, c: null, d: 'string', e: [
@@ -100,8 +113,7 @@ describe('Tools', () => {
       c: function foo(){},
       d: async() => {},
       e: async function() {},
-      f: async function bar(){},
-      g: new Date()
+      f: async function bar(){}
     };
 
     const result = mergeObjects({}, obj);
@@ -111,5 +123,41 @@ describe('Tools', () => {
     }
 
     done();
-  })
+  });
+
+  it('should merge types not explicitly defined by reference', done => {
+    const obj = {
+      d: new Date()
+    };
+
+    const result = mergeObjects({}, obj);
+
+    assert.strictEqual(obj.d, result.d);
+    expect(result).to.deep.equal(obj);
+
+    done();
+  });
+
+  it('should deep-clone objects using JSON-stringify/parse', done => {
+    const o1 = {
+      a: {
+        f: 1
+      },
+      b: null,
+      c: [1,2]
+    }, o2 = {
+      x: 5,
+      f: () => {}
+    };
+
+    const r1 = deepCloneObject(o1), r2 = deepCloneObject(o2);
+
+    expect(r1).to.deep.equal(o1);
+    assert.isTrue(o1 !== r1);
+
+    expect(r2).to.deep.equal({ x: 5 });
+    assert.isTrue(o2 !== r2);
+
+    done();
+  });
 });
