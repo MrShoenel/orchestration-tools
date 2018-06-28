@@ -72,6 +72,10 @@ describe('CalendarScheduler', () => {
     });
 
     assert.throws(() => {
+      new CalendarScheduler('4.9');
+    });
+
+    assert.throws(() => {
       new CalendarScheduler(4.9);
     });
   });
@@ -152,7 +156,7 @@ describe('CalendarScheduler', () => {
   it('should un-schedule events if they get cancelled', async function() {
     this.timeout(5000);
     const cs = new CalendarScheduler();
-    const c = new Calendar('foo', () => {
+    const c = new Calendar('foo', async() => {
       return createVCalendar([
         createVEvent(new Date((+new Date) + 1.3e3), 'e1'),
         createVEvent(new Date((+new Date) + 1.7e3), 'e2')
@@ -266,7 +270,7 @@ describe('CalendarScheduler', () => {
 
     const cs = new CalendarScheduler();
 
-    const c_all = new Calendar('all', () => {
+    const c_all = new Calendar('all', async() => {
       const now = (+new Date);
       return createVCalendar([
         createVEvent(new Date(now + 0.75e3), 'e1'),
