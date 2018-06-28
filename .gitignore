@@ -16,6 +16,8 @@ lib-cov
 
 # Coverage directory used by tools like istanbul
 coverage
+# This should NOT be checked in (has private ENV var at Travis-CI)
+.coveralls.yml
 
 # nyc test coverage
 .nyc_output
