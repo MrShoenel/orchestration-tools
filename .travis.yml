@@ -2,7 +2,7 @@ language: node_js
 node_js:
   - "node"
 script:
-  - npm test_ci
+  - npm run test_ci
 branches:
   only:
   - master
