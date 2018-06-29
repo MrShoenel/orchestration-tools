@@ -1,7 +1,7 @@
 const { assert, expect } = require('chai')
 , { timeout } = require('../tools/Defer')
 , { Job, JobQueue } = require('../lib/JobQueue')
-, { ProgressNumeric } = require('../lib/Progress');
+, { Progress, ProgressNumeric } = require('../lib/Progress');
 
 
 describe('Progress', () => {
@@ -11,6 +11,14 @@ describe('Progress', () => {
     });
     assert.throws(() => {
       new ProgressNumeric(-1, 1);
+    });
+    assert.throws(() => {
+      new ProgressNumeric('-1', false);
+    });
+
+    const p = new ProgressNumeric(1, 10);
+    assert.throws(() => {
+      p.reportProgress(0.9)
     });
   });
 
@@ -28,6 +36,8 @@ describe('Progress', () => {
       resolve();
     }));
     j.progress = p;
+
+    assert.strictEqual(p.percent, 0);
 
     const jobPromise = j.run();
 
