@@ -1,7 +1,12 @@
 const { assert, expect } = require('chai')
-, { deferMocha, timeout } = require('../tools/Defer')
+, { timeout } = require('../tools/Defer')
+, { assertThrowsAsync } = require('../tools/AssertAsync')
 , { Job, JobQueue, symbolRun, symbolDone, symbolFailed } = require('../lib/JobQueue');
 
+process.on('unhandledRejection', (reason, p) => {
+  console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+  // application specific logging, throwing an error, or other logic here
+});
 
 describe('JobQueue', () => {
   it('should throw if given invalid parameters', () => {
@@ -17,6 +22,35 @@ describe('JobQueue', () => {
     assert.throws(() => {
       new JobQueue(-15);
     });
+  });
+
+  it('should handle misconfigured or failed jobs', async function() {
+    const q = new JobQueue(1);
+    q.pause();
+
+    const j1 = new Job(() => { return 42; });
+    const j2 = new Job(() => { throw new Error('42') });
+    const j3 = new Job(async() => { throw new Error('42') });
+
+    let numJobsFailed = 0;
+    q.observableFailed.subscribe(jEvt => {
+      if (numJobsFailed < 1) {
+        // j1
+        assert.isTrue(jEvt.error.message.startsWith('The promiseProducer does not produce a Promise or is not an async function'));
+      } else {
+        // j2 & j3
+        assert.isTrue(jEvt.error.message.startsWith('42'))
+      }
+
+      numJobsFailed++;
+    });
+
+    q.addJob(j1).addJob(j2).addJob(j3);
+
+    q.resume();
+
+    await timeout(50);
+    assert.isTrue(j1.hasFailed && j2.hasFailed && j3.hasFailed);
   });
 
   it('should behave as a 1-capacity serial fifo-queue if not used parallel', async function() {
@@ -67,6 +101,9 @@ describe('JobQueue', () => {
     q.addJob(j1);
     await timeout(50);
     assert.isTrue(q.isWorking && !q.isBusy && !j1.isDone);
+    assert.throws(() => {
+      const x = `${j1.result}`;
+    });
     q.addJob(j2);
     await timeout(50);
     assert.isTrue(q.isWorking && q.isBusy);
