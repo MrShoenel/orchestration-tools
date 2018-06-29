@@ -160,4 +160,27 @@ describe('Tools', () => {
 
     done();
   });
+
+  it('should allow deferring promises for mocha', async() => {
+    const mochaArr = deferMocha(), done = mochaArr[1];
+
+    await timeout(10);
+    timeout(10).then(_ => {
+      done();
+    });
+
+    return mochaArr[0]; // return the promise
+  });
+
+  it('should allow creating rejectable promises for mocha', async() => {
+    const mochaArr = deferMocha(), done = mochaArr[1];
+
+    let e = null;
+    mochaArr[0].catch(x => e = x);
+
+    done('my Error');
+    await timeout(10); // just in case..
+
+    assert.strictEqual(e, 'my Error');
+  });
 });
