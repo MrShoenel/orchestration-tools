@@ -1,6 +1,7 @@
 const { assert, expect } = require('chai')
 , { timeout } = require('../tools/Defer')
 , { assertThrowsAsync } = require('../tools/AssertAsync')
+, { ScheduleEvent } = require('../lib/Schedule')
 , { Interval, IntervalScheduler, IntervalEventSimple
   } = require('../lib/IntervalScheduler');
 
@@ -9,6 +10,52 @@ describe('IntervalScheduler', () => {
   it('should throw if given invalid parameters', () => {
     assert.throws(() => new Interval(0, () => {}));
     assert.throws(() => new Interval(1));
+    assert.throws(() => new Interval(30, () => {}, null));
+    assert.throws(() => {
+      const i = new Interval(30, () => {});
+      i.finish();
+    });
+    assert.throws(() => {
+      const i = new Interval(30, () => {});
+      i.finalize();
+    });
+    assert.doesNotThrow(() => {
+      const i = new IntervalScheduler();
+      i._isInterval(new Interval(10, () => {}));
+    });
+    assert.throws(() => {
+      const i = new IntervalScheduler();
+      i._isInterval(null);
+    });
+    assert.throws(() => {
+      const is = new IntervalScheduler();
+      const i = new Interval(20, () => {});
+      is._getIntervalId(i);
+    });
+    assert.throws(() => {
+      const is = new IntervalScheduler();
+      const i = new Interval(20, () => {});
+
+      try {
+        is.addInterval(i);
+        is.addInterval(i);
+      } catch (e) {
+        // We gotta clean it up
+        is.removeInterval(i);
+        throw e;
+      }
+    });
+    assert.throws(() => {
+      const is = new IntervalScheduler();
+      const i = new Interval(20, () => {});
+      is.removeInterval(i);
+    });
+    assert.throws(() => {
+      new IntervalEventSimple(null, 42);
+    });
+    assert.throws(() => {
+      new ScheduleEvent(null, 42);
+    });
   });
 
   it('should be able to handle multiple different Intervals', async function() {

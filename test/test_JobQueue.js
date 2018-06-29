@@ -1,7 +1,9 @@
 const { assert, expect } = require('chai')
 , { timeout } = require('../tools/Defer')
 , { assertThrowsAsync } = require('../tools/AssertAsync')
-, { Job, JobQueue, symbolRun, symbolDone, symbolFailed } = require('../lib/JobQueue');
+, { ProgressNumeric } = require('../lib/Progress')
+, { Job, JobQueue, symbolRun, symbolDone, symbolFailed } = require('../lib/JobQueue')
+, { JobQueueCapabilities } = require('../lib/JobQueueCapabilities');
 
 process.on('unhandledRejection', (reason, p) => {
   console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
@@ -22,6 +24,62 @@ describe('JobQueue', () => {
     assert.throws(() => {
       new JobQueue(-15);
     });
+
+    (() => {
+      const jq = new JobQueue(1);
+      assert.throws(() => {
+        jq.addJob(42);
+      });
+      assert.doesNotThrow(() => {
+        jq.addJob(() => {});
+      });
+    })();
+
+    (() => {
+      const jq = new JobQueueCapabilities(2.5, false);
+      assert.throws(() => {
+        jq.addJob(42);
+      });
+      assert.throws(() => {
+        jq.addJob(async() => 42, 0);
+      });
+      assert.throws(() => {
+        jq.addJob(async() => 42, true);
+      });
+      assert.doesNotThrow(() => {
+        const x = Job.fromSyncFunction(() => 42);
+        x.cost = 1;
+        jq.addJob(x);
+      });
+    })();
+  });
+
+  it('should create jobs from synchronous functions', async() => {
+    assert.throws(() => {
+      Job.fromSyncFunction(42);
+    });
+
+    const j1 = Job.fromSyncFunction(() => 42);
+    j1.cost = 42;
+    assert.isFalse(j1.supportsProgress);
+    assert.isTrue(j1.hasCost);
+    assert.strictEqual(j1.cost, 42);
+
+    assert.throws(() => {
+      j1.cost = true;
+    });
+
+    assert.throws(() => {
+      j1.progress = 'progress';
+    });
+    const p = new ProgressNumeric(1, 10);
+    assert.doesNotThrow(() => {
+      j1.progress = p;
+      assert.strictEqual(j1.progress, p);
+    });
+
+    await j1.run();
+    assert.strictEqual(j1.result, 42);
   });
 
   it('should handle misconfigured or failed jobs', async function() {
@@ -100,6 +158,7 @@ describe('JobQueue', () => {
 
     q.addJob(j1);
     await timeout(50);
+    assert.isTrue(j1.isRunning);
     assert.isTrue(q.isWorking && !q.isBusy && !j1.isDone);
     assert.throws(() => {
       const x = `${j1.result}`;
@@ -124,6 +183,22 @@ describe('JobQueue', () => {
     q.pause();
     await timeout(10);
     assert.isTrue(idleReceived);
+  });
+
+  it('should allow to clear the backlog on paused queues', async() => {
+    const q = new JobQueue(1);
+    q.pause();
+    q.addJob(() => 42);
+
+    await timeout(50); // wait some time just to make sure
+
+    assert.strictEqual(q.currentJobs.length, 0);
+    assert.strictEqual(q.queue.length, 1);
+
+    const jobs = q.clearBacklog();
+    assert.strictEqual(jobs.length, 1);
+    assert.strictEqual(q.currentJobs.length, 0);
+    assert.strictEqual(q.queue.length, 0);
   });
 
   it('should respect pausing and resuming a queue', async() => {

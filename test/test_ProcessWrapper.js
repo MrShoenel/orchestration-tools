@@ -21,8 +21,14 @@ if (idx >= 0) {
     case '2':
       throw new Error('I fault!'); // will exit with code 1
       break;
+    case '3':
+      setTimeout(() => {
+        console.log('static!');
+        process.exit(0);
+      }, 200);
+      break;
     default:
-      throw new Error(`Test with ID '${testId}' is not known.`);
+      throw new Error(`Test with ID '${testId}' is not known.` + testId);
   }
 }
 
@@ -69,6 +75,24 @@ if (idx >= 0) {
     });
 
     return deferred.promise;
+  });
+
+  it('should create jobs from ProcessWrapper objects', async function() {
+    const pw = new ProcessWrapper('node', [thisFile, 'proctest3']);
+
+    const j = Job.fromProcess(pw);
+    assert.isTrue(j.supportsProgress);
+    let hadProgress = false;
+    j.progress.observable.subscribe(prog => {
+      assert.isTrue(prog instanceof ProcessOutput);
+      assert.isTrue(prog.isStdOut);
+      assert.isFalse(prog.isStdErr);
+      assert.strictEqual(prog.asString.trim(), 'static!');
+      hadProgress = true;
+    });
+
+    await j.run();
+    assert.isTrue(hadProgress);
   });
 
   it('should handle failing processes correctly', async function() {
