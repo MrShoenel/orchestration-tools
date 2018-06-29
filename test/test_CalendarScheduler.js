@@ -178,6 +178,9 @@ describe('CalendarScheduler', () => {
     const subscriber = evt => {
       numEventsOcurred++;
       assert.isTrue(evt.id === 'e1' || evt.id === 'e2');
+      assert.strictEqual(evt.summary, 'null');
+      assert.strictEqual(evt.description, 'null');
+      assert.strictEqual(evt.descriptionJson, null);
     };
 
     cs.observable.subscribe(subscriber);
@@ -246,6 +249,38 @@ describe('CalendarScheduler', () => {
     cs.removeCalendar(c);
   });
 
+  it('should only observe events from subscribed calendars', async function() {
+    this.timeout(5000);
+    const cs = new CalendarScheduler(5);
+
+    const c = new Calendar('foo', () => {
+      return createVCalendar([
+        createVEvent(new Date((+new Date) + 1.25e3), 'e1'),
+        createVEvent(new Date((+new Date) + 2.50e3), 'e2')
+      ]);
+    }, 25000);
+
+    assert.throws(() => {
+      cs.removeCalendar(c);
+    });
+
+    const addPromise = cs.addCalendar(c, true);
+    await timeout(50);
+    let observed = 0;
+    cs.getObservableForSchedule(c).subscribe(evt => {
+      assert.strictEqual(evt.calendar, c);
+      observed++;
+    });
+    await addPromise;
+    await timeout(3000);
+
+    assert.strictEqual(observed, 2);
+
+    assert.doesNotThrow(() => {
+      cs.removeCalendar(c);
+    });
+  });
+
   it('should un-schedule events from disabled calendars', async function() {
     this.timeout(10000);
     const cs = new CalendarScheduler(5);
@@ -272,6 +307,25 @@ describe('CalendarScheduler', () => {
     await timeout(3500);
 
     assert.isTrue(Object.keys(cs._scheduledEvents.foo).length === 0);
+    cs.removeCalendar(c);
+  });
+
+  it('should never schedule initially disabled calendars', async function() {
+    const cs = new CalendarScheduler(5);
+
+    const c = new Calendar('foo', () => {
+      return createVCalendar([
+        createVEvent(new Date((+new Date) + 1.2e3), 'e1'),
+        createVEvent(new Date((+new Date) + 2.0e3), 'e2')
+      ]);
+    }, 25000);
+
+    c.isEnabled = false;
+
+    await cs.addCalendar(c, true);
+
+    expect(cs._scheduledEvents).to.deep.equal({ foo: {} });
+
     cs.removeCalendar(c);
   });
 
