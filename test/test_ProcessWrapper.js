@@ -31,7 +31,7 @@ if (idx >= 0) {
 (global.describe || (() => {}))('ProcessWrapper', () => {
   const thisFile = path.resolve(__filename);
 
-  it('should create a nicely observable process', function() {
+  it('should create a nicely observable process', async function() {
     this.timeout(9999);
     const deferred = defer();
 
@@ -59,6 +59,14 @@ if (idx >= 0) {
         deferred.resolve();
       }
     );
+
+    await assertThrowsAsync(async () => {
+      await pw.run(); // because it's already running
+    });
+
+    await assertThrowsAsync(async () => {
+      await pw.spawnAsync(); // because it's already running
+    });
 
     return deferred.promise;
   });

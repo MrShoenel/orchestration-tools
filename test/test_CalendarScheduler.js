@@ -72,12 +72,58 @@ describe('CalendarScheduler', () => {
     });
 
     assert.throws(() => {
+      new Calendar('');
+    });
+
+    assert.throws(() => {
+      new Calendar('cal', 'icsProvider');
+    });
+
+    assert.throws(() => {
+      const c = new Calendar('cal', () => {});
+      c.setFilter(null);
+    });
+
+    assert.throws(() => {
+      const c = new Calendar('cal', () => {});
+      c.createFiltered(() => false, '');
+    });
+
+    await assertThrowsAsync(async() => {
+      const c = new Calendar('cal', async() => 42);
+      await c.refresh();
+    });
+
+    assert.throws(() => {
       new CalendarScheduler('4.9');
     });
 
     assert.throws(() => {
       new CalendarScheduler(4.9);
     });
+
+    assert.throws(() => {
+      const c = new CalendarScheduler();
+      c._isCalendar(null);
+    });
+
+    assert.throws(() => {
+      const c = new CalendarScheduler();
+      c.removeCalendar(null);
+    });
+  });
+
+  it('should apply and remove filters from Calendars', done => {
+    const c = new Calendar('cal', () => {});
+    const i = () => ['something else'];
+
+    c.setFilter(i);
+    assert.strictEqual(c._filter()[0], 'something else');
+    assert.strictEqual(c._filter, i);
+
+    c.removeFilter();
+    assert.notEqual(c._filter, i);
+    done();
   });
 
   it('should not allow duplicate calendars or removing of unknown calendars', async() => {
