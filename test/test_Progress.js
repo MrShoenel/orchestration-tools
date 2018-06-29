@@ -49,4 +49,25 @@ describe('Progress', () => {
     await timeout(5);
     assert.equal(j.progress.last, 1);
   });
+
+  it('should trigger our handler if we provide one', async function() {
+    this.timeout(3500);
+    let lastItem = null;
+    const p = new Progress(progressItem => {
+      lastItem = progressItem;
+    });
+
+    let wasObserved = false;
+    p.observable.subscribe(evtItem => {
+      expect(evtItem).to.deep.equal({ f: 42 });
+      wasObserved = true;
+    });
+
+    p.reportProgress({ f: 42 });
+    await timeout(25);
+    assert.isTrue(lastItem !== null);
+    expect(lastItem).to.deep.equal({ f: 42 });
+
+    assert.isTrue(wasObserved);
+  });
 });
