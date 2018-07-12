@@ -1,7 +1,7 @@
 const { assert, expect } = require('chai')
 , { timeout } = require('../tools/Defer')
 , { assertThrowsAsync } = require('../tools/AssertAsync')
-, { ScheduleEvent } = require('../lib/Schedule')
+, { Schedule, ScheduleEvent } = require('../lib/Schedule')
 , { Interval, IntervalScheduler, IntervalEventSimple
   } = require('../lib/IntervalScheduler');
 
@@ -56,6 +56,14 @@ describe('IntervalScheduler', () => {
     assert.throws(() => {
       new ScheduleEvent(null, 42);
     });
+
+    let sched = new Schedule();
+    assert.strictEqual(sched.enabled, true);
+    
+    sched = new Schedule(false);
+    assert.strictEqual(sched.enabled, false);
+    sched = new Schedule(true);
+    assert.strictEqual(sched.enabled, true);
   });
 
   it('should be able to handle multiple different Intervals', async function() {
@@ -135,7 +143,7 @@ describe('IntervalScheduler', () => {
       obs_all.push(i);
     }, e => { throw e; }, () => { throw 'should never complete!'; });
 
-    await timeout(1050); // i1 = 3x, i2 = 12-14x
+    await timeout(1100); // i1 = 3x, i2 = 12-14x
 
     assert.isAbove(obs_all.length, 14); // 15 or more
     assert.strictEqual(obs_i1.length, 3);
