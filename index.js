@@ -16,6 +16,7 @@ const Rx = require('rxjs')
 , { assertThrowsAsync } = require('./tools/AssertAsync')
 , { deepCloneObject, mergeObjects } = require('./tools/Objects')
 , { getRandomNumber } = require('./tools/Random')
+, { Resolve } = require('./tools/Resolve')
 , docs = require('./docs');
 
 
@@ -33,5 +34,6 @@ module.exports = {
   assertThrowsAsync,
   deepCloneObject, mergeObjects,
   getRandomNumber,
+  Resolve,
   docs
 };
