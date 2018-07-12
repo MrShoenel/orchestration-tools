@@ -78,6 +78,7 @@ if (idx >= 0) {
   });
 
   it('should create jobs from ProcessWrapper objects', async function() {
+    this.timeout(5000);
     const pw = new ProcessWrapper('node', [thisFile, 'proctest3']);
 
     const j = Job.fromProcess(pw);
