@@ -19,6 +19,8 @@ const Rx = require('rxjs')
 , { deepCloneObject, mergeObjects } = require('./tools/Objects')
 , { getRandomNumber } = require('./tools/Random')
 , { Resolve } = require('./tools/Resolve')
+, { createVEvent, createVCalendar, createEmptyCalendar
+  } = require('./test/test_CalendarScheduler')
 , docs = require('./docs');
 
 
@@ -38,5 +40,6 @@ module.exports = {
   deepCloneObject, mergeObjects,
   getRandomNumber,
   Resolve,
+  createVEvent, createVCalendar, createEmptyCalendar,
   docs
 };
