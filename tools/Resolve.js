@@ -26,21 +26,19 @@ class Resolve {
 
     try {
       const proto = Object.getPrototypeOf(value)
-      , ctor = proto.hasOwnProperty('constructor') ? proto.constructor : null;
+      , ctor = !!proto && proto.hasOwnProperty('constructor') ? proto.constructor : null;
 
       if (typeof exampleOrTypeOrClassName === 'string') {
         if (ctor.name === exampleOrTypeOrClassName) {
           return true;
         }
       } else if (Resolve.isFunction(exampleOrTypeOrClassName)) {
-        if (value instanceof exampleOrTypeOrClassName) {
-          return true;
-        } else if (ctor === exampleOrTypeOrClassName) {
+        if (ctor === exampleOrTypeOrClassName) {
           return true;
         }
       } else {
         const exProto = Object.getPrototypeOf(exampleOrTypeOrClassName)
-        , exCtor = exProto.hasOwnProperty('constructor') ? exProto.constructor : null;
+        , exCtor = !!exProto && exProto.hasOwnProperty('constructor') ? exProto.constructor : null;
 
         if (proto === exProto || ctor === exCtor) {
           return true;
