@@ -7,13 +7,18 @@ const { assert, expect } = require('chai')
 
 
 describe('IntervalScheduler', () => {
-  it('should throw if given invalid parameters', () => {
+  it('should throw if given invalid parameters', async() => {
     assert.throws(() => new Interval(0, () => {}));
     assert.throws(() => new Interval(1));
     assert.throws(() => new Interval(30, () => {}, null));
     assert.throws(() => {
       const i = new Interval(30, () => {});
       i.finish();
+    });
+    assert.doesNotThrow(() => {
+      const i = new Interval(30, () => 42, 3, true, false);
+      i.finish();
+      assert.strictEqual(i.numOccurred, 3);
     });
     assert.throws(() => {
       const i = new Interval(30, () => {});
@@ -55,6 +60,25 @@ describe('IntervalScheduler', () => {
     });
     assert.throws(() => {
       new ScheduleEvent(null, 42);
+    });
+    await assertThrowsAsync(async() => {
+      const is = new IntervalScheduler();
+      const i = new Interval(30, () => 42, 3, true, true, false); // trigger initially..
+      is.addInterval(i); // Nothing will happen because it's not enabled
+      await timeout(75);
+      assert.strictEqual(i.numOccurred, 0); // because it's disabled..
+
+      const iId = Object.keys(is._intervalIds)[0];
+      delete is._intervalIds[iId]; // Now interfere with internals to provoke an error
+
+      try {
+        is._getIntervalId(i);
+      } catch (e) {
+        // Restore internals..
+        is._intervalIds[iId] = i;
+        is.removeInterval(i);
+        throw e; 
+      }
     });
 
     let sched = new Schedule();
@@ -111,6 +135,26 @@ describe('IntervalScheduler', () => {
     assert.strictEqual(cnt, 2);
 
     s.removeInterval(i1);
+  });
+
+  it('should trigger special Intervals once if requested', async() => {
+    const is = new IntervalScheduler();
+    const i = new Interval(25, () => 42, 1, true, true, true);
+    is.addInterval(i);
+
+    await timeout(75);
+    assert.strictEqual(i.numOccurred, 1);
+    is.removeInterval(i);
+
+    const i2 = new Interval(25, () => 43, 1, true, true, false);
+    is.addInterval(i2);
+    await timeout(75);
+    assert.strictEqual(i2.numOccurred, 0);
+    i2.enabled = true;
+    is._scheduleInterval(Object.keys(is._intervalIds)[0], i2);
+    await timeout(50);
+    assert.strictEqual(i2.numOccurred, 1);
+    is.removeInterval(i2);
   });
 
   it('should be possible to observe only particular schedules', async function() {
