@@ -67,6 +67,16 @@ describe('CalendarScheduler', () => {
       await c.refresh();
     });
 
+    assert.throws(() => {
+      const c = new CalendarScheduler();
+      c._unscheduleCalendar(new Calendar('foo', () => ''));
+    });
+
+    assert.throws(() => {
+      const c = new CalendarScheduler();
+      c.getObservableForSchedule(new Calendar('foo', () => ''));
+    });
+
     await assertThrowsAsync(async () => {
       const c = new Calendar('bla', () => '', 4900);
     });
@@ -163,6 +173,10 @@ describe('CalendarScheduler', () => {
 
   it('should schedule events that are in the future', async function() {
     this.timeout(6000);
+
+    const ces = new CalendarEventSimple(new Calendar('foo', () => ''), null);
+    assert.isTrue(ces.isBeginOfEvent);
+    assert.isFalse(ces.isEndOfEvent);
     
     const cs = new CalendarScheduler();
     const c = new Calendar('foo', () => {
@@ -285,6 +299,8 @@ describe('CalendarScheduler', () => {
     this.timeout(10000);
     const cs = new CalendarScheduler(5);
 
+    assert.strictEqual(cs._schedulerInterval, null);
+
     const occurred = [];
     cs.observable.subscribe(v => {
       if (v.isBeginOfEvent) {
@@ -300,7 +316,9 @@ describe('CalendarScheduler', () => {
     }, 25000);
 
     await cs.addCalendar(c);
-    await timeout(3000);
+    await timeout(500);
+    assert.isTrue(cs._schedulerInterval !== null);
+    await timeout(2500);
 
     assert.strictEqual(occurred.length, 1);
     c.isEnabled = false;
@@ -400,4 +418,11 @@ describe('CalendarScheduler', () => {
 
     cs.removeCalendar(c_all);
   });
+});
+
+
+module.exports = Object.freeze({
+  createVEvent,
+  createVCalendar,
+  createEmptyCalendar
 });

@@ -120,7 +120,8 @@ if (idx >= 0) {
     assert.strictEqual(pw.result.error.code, 'ENOENT');
   });
 
-  it('should be perfectly fine to represent a process as a Job', async() => {
+  it('should be perfectly fine to represent a process as a Job', async function() {
+    this.timeout(5000);
     const pw = new ProcessWrapper('node', [thisFile, 'proctest1']);
     const job = Job.fromProcess(pw);
     job.cost = 2.5;
@@ -134,5 +135,20 @@ if (idx >= 0) {
     assert.isTrue(arr.length === 1 && arr[0] instanceof ProcessOutput);
     assert.isTrue(arr[0].isStdOut);
     assert.strictEqual(arr[0].asString, "hi\n");
+  });
+
+  it('should handle default arguments correctly', async() => {
+    const pw = new ProcessWrapper('foo');
+    assert.isTrue(pw.args instanceof Array && pw.args.length === 0);
+    assert.strictEqual(Object.keys(pw.options).length, 0)
+  });
+
+  it('should work with strings and buffers equally', done => {
+    const po1 = new ProcessOutput('stdout', 'foobar123');
+    const po2 = new ProcessOutput('stdout', new Buffer('foobar123'));
+
+    assert.strictEqual(po1.asString, po2.asString);
+
+    done();
   });
 });

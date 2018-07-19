@@ -29,6 +29,12 @@ describe('Resolve', () => {
     assert.isTrue(Resolve.isTypeOf(NaN, Number));
     assert.isTrue(Resolve.isTypeOf("a", String));
     assert.isTrue(Resolve.isTypeOf(["a"], []));
+    assert.isTrue(Resolve.isTypeOf(new Boolean(false), Boolean));
+
+    // Because those two DO NOT HAVE the same Prototype:
+    assert.isFalse(Resolve.isTypeOf(Object.create(null), {}));
+    // ... the same goes for the following case:
+    assert.isFalse(Resolve.isTypeOf({}, Object.create(null)));
 
     done();
   });
