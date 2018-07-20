@@ -120,6 +120,16 @@ if (idx >= 0) {
     assert.strictEqual(pw.result.error.code, 'ENOENT');
   });
 
+  it('should handle observed errors when wrapped in a Job correctly', async() => {
+    const pw = new ProcessWrapper('ni_de' /* typo of 'node' */, [thisFile, 'proctest1']);
+
+    const j = Job.fromProcess(pw);
+
+    await assertThrowsAsync(async() => {
+      await j.run();
+    });
+  });
+
   it('should be perfectly fine to represent a process as a Job', async function() {
     this.timeout(5000);
     const pw = new ProcessWrapper('node', [thisFile, 'proctest1']);
