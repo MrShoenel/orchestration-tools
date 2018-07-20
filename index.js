@@ -21,6 +21,10 @@ const Rx = require('rxjs')
 , { Resolve } = require('./tools/Resolve')
 , { createVEvent, createVCalendar, createEmptyCalendar
   } = require('./test/test_CalendarScheduler')
+, { EqualityComparer, DefaultEqualityComparer } = require('./lib/collections/EqualityComparer')
+, { Collection } = require('./lib/collections/Collection')
+, { Queue, ConstrainedQueue } = require('./lib/collections/Queue')
+, { Stack } = require('./lib/collections/Stack')
 , docs = require('./docs');
 
 
@@ -41,5 +45,9 @@ module.exports = {
   getRandomNumber,
   Resolve,
   createVEvent, createVCalendar, createEmptyCalendar,
+  EqualityComparer, DefaultEqualityComparer,
+  Collection,
+  Queue, ConstrainedQueue,
+  Stack,
   docs
 };

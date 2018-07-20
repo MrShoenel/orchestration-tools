@@ -5,7 +5,7 @@ const { assert, expect } = require('chai')
 
 
 describe('Progress', () => {
-  it('should throw if given invalid parameters', () => {
+  it('should throw if given invalid parameters', done => {
     assert.throws(() => {
       new ProgressNumeric(2, 1);
     });
@@ -20,6 +20,21 @@ describe('Progress', () => {
     assert.throws(() => {
       p.reportProgress(0.9)
     });
+
+    done();
+  });
+
+  it('should behave correctly if initializaed with default params', done => {
+    const p = new ProgressNumeric();
+    assert.strictEqual(p.progressMin, 0);
+    assert.strictEqual(p.progressMax, 1);
+
+    assert.strictEqual(p.percent, 0);
+
+    p.reportProgress(0.4);
+    assert.approximately(p.percent, 0.4, 1e-12);
+
+    done();
   });
 
   it('should report progress', async function() {

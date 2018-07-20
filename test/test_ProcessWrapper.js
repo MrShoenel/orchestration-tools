@@ -155,7 +155,7 @@ if (idx >= 0) {
 
   it('should work with strings and buffers equally', done => {
     const po1 = new ProcessOutput('stdout', 'foobar123');
-    const po2 = new ProcessOutput('stdout', new Buffer('foobar123'));
+    const po2 = new ProcessOutput('stdout', Buffer.from('foobar123'));
 
     assert.strictEqual(po1.asString, po2.asString);
 
