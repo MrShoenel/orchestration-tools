@@ -24,6 +24,9 @@ describe('JobQueue', () => {
     assert.throws(() => {
       new JobQueue(-15);
     });
+    assert.throws(() => {
+      (new JobQueue(1)).addSyncJob(42);
+    });
 
     (() => {
       const jq = new JobQueue(1);
@@ -109,6 +112,10 @@ describe('JobQueue', () => {
 
     await timeout(50);
     assert.isTrue(j1.hasFailed && j2.hasFailed && j3.hasFailed);
+    assert.strictEqual(q.numJobsDone, 0);
+    assert.strictEqual(q.numJobsFailed, 3);
+    assert.strictEqual(q.workDone, 0);
+    assert.strictEqual(q.workFailed, 3);
   });
 
   it('should behave as a 1-capacity serial fifo-queue if not used parallel', async function() {
@@ -129,6 +136,7 @@ describe('JobQueue', () => {
     await timeout(50);
     // The Job should have been started in the meantime..
     assert.isTrue(q.isBusy && q.isWorking, 'The queue should be busy and working here.');
+    assert.strictEqual(q.numJobsRunning, 1);
 
     const secondJob = new Job(() => new Promise((resolve, reject) => {
       setTimeout(resolve, 250);
@@ -143,6 +151,22 @@ describe('JobQueue', () => {
     assert.isTrue(q.load > 1, 'The load should be greater one, since there are jobs waiting.');
 
     await secondJob.donePromise;
+  });
+
+  it('should be able to process sync functions as Jobs, too', async function() {
+    const q = new JobQueue(1);
+
+    /** @type {Job.<number>} */
+    let job = null;
+    q.observableDone.subscribe(next => {
+      assert.isTrue(next.job instanceof Job);
+      job = next.job;
+    });
+    
+    q.addSyncJob(() => 42);
+    await timeout(50);
+
+    assert.strictEqual(job.result, 42);
   });
 
   it('should be able to process jobs in parallel', async function() {

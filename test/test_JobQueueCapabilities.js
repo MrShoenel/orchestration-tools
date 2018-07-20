@@ -87,24 +87,43 @@ describe('JobQueueCapabilities', () => {
     const j1 = new Job(() => new Promise((resolve, reject) => {
       setTimeout(resolve, 100);
     }));
+    assert.doesNotThrow(() => {
+      j1.cost = void 0;
+    });
     j1.cost = 2.5;
     const j2 = new Job(() => new Promise((resolve, reject) => {
       setTimeout(resolve, 125);
     }));
     j2.cost = 10;
+    const j3 = new Job(async() => { await timeout(50); throw '42'; });
+    j3.cost = 3.33;
 
-    q.addJob(j1).addJob(j2);
+    q.addJob(j1).addJob(j2).addJob(j3);
+
     await timeout(50);
     assert.isTrue(j1.isRunning && !j2.isRunning && !j2.isDone);
     assert.approximately(q.capabilitiesFree, 0.5, 1e-12);
+    assert.strictEqual(q.numJobsRunning, 1);
 
     await timeout(75);
     assert.isTrue(j1.isDone && j2.isRunning);
+    assert.strictEqual(q.numJobsDone, 1);
+    assert.strictEqual(q.numJobsFailed, 0);
+    assert.approximately(q.workDone, 2.5, 1e-12);
     assert.strictEqual(q.capabilitiesFree, 0);
 
     await j2.donePromise;
     await timeout(10); // Give the queue the chance to clean up that done job
+    assert.strictEqual(q.capabilitiesFree, 0);
+    assert.strictEqual(q.numJobsDone, 2);
+    assert.strictEqual(q.numJobsFailed, 0);
+    assert.strictEqual(q.workFailed, 0);
+    assert.approximately(q.workDone, 12.5, 1e-12);
+
+    await timeout(75);
     assert.strictEqual(q.capabilitiesFree, 3);
-    assert.isTrue(!q.isWorking && !q.isBusy && j2.isDone);
+    assert.isTrue(!q.isWorking && !q.isBusy && j2.isDone && j3.hasFailed);
+    assert.strictEqual(q.numJobsFailed, 1);
+    assert.approximately(q.workFailed, 3.33, 1e-12);
   });
 });
