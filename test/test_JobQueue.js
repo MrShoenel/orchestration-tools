@@ -5,10 +5,10 @@ const { assert, expect } = require('chai')
 , { Job, JobQueue, symbolRun, symbolDone, symbolFailed } = require('../lib/JobQueue')
 , { JobQueueCapabilities } = require('../lib/JobQueueCapabilities');
 
-process.on('unhandledRejection', (reason, p) => {
-  console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
-  // application specific logging, throwing an error, or other logic here
-});
+// process.on('unhandledRejection', (reason, p) => {
+//   console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+//   // application specific logging, throwing an error, or other logic here
+// });
 
 describe('JobQueue', () => {
   it('should throw if given invalid parameters', () => {
