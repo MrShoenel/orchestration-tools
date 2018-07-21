@@ -2,7 +2,9 @@ const { assert, expect } = require('chai')
 , { EqualityComparer, DefaultEqualityComparer } = require('../lib/collections/EqualityComparer')
 , { Collection } = require('../lib/collections/Collection')
 , { Queue, ConstrainedQueue } = require('../lib/collections/Queue')
-, { Stack } = require('../lib/collections/Stack');
+, { Stack } = require('../lib/collections/Stack')
+, { LinkedList, LinkedListNode } = require('../lib/collections/LinkedList')
+, { Comparer, DefaultComparer } = require('../lib/collections/Comparer');
 
 
 describe('EqualityComparer', function() {
@@ -19,6 +21,37 @@ describe('EqualityComparer', function() {
 
     assert.isTrue(d.equals(42, 42));
     assert.isFalse(d.equals(42, '42'));
+
+    done();
+  });
+});
+
+
+
+
+describe('Comparer', function() {
+  it('should be an abstract base-class', done => {
+    const c = new Comparer();
+
+    assert.isTrue(c.equalityComparer instanceof EqualityComparer);
+
+    assert.throws(() => {
+      c.compare(42, 42);
+    });
+
+    assert.throws(() => {
+      c.equalityComparer = new Date;
+    });
+
+    done();
+  });
+
+  it('should provide a default comparer that supports comparing', done => {
+    const c = new DefaultComparer();
+
+    assert.strictEqual(c.compare(1, 1), 0);
+    assert.strictEqual(c.compare(1, 2), -1);
+    assert.strictEqual(c.compare(2, 1), 1);
 
     done();
   });
