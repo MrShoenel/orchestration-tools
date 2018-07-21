@@ -170,6 +170,9 @@ describe('Stack', function() {
       s.peek();
     });
     assert.throws(() => {
+      s.peekBottom();
+    });
+    assert.throws(() => {
       s.pop();
     });
     
@@ -177,6 +180,7 @@ describe('Stack', function() {
 
     assert.strictEqual(s.size, 2);
     assert.strictEqual(s.peek(), 42);
+    assert.strictEqual(s.peekBottom(), 41);
 
     assert.strictEqual(s.pop(), 42);
     assert.strictEqual(s.size, 1);
