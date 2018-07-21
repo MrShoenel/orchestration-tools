@@ -97,6 +97,7 @@ if (idx >= 0) {
   });
 
   it('should handle failing processes correctly', async function() {
+    this.timeout(5000);
     const pw = new ProcessWrapper('node', [thisFile, 'proctest2']);
 
     await assertThrowsAsync(async () => {
