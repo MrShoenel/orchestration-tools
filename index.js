@@ -19,8 +19,6 @@ const Rx = require('rxjs')
 , { deepCloneObject, mergeObjects } = require('./tools/Objects')
 , { getRandomNumber } = require('./tools/Random')
 , { Resolve } = require('./tools/Resolve')
-, { createVEvent, createVCalendar, createEmptyCalendar
-  } = require('./test/test_CalendarScheduler')
 , { EqualityComparer, DefaultEqualityComparer } = require('./lib/collections/EqualityComparer')
 , { Collection } = require('./lib/collections/Collection')
 , { Queue, ConstrainedQueue } = require('./lib/collections/Queue')
@@ -44,7 +42,6 @@ module.exports = {
   deepCloneObject, mergeObjects,
   getRandomNumber,
   Resolve,
-  createVEvent, createVCalendar, createEmptyCalendar,
   EqualityComparer, DefaultEqualityComparer,
   Collection,
   Queue, ConstrainedQueue,
