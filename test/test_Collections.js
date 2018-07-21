@@ -222,3 +222,251 @@ describe('Stack', function() {
     done();
   });
 });
+
+
+
+describe('LinkedList', function() {
+  it('should throw if given invalid parameters', done => {
+    const l = new LinkedList();
+
+    assert.throws(() => {
+      l._add(new Date, 42);
+    });
+    assert.throws(() => {
+      l._add(new LinkedListNode(42, l));
+    });
+    assert.throws(() => {
+      l.remove(new LinkedListNode(42, l));
+    });
+
+    done();
+  });
+
+  it('should support adding and removing at certain positions', done => {
+    const l = new LinkedList();
+
+    const n42 = l.addFirst(42);
+    const n41 = n42.list.addBefore(l.first, 41);
+
+    assert.strictEqual(l.first, n41);
+    assert.strictEqual(l.last, n42);
+    assert.strictEqual(l.last.prev, n41);
+    assert.strictEqual(l.first.next, n42);
+    assert.strictEqual(n41.prev, null);
+    assert.strictEqual(n42.next, null);
+
+    const n40 = l.addFirst(40);
+    assert.strictEqual(l.first, n40);
+    assert.strictEqual(l.size, 3);
+    assert.strictEqual(n41.prev, n40);
+    assert.strictEqual(n40.prev, null);
+    assert.strictEqual(n40.next, n41);
+
+    l.clear();
+
+    assert.isTrue(l.isEmpty);
+    assert.strictEqual(l.size, 0);
+    assert.throws(() => {
+      l.first;
+    });
+    assert.throws(() => {
+      l.last;
+    });
+
+
+    const l1 = new LinkedList();
+    const x42 = l1.addLast(42);
+    const x43 = l1.addLast(43);
+
+    assert.strictEqual(l1.size, 2);
+    assert.strictEqual(l1.first, x42);
+    assert.strictEqual(l1.last, x43);
+    assert.strictEqual(x42.prev, null);
+    assert.strictEqual(x42.next, x43);
+    assert.strictEqual(x43.prev, x42);
+    assert.strictEqual(x43.next, null);
+
+    const x42_detached = l1.removeFirst();
+    assert.strictEqual(x42_detached, x42);
+    assert.strictEqual(l1.first, x43);
+    assert.strictEqual(l1.last, x43);
+
+    assert.strictEqual(x42.prev, null);
+    assert.strictEqual(x42.next, null);
+    assert.strictEqual(x43.next, null);
+    assert.strictEqual(x43.prev, null);
+
+    const x43_detached = l1.removeFirst();
+    assert.isTrue(l1.isEmpty);
+    assert.strictEqual(l1.size, 0);
+    assert.strictEqual(x43_detached, x43);
+    assert.strictEqual(x43.next, null);
+    assert.strictEqual(x43.prev, null);
+
+    done();
+  });
+
+  it('should have a properly initialized LinkedListNode class', done => {
+    const l = new LinkedList();
+    const n = new LinkedListNode(42, l);
+    
+    assert.strictEqual(n.list, l);
+    assert.strictEqual(n.next, null);
+    assert.strictEqual(n.prev, null);
+
+    done();
+  });
+
+  it('should override the properties of Collection correctly', done => {
+    const l = new LinkedList();
+
+    assert.isTrue(l.equalityComparer instanceof EqualityComparer);
+
+    assert.isTrue(l.isEmpty);
+    assert.strictEqual(l.size, 0);
+    assert.throws(() => {
+      l.first;
+    });
+    assert.throws(() => {
+      l.last;
+    });
+
+    done();
+  });
+
+  it('should override the methods of Collection correctly', done => {
+    const l = new LinkedList();
+
+    assert.throws(() => {
+      l._requireNotEmpty();
+    });
+
+    const n42 = l.addFirst(42);
+
+    assert.isTrue(l.hasNode(n42));
+
+    assert.doesNotThrow(() => {
+      l._requireNotEmpty();
+    });
+
+    assert.strictEqual(l.size, 1);
+    assert.isFalse(l.isEmpty);
+
+    const n43 = l.addAfter(n42, 43);
+
+    assert.strictEqual(l.size, 2);
+    assert.isFalse(l.isEmpty);
+
+    let idx = 0;
+    for (const n of l.nodes()) {
+      if (idx === 0) {
+        assert.strictEqual(n, n42);
+      } else {
+        assert.strictEqual(n, n43);
+      }
+      idx++;
+    }
+
+    idx = 0;
+    for (const n of l.nodesReversed()) {
+      if (idx === 0) {
+        assert.strictEqual(n, n43);
+      } else {
+        assert.strictEqual(n, n42);
+      }
+      idx++;
+    }
+
+    idx = 0;
+    for (const val of l.entries()) {
+      if (idx === 0) {
+        assert.strictEqual(val, 42);
+      } else {
+        assert.strictEqual(val, 43);
+      }
+      idx++;
+    }
+
+    idx = 0;
+    for (const val of l.entriesReversed()) {
+      if (idx === 0) {
+        assert.strictEqual(val, 43);
+      } else {
+        assert.strictEqual(val, 42);
+      }
+      idx++;
+    }
+
+
+    assert.throws(() => {
+      l._requireIsNode(42);
+    });
+    assert.doesNotThrow(() => {
+      assert.isTrue(l._requireIsNode(n42));
+    });
+
+
+    // now let's check the nodes..
+    assert.strictEqual(l.first, n42);
+    assert.strictEqual(l.last, n43);
+    assert.strictEqual(n42.prev, null);
+    assert.strictEqual(n42.next, n43);
+    assert.strictEqual(n43.prev, n42);
+    assert.strictEqual(n43.next, null);
+
+
+    assert.isTrue(l.hasNode(n43));
+    assert.isTrue(l.has(43));
+
+    const n43_detached = l.removeLast();
+
+    assert.strictEqual(n42, l.first);
+    assert.strictEqual(n42, l.last);
+    assert.strictEqual(l.size, 1);
+    assert.isFalse(l.hasNode(n43));
+    assert.isFalse(l.has(43));
+
+    assert.strictEqual(n43, n43_detached);
+    assert.strictEqual(n43.next, null);
+    assert.strictEqual(n43.prev, null);
+    assert.strictEqual(n42.next, null);
+    assert.strictEqual(n42.prev, null);
+
+
+    const n42_detached = l.removeLast();
+
+    assert.strictEqual(n42, n42_detached);
+    assert.strictEqual(n42.next, null);
+    assert.strictEqual(n42.prev, null);
+
+    assert.isTrue(l.isEmpty);
+    assert.strictEqual(l.size, 0);
+
+
+    done();
+  });
+
+  it('should maintain the order of nodes correctly', done => {
+    const l = new LinkedList();
+
+    const n42 = l.addLast(42);
+    const n43 = l.addAfter(l.first);
+    const n44 = l.addLast(n43);
+
+    assert.strictEqual(n42.prev, null);
+    assert.strictEqual(n42.next, n43);
+    assert.strictEqual(n43.prev, n42);
+    assert.strictEqual(n43.next, n44);
+    assert.strictEqual(n44.prev, n43);
+    assert.strictEqual(n44.next, null);
+
+    const n43_detached = l.remove(n43);
+    assert.strictEqual(n43_detached, n43);
+    assert.strictEqual(n42.next, n44);
+    assert.strictEqual(n44.prev, n42);
+    assert.strictEqual(n43.next, null);
+    assert.strictEqual(n43.prev, null);
+
+    done();
+  });
+});
