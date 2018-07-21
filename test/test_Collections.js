@@ -56,12 +56,24 @@ describe('Collection', function() {
     let idx = 0;
     for (const item of c.entries()) {
       if (idx === 0) {
-        idx++;
         assert.strictEqual(item, 42);
       } else {
         assert.strictEqual(item, 43);
       }
+      idx++;
     }
+    assert.strictEqual(idx, 2);
+
+    idx = 0;
+    for (const item of c.entriesReversed()) {
+      if (idx === 0) {
+        assert.strictEqual(item, 43);
+      } else {
+        assert.strictEqual(item, 42);
+      }
+      idx++;
+    }
+    assert.strictEqual(idx, 2);
     
     c.clear();
 
