@@ -23,5 +23,6 @@ Please note that between `v1.8.0` and `v2.0.0` there were breaking changes regar
 * __ProcessWrapper__ and related classes (such as `ProcessResult` and `ProcessOutput`) to encapsulate child processes and let them run as `Promises` or `Obervable`s (since `v1.8.0`).
 * __Resolve__ - a class containing helpers to determine types of variables and to resolve functions and `Promise`s to values of any type (since `v2.6.0`).
 * __ManualScheduler__ and __ManualSchedule__ provide mechanisms that align with the scheduler-concept and allow to trigger events manually (since `v2.7.0`).
-* __Collection__, __Queue__, __ConstrainedQueue__ (a queue with limited size), __Stack__ provide fully tested collections that are often needed in JavaScript (since `v2.9.0`)
+* __Collection__, __Queue__, __ConstrainedQueue__ (a queue with limited size), __Stack__ and __LinkedList__\*/__LinkedListNode__\* provide fully tested collections that are often needed in JavaScript (since `v2.9.0`/\*`v2.10.0`)
 * __EqualityComparer__ and __DefaultEqualityComparer__ are used within the *collections* to provide default- and custom-capabilities for comparing items (since `v2.9.0`)
+* __Comparer__ and __DefaultComparer__ to equate items in terms of size (e.g. for sorting) (since `v2.10.0`)
