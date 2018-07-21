@@ -52,7 +52,7 @@ describe('JobQueueCapabilities', () => {
     assert.isTrue(q.load > 1);
     assert.isTrue(q.backlogCost > 0);
     assert.isTrue(q.backlog > 0);
-    await timeout(75);
+    await timeout(125);
     assert.isTrue(j1.isDone && !j2.isDone && j2.isRunning && !j3.isDone && j3.isRunning);
   });
 

@@ -23,6 +23,8 @@ const Rx = require('rxjs')
 , { Collection } = require('./lib/collections/Collection')
 , { Queue, ConstrainedQueue } = require('./lib/collections/Queue')
 , { Stack } = require('./lib/collections/Stack')
+, { LinkedList, LinkedListNode } = require('./lib/collections/LinkedList')
+, { Comparer, DefaultComparer } = require('./lib/collections/Comparer')
 , docs = require('./docs');
 
 
@@ -46,5 +48,7 @@ module.exports = {
   Collection,
   Queue, ConstrainedQueue,
   Stack,
+  LinkedList, LinkedListNode,
+  Comparer, DefaultComparer,
   docs
 };
