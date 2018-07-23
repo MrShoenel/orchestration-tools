@@ -4,13 +4,13 @@ const { assert } = require('chai');
  * @param {() => Promise.<any>} promiseFn 
  */
 const assertThrowsAsync = async promiseFn => {
-  let f = () => {};
+  let threw = false;
   try {
     await promiseFn();
   } catch (e) {
-    f = () => { throw e; };
+    threw = true;
   } finally {
-    assert.throws(f)
+    assert.isTrue(threw);
   }
 };
 
