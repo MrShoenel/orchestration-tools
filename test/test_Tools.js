@@ -44,6 +44,31 @@ describe('Tools', () => {
     done();
   });
 
+  it('should also merge custom classes', done => {
+    class Xx123 {
+      get [Symbol.toStringTag]() {
+        return this.constructor.name;
+      };
+    };
+
+    const xx123 = new Xx123();
+    const result = mergeObjects({}, { foo: true }, { xx123 });
+    
+    expect(result).to.deep.equal({ foo: true, xx123 });
+    assert.strictEqual(result.xx123, xx123);
+
+    class Invalid {
+      get [Symbol.toStringTag]() {
+        return '123'; // This would be an invalid class name and therefore be skipped
+      }
+    }
+
+    const result2 = mergeObjects({}, { inv: new Invalid() });
+    expect(result2).to.deep.equal({});
+
+    done();
+  });
+
   it('should deep-merge two or more objects, retaining all properties', done => {
     const o_a = {
       a: 5,
