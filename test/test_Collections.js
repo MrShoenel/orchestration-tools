@@ -85,6 +85,19 @@ describe('Collection', function() {
 
     assert.isTrue(c.has(42));
     assert.isTrue(c.has(43));
+
+    class FalseEqComparer extends EqualityComparer {
+      constructor() {
+        super();
+      };
+
+      equals(x, y) {
+        return false;
+      };
+    };
+
+    assert.isFalse(c.has(42, new FalseEqComparer()));
+    assert.isTrue(c.has(42, EqualityComparer.default));
     
     let idx = 0;
     for (const item of c.entries()) {

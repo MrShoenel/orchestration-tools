@@ -1,6 +1,6 @@
 {
   "name": "sh.orchestration-tools",
-  "version": "2.10.2",
+  "version": "2.11.0",
   "description": "A collection of tools that help building infrastructures or to orchestrate resources.",
   "main": "index.js",
   "scripts": {
@@ -20,7 +20,10 @@
     "job",
     "jobqueue",
     "parallel",
-    "processing"
+    "processing",
+    "collections",
+    "equality comparer",
+    "comparer"
   ],
   "author": "Sebastian Hönel <development@hoenel.net>",
   "license": "MIT",
