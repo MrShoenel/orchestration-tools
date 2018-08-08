@@ -307,4 +307,22 @@ describe('JobQueue', () => {
 
     idleSubs.unsubscribe();
   });
+
+  it('should not emit idle if paused and jobs are enqueued', async() => {
+    const q = new JobQueue(1);
+
+    let idleReceived = false;
+    q.observableIdle.subscribe(jqEvt => {
+      idleReceived = true;
+    });
+
+    q.addJob(async() => await timeout(100));
+
+    await timeout(25);
+    q.pause();
+    q._runNext();
+
+    await timeout(25);
+    assert.isFalse(idleReceived);
+  });
 });
