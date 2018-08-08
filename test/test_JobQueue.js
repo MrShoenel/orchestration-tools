@@ -158,6 +158,11 @@ describe('JobQueue', () => {
 
     /** @type {Job.<number>} */
     let job = null;
+
+    q.observableRun.subscribe(jqEvt => {
+      assert.isTrue(jqEvt.job.isRunning);
+    });
+
     q.observableDone.subscribe(next => {
       assert.isTrue(next.job instanceof Job);
       job = next.job;
