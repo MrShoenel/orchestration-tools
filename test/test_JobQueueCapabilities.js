@@ -75,6 +75,7 @@ describe('JobQueueCapabilities', () => {
     q.addJob(j1).addJob(j2).addJob(j3);
     await timeout(25);
     assert.isTrue(j1.isRunning && j2.isRunning && !j3.isRunning && !j3.isDone);
+    assert.approximately(q.utilization, 3 / 3.6, 1e-12);
     await timeout(100);
     assert.isTrue(j1.isDone && j2.isRunning && !j3.isRunning && !j3.isDone);
     await timeout(150)
@@ -111,6 +112,7 @@ describe('JobQueueCapabilities', () => {
     assert.strictEqual(q.numJobsFailed, 0);
     assert.approximately(q.workDone, 2.5, 1e-12);
     assert.strictEqual(q.capabilitiesFree, 0);
+    assert.approximately(q.utilization, 10/3, 1e-12);
 
     await j2.donePromise;
     await timeout(10); // Give the queue the chance to clean up that done job

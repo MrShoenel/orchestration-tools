@@ -2,7 +2,7 @@ const { assert, expect } = require('chai')
 , { timeout } = require('../tools/Defer')
 , { assertThrowsAsync } = require('../tools/AssertAsync')
 , { ProgressNumeric } = require('../lib/Progress')
-, { Job, JobQueue, symbolRun, symbolDone, symbolFailed } = require('../lib/JobQueue')
+, { Job, JobQueue, symbolRun, symbolDone, symbolFailed, symbolIdle } = require('../lib/JobQueue')
 , { JobQueueCapabilities } = require('../lib/JobQueueCapabilities');
 
 // process.on('unhandledRejection', (reason, p) => {
@@ -247,6 +247,8 @@ describe('JobQueue', () => {
     q.addJob(j1);
     q.addJob(j2);
     await timeout(50);
+    assert.strictEqual(q.load, 2);
+    assert.strictEqual(q.utilization, 1);
     assert.isTrue(q.isBusy && !j1.isDone && !j2.isDone);
 
     q.pause();
