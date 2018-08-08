@@ -1,6 +1,6 @@
 {
   "name": "sh.orchestration-tools",
-  "version": "2.12.1",
+  "version": "2.12.2",
   "description": "A collection of tools that help building infrastructures or to orchestrate resources.",
   "main": "index.js",
   "scripts": {
@@ -39,6 +39,6 @@
     "chai": "^4.1.2",
     "ical.js": "^1.2.2",
     "mocha": "^5.2.0",
-    "rxjs": "^6.2.1"
+    "rxjs": "^6.2.2"
   }
 }
