@@ -1,6 +1,6 @@
 {
   "name": "sh.orchestration-tools",
-  "version": "2.13.0",
+  "version": "2.14.0",
   "description": "A collection of tools that help building infrastructures or to orchestrate resources.",
   "main": "index.js",
   "scripts": {
