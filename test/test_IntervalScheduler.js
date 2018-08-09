@@ -9,11 +9,16 @@ const { assert, expect } = require('chai')
 describe('IntervalScheduler', () => {
   it('should throw if given invalid parameters', async() => {
     assert.throws(() => new Interval(0, () => {}));
-    assert.throws(() => new Interval(1));
     assert.throws(() => new Interval(30, () => {}, null));
     assert.throws(() => {
       const i = new Interval(30, () => {});
       i.finish();
+    });
+    assert.throws(() => new Interval(1, {}));
+    assert.doesNotThrow(() => {
+      const i = new Interval(1);
+      assert.isTrue(i.itemProducer instanceof Function);
+      assert.strictEqual(i.itemProducer(), void 0); // the default
     });
     assert.doesNotThrow(() => {
       const i = new Interval(30, () => 42, 3, true, false);
