@@ -62,7 +62,7 @@ describe('ManualScheduler', () => {
       m1.trigger('m1');
     }, 25);
     setTimeout(() => {
-      m2.trigger('m2');
+      m2.triggerNext('m2');
     }, 50);
     
     await timeout(75);
@@ -106,4 +106,45 @@ describe('ManualScheduler', () => {
     m.removeManualSchedule(m1);
     m.removeManualSchedule(m2);
   });
+
+  it('should not forward errors from schedules or complete', async() => {
+    const s = new ManualScheduler();
+    const m = new ManualSchedule();
+    s.addSchedule(m);
+
+    let hadErrorS = false;
+    let wasCompleteS = false;
+    s.observable.subscribe(() =>{}, err => {
+      hadErrorS = true;
+    }, () => wasCompleteS = true);
+
+    let hadErrorM = false;
+    let wasCompleteM = false;
+    s.getObservableForSchedule(m).subscribe(() =>{}, err => {
+      hadErrorM = true;
+    }, () => wasCompleteM = true);
+
+    m.triggerError(42);
+
+    await timeout(50);
+    assert.isFalse(hadErrorS);
+    assert.isTrue(hadErrorM);
+    assert.isFalse(wasCompleteM);
+
+    m.triggerComplete();
+    await timeout(50);
+    assert.isFalse(wasCompleteM);
+    assert.isFalse(wasCompleteS);
+
+    let m2Complete = false;
+    const m2 = new ManualSchedule();
+    s.addSchedule(m2).getObservableForSchedule(m2).subscribe(()=>{},e=>{}, () => m2Complete = true);
+    m2.triggerComplete();
+
+    await timeout(50);
+    assert.isTrue(m2Complete);
+    assert.isFalse(wasCompleteS);
+
+    s.removeSchedule(m);
+  })
 });
