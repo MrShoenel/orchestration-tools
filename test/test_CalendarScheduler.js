@@ -13,6 +13,24 @@ CALSCALE:GREGORIAN
 METHOD:PUBLISH
 X-WR-CALNAME:IoT
 X-WR-TIMEZONE:UTC
+BEGIN:VTIMEZONE
+TZID:Europe/Stockholm
+X-LIC-LOCATION:Europe/Stockholm
+BEGIN:DAYLIGHT
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0200
+TZNAME:CEST
+DTSTART:19700329T020000
+RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU
+END:DAYLIGHT
+BEGIN:STANDARD
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0100
+TZNAME:CET
+DTSTART:19701025T030000
+RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU
+END:STANDARD
+END:VTIMEZONE
 __EVENTS__
 END:VCALENDAR`;
 
@@ -24,12 +42,18 @@ END:VCALENDAR`;
 const createVEvent = (start, id, durationMSecs = 60*1e3) => {
   const end = new Date(+start + durationMSecs),
     toVEventTime = date => {
-      return date.toISOString().replace(/[-:]/g, '').replace(/\.[0-9]+[a-z]+$/i, '') + 'Z';
-    }
+      /** @type {Date} */
+      const d = date
+      , pad = n => n < 10 ? `0${n}` : `${n}`;
+
+      //'2018 08 11 T 08 39 00' -- w/o spaces!
+      return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+    };
+
   return `
 BEGIN:VEVENT
-DTSTART:${toVEventTime(start)}
-DTEND:${toVEventTime(end)}
+DTSTART;TZID=Europe/Stockholm:${toVEventTime(start)}
+DTEND;TZID=Europe/Stockholm:${toVEventTime(end)}
 UID:${id}
 CREATED:${toVEventTime(start)}
 SEQUENCE:0
@@ -62,19 +86,19 @@ describe('CalendarScheduler', () => {
   });
 
   it('should throw if given invalid parameters', async () => {
-    await assertThrowsAsync(async () => {
-      const c = new Calendar('bla', () => '', 5000);
-      await c.refresh();
+    // UPDATE: This should not throw anymore, as empty Calendars
+    // are entirely OK!
+    const cx = new Calendar('bla', () => '', 5000);
+    await cx.refresh();
+
+    assert.throws(() => {
+      const c = new CalendarScheduler();
+      c._unscheduleCalendar(cx);
     });
 
     assert.throws(() => {
       const c = new CalendarScheduler();
-      c._unscheduleCalendar(new Calendar('foo', () => ''));
-    });
-
-    assert.throws(() => {
-      const c = new CalendarScheduler();
-      c.getObservableForSchedule(new Calendar('foo', () => ''));
+      c.getObservableForSchedule(cx);
     });
 
     await assertThrowsAsync(async () => {
@@ -293,6 +317,8 @@ describe('CalendarScheduler', () => {
     assert.doesNotThrow(() => {
       cs.removeCalendar(c);
     });
+
+    assert.isTrue(!cs.hasSchedule(c));
   });
 
   it('should un-schedule events from disabled calendars', async function() {
