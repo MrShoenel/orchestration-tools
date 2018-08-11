@@ -444,6 +444,19 @@ describe('CalendarScheduler', () => {
 
     cs.removeCalendar(c_all);
   });
+
+  it('should not throw when updating empty calendars', async() => {
+    const c = new Calendar('xcv', async() => '');
+
+    let threw = false;
+    try {
+      await c.refresh();
+    } catch (e) {
+      threw = true;
+    } finally {
+      assert.isFalse(threw);
+    }
+  });
 });
 
 
