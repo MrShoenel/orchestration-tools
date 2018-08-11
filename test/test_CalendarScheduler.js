@@ -86,19 +86,19 @@ describe('CalendarScheduler', () => {
   });
 
   it('should throw if given invalid parameters', async () => {
-    await assertThrowsAsync(async () => {
-      const c = new Calendar('bla', () => '', 5000);
-      await c.refresh();
+    // UPDATE: This should not throw anymore, as empty Calendars
+    // are entirely OK!
+    const cx = new Calendar('bla', () => '', 5000);
+    await cx.refresh();
+
+    assert.throws(() => {
+      const c = new CalendarScheduler();
+      c._unscheduleCalendar(cx);
     });
 
     assert.throws(() => {
       const c = new CalendarScheduler();
-      c._unscheduleCalendar(new Calendar('foo', () => ''));
-    });
-
-    assert.throws(() => {
-      const c = new CalendarScheduler();
-      c.getObservableForSchedule(new Calendar('foo', () => ''));
+      c.getObservableForSchedule(cx);
     });
 
     await assertThrowsAsync(async () => {
@@ -317,6 +317,8 @@ describe('CalendarScheduler', () => {
     assert.doesNotThrow(() => {
       cs.removeCalendar(c);
     });
+
+    assert.isTrue(!cs.hasSchedule(c));
   });
 
   it('should un-schedule events from disabled calendars', async function() {
