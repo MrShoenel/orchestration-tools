@@ -85,11 +85,21 @@ describe('CalendarScheduler', () => {
     done();
   });
 
-  it('should throw if given invalid parameters', async () => {
-    // UPDATE: This should not throw anymore, as empty Calendars
-    // are entirely OK!
-    const cx = new Calendar('bla', () => '', 5000);
-    await cx.refresh();
+  it('should throw if given invalid parameters', async() => {
+    await assertThrowsAsync(async() => {
+      const cx = new Calendar('bla', () => '', 5000);
+      let threw = false;
+      let _e = null;
+      try {
+      await cx.refresh();
+      } catch (e) {
+        _e = e;
+        threw = true;
+      } finally {
+        assert.isTrue(threw);
+        throw _e;
+      }
+    });
 
     assert.throws(() => {
       const c = new CalendarScheduler();
@@ -101,8 +111,8 @@ describe('CalendarScheduler', () => {
       c.getObservableForSchedule(cx);
     });
 
-    await assertThrowsAsync(async () => {
-      const c = new Calendar('bla', () => '', 4900);
+    assert.throws(() => {
+      new Calendar('bla', () => '', 4900);;
     });
 
     assert.throws(() => {
@@ -445,18 +455,18 @@ describe('CalendarScheduler', () => {
     cs.removeCalendar(c_all);
   });
 
-  it('should not throw when updating empty calendars', async() => {
-    const c = new Calendar('xcv', async() => '');
+  // it('should not throw when updating empty calendars', async() => {
+  //   const c = new Calendar('xcv', async() => '');
 
-    let threw = false;
-    try {
-      await c.refresh();
-    } catch (e) {
-      threw = true;
-    } finally {
-      assert.isFalse(threw);
-    }
-  });
+  //   let threw = false;
+  //   try {
+  //     await c.refresh();
+  //   } catch (e) {
+  //     threw = true;
+  //   } finally {
+  //     assert.isFalse(threw);
+  //   }
+  // });
 });
 
 
