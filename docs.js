@@ -27,6 +27,7 @@
  * @property {string} icaltype
  * @property {string} timezone
  * @property {boolean} isDate
+ * @property {() => Date} toJSDate
  */
 
 /**
