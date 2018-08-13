@@ -100,7 +100,7 @@ const offsetNow = (() => {
   , mins = Number.isInteger(hours) ? 0 : Math.abs(60 * (hours - (hours | 0)))
   , pad = v => v < 10 ? `0${v}` : `${v}`;
 
-  return `${minutes < 0 ? '+' : '-'}${pad(hours)}${pad(mins)}`;
+  return `${minutes <= 0 ? '+' : '-'}${pad(hours)}${pad(mins)}`;
 })();
 
 const getMatchingTimezoneBlock = () => {
