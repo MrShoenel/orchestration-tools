@@ -8,4 +8,6 @@ before_script:
   - sudo dpkg-reconfigure --frontend noninteractive tzdata
 branches:
   only:
+  - master
+  - master-pre-v2.0.0
   - test-ical-fix
