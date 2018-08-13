@@ -208,6 +208,9 @@ describe('CalendarScheduler', () => {
   it('should schedule events that are in the future', async function() {
     this.timeout(6000);
 
+    console.log(`Now: ${(new Date()).toString()}`);
+    console.log(`Offset: ${(new Date).getTimezoneOffset()}`);
+
     const ces = new CalendarEventSimple(new Calendar('foo', () => ''), null);
     assert.isTrue(ces.isBeginOfEvent);
     assert.isFalse(ces.isEndOfEvent);
