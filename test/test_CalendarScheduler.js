@@ -5,6 +5,134 @@ const { assert, expect } = require('chai')
 , ical = require('ical.js');
 
 
+Date.prototype.stdTimezoneOffset = function () {
+  var jan = new Date(this.getFullYear(), 0, 1);
+  var jul = new Date(this.getFullYear(), 6, 1);
+  return Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
+};
+
+Date.prototype.isDstObserved = function () {
+  return this.getTimezoneOffset() < this.stdTimezoneOffset();
+};
+
+
+class Block {
+  /**
+   * @param {string} type
+   */
+  constructor(type) {
+    this.type = type;
+    /** @type {Map.<string, string>} */
+    this.props = new Map();
+    /** @type {Array.<Block>} */
+    this.blocks = [];
+    /** @type {Block} */
+    this.parent = null;
+  };
+
+  tryGetSubBlock(type) {
+    for (const block of this.blocks) {
+      if (block.type === type) {
+        return block;
+      }
+      const sub = block.tryGetSubBlock(type);
+      if (sub instanceof Block) {
+        return sub;
+      }
+    }
+    return null;
+  };
+
+  /**
+   * @param {string} type
+   * @returns {Block}
+   */
+  enterBlock(type) {
+    const b = new Block(type);
+    b.parent = this;
+    this.blocks.push(b);
+    return b;
+  };
+
+  /**
+   * @returns {Block}
+   */
+  exitBlock() {
+    return this.parent;
+  };
+
+  toString() {
+    return `BEGIN:${this.type}\n${[...this.props.entries()].map(e => `${e[0]}:${e[1]}`).join("\n")}\n${this.blocks.map(b => b.toString().trim()).join("\n")}${this.blocks.length === 0 ? '' : "\n"}END:${this.type}`;
+  };
+
+  /**
+   * @param {Array.<string>} lines
+   * @returns {Block}
+   */
+  static fromLines(lines) {
+    let b = new Block(lines[0].split(':')[1]);
+
+    lines.slice(1, lines.length - 1).forEach((l, idx) => {
+      const s = l.trim().split(':');
+      if (s[0] === 'BEGIN') {
+        b = b.enterBlock(s[1]);
+      } else if (s[0] === 'END') {
+        b = b.exitBlock();
+      } else {
+        b.props.set(s[0], s[1]);
+      }
+    });
+
+    return b;
+  };
+};
+
+/** @type {Object.<string, string>} */
+const tzdata = JSON.parse(require('fs').readFileSync(require('path').resolve('./node_modules/ical-expander/zones-compiled.json')).toString('utf8'));
+/** @type {Map.<string, Block>} */
+const tzdataAsBlocks = new Map(Object.keys(tzdata).map(k => {
+  return [k, Block.fromLines(tzdata[k].split("\n"))];
+}));
+
+const offsetNow = (() => {
+  const minutes = (new Date).getTimezoneOffset()
+  , hours = Math.abs(minutes / 60)
+  , mins = Number.isInteger(hours) ? 0 : Math.abs(60 * (hours - (hours | 0)))
+  , pad = v => v < 10 ? `0${v}` : `${v}`;
+
+  return `${minutes <= 0 ? '+' : '-'}${pad(hours)}${pad(mins)}`;
+})();
+
+const getMatchingTimezoneBlock = () => {
+  const isDst = (new Date).isDstObserved();
+
+  for (const block of tzdataAsBlocks.values()) {
+    /** @type {Block} */
+    let sub = null;
+    if (isDst) {
+      sub = block.tryGetSubBlock('DAYLIGHT');
+    } else {
+      sub = block.tryGetSubBlock('STANDARD');
+    }
+
+    if (sub === null) {
+      continue;
+    }
+
+
+    const prop = isDst ? 'TZOFFSETTO' : 'TZOFFSETFROM';
+    if (sub.props.has(prop) && sub.props.get(prop) === offsetNow) {
+      return block;
+    }
+  }
+  return null;
+};
+
+const tzBlock = getMatchingTimezoneBlock();
+if (!tzBlock) {
+  throw new Error('Cannot determine Timezone!');
+}
+
 const vcal =
 `BEGIN:VCALENDAR
 PRODID:-//Google Inc//Google Calendar 70.9054//EN
@@ -13,26 +141,11 @@ CALSCALE:GREGORIAN
 METHOD:PUBLISH
 X-WR-CALNAME:IoT
 X-WR-TIMEZONE:UTC
-BEGIN:VTIMEZONE
-TZID:Europe/Stockholm
-X-LIC-LOCATION:Europe/Stockholm
-BEGIN:DAYLIGHT
-TZOFFSETFROM:+0100
-TZOFFSETTO:+0200
-TZNAME:CEST
-DTSTART:19700329T020000
-RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU
-END:DAYLIGHT
-BEGIN:STANDARD
-TZOFFSETFROM:+0200
-TZOFFSETTO:+0100
-TZNAME:CET
-DTSTART:19701025T030000
-RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU
-END:STANDARD
-END:VTIMEZONE
+${tzBlock.toString()}
 __EVENTS__
 END:VCALENDAR`;
+
+
 
 /**
  * @param {Date} start 
@@ -52,8 +165,8 @@ const createVEvent = (start, id, durationMSecs = 60*1e3) => {
 
   return `
 BEGIN:VEVENT
-DTSTART;TZID=Europe/Stockholm:${toVEventTime(start)}
-DTEND;TZID=Europe/Stockholm:${toVEventTime(end)}
+DTSTART;TZID=${tzBlock.props.get('TZID')}:${toVEventTime(start)}
+DTEND;TZID=${tzBlock.props.get('TZID')}:${toVEventTime(end)}
 UID:${id}
 CREATED:${toVEventTime(start)}
 SEQUENCE:0

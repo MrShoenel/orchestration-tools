@@ -3,7 +3,9 @@ node_js:
   - "node"
 script:
   - npm run test_ci
+before_script:
+  - echo 'Europe/Stockholm' | sudo tee /etc/timezone
+  - sudo dpkg-reconfigure --frontend noninteractive tzdata
 branches:
   only:
-  - master
-  - master-pre-v2.0.0
+  - test-ical-fix

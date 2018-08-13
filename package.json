@@ -38,7 +38,6 @@
   "dependencies": {
     "chai": "^4.1.2",
     "ical-expander": "^2.0.0",
-    "ical.js": "^1.2.2",
     "mocha": "^5.2.0",
     "rxjs": "^6.2.2"
   }
