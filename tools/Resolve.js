@@ -1,3 +1,6 @@
+const { inspect } = require('util');
+
+
 /**
  * @author Sebastian Hönel <development@hoenel.net>
  */
@@ -161,9 +164,26 @@ class Resolve {
       }
     } while (true);
 
-    throw new Error(`The value '${JSON.stringify(orgVal)}' cannot be resolved to
+    throw new Error(`The value '${inspect(orgVal)}' cannot be resolved to
       '${exampleOrTypeOrClassName}' using resolveFuncs=${resolveFuncs}
       and resolvePromises=${resolvePromises}.`);
+  };
+
+  /**
+   * @see {Resolve.toValue}
+   * @template T
+   * Convenience method for resolving functions and/or Promises to values. Calls
+   * toValue() without an example which leads to resolving the given function or
+   * Promise until it yields a value that is not a function and not a Promise.
+   * @param {(() => (T|Promise.<T>))|Promise.<T>} asyncFuncOrPromise An (async)
+   * function or a Promise.
+   * @returns {T} The result of deeply resolving the given function or Promise.
+   */
+  static async asyncFuncOrPromise(asyncFuncOrPromise) {
+    if (!Resolve.isFunction(asyncFuncOrPromise) && !Resolve.isPromise(asyncFuncOrPromise)) {
+      throw new Error(`The value given for func is neither an (async) function nor a Promise. The value given was: ${inspect(asyncFuncOrPromise)}`);
+    }
+    return await Resolve.toValue(asyncFuncOrPromise);
   };
 };
 
