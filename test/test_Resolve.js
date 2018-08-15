@@ -39,6 +39,30 @@ describe('Resolve', () => {
     done();
   });
 
+  it('should resolve functions and promises without example', async() => {
+    let result = await Resolve.toValue(async() => 42);
+    assert.strictEqual(result, 42);
+
+    result = await Resolve.optionalToValue(null, () => 43);
+    assert.strictEqual(result, 43);
+
+    result = await Resolve.asyncFuncOrPromise(async() => {
+      return async() => {
+        return new Promise((resolve, reject) => {
+          resolve(44);
+        });
+      };
+    });
+    assert.strictEqual(result, 44);
+
+    result = await Resolve.asyncFuncOrPromise(new Promise((res, _) => { res(45); }));
+    assert.strictEqual(result, 45);
+
+    await assertThrowsAsync(async() => {
+      await Resolve.asyncFuncOrPromise(new Boolean());
+    });
+  });
+
   it('should resolve functions and towards functions correctly', async() => {
     const boolVal = await Resolve.toValue(testObj.v, Boolean);
     assert.isTrue(boolVal === true || boolVal === false);
