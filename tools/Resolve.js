@@ -114,7 +114,7 @@ class Resolve {
       return defaultValue;
     }
 
-    return await Resolve.toValue(value, exampleOrTypeOrClassName, resolveFuncs, resolvePromises);
+    return await Resolve.toValue(...[...arguments].slice(1));
   };
 
   /**
@@ -126,8 +126,10 @@ class Resolve {
    * @template T
    * @param {any|T|(() => T)|Promise.<T>} value a literal value or an (async) function
    * or Promise that may produce a value of the expected type or exemplary value.
-   * @param {any|string|T} exampleOrTypeOrClassName an examplary other value you'd
-   * expect, a type (e.g. RegExp) or class or the name of a class or c'tor-function.
+   * @param {any|string|T} [exampleOrTypeOrClassName] Optional. If not given, will only
+   * resolve functions and promises to a value that is not a function and not a Promise.
+   * Otherwise, pass in an examplary other value you'd expect, a type (e.g. RegExp) or
+   * class or the name of a class or c'tor-function.
    * @param {boolean} [resolveFuncs] Optional. Defaults to true. If true, then functions
    * will be called and their return value will be checked against the expected type or
    * exemplary value. Note that this parameter applies recursively, until a function's
@@ -141,8 +143,11 @@ class Resolve {
    * @returns {T} the resolved-to value
    */
   static async toValue(value, exampleOrTypeOrClassName, resolveFuncs = true, resolvePromises = true) {
-    const checkType = val => Resolve.isTypeOf(val, exampleOrTypeOrClassName)
-    , orgVal = value;
+    const hasExample = arguments.length > 1
+    , checkType = val => {
+      return Resolve.isTypeOf(val, exampleOrTypeOrClassName) ||
+        (!hasExample && !Resolve.isFunction(val) && !Resolve.isPromise(val));
+    } , orgVal = value;
 
     if (checkType(value)) {
       return value;
