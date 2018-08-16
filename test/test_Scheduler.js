@@ -25,6 +25,11 @@ describe('Scheduler', function() {
       s.hasSchedule(new Schedule());
     }, /abstract\smethod/i);
 
+    assert.throws(() => {
+      const s = new Scheduler('foo');
+      s.removeAllSchedules();
+    }, /abstract\smethod/i);
+
     done();
   });
 
