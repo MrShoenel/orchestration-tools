@@ -399,7 +399,9 @@ describe('CalendarScheduler', () => {
       cs.removeCalendar(c3);
     });
 
-    cs.removeCalendar(c1);
+    const removed = cs.removeAllSchedules();
+    assert.strictEqual(removed.length, 1);
+    assert.strictEqual(removed[0], c1);
   });
 
   it('should unschedule updates of a calendar that was removed in the meantime', async() => {
