@@ -61,6 +61,9 @@ describe('Resolve', () => {
     await assertThrowsAsync(async() => {
       await Resolve.asyncFuncOrPromise(new Boolean());
     });
+
+    result = await Resolve.asyncFuncOrPromise(() => 46);
+    assert.strictEqual(result, 46);
   });
 
   it('should resolve functions and towards functions correctly', async() => {

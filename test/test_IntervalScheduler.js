@@ -112,6 +112,10 @@ describe('IntervalScheduler', () => {
     s.addInterval(i1);
     s.addInterval(i2);
 
+    // It should return the correct interval-id:
+    const intId2 = s._getIntervalId(i2);
+    assert.strictEqual(intId2, 'i_1'); // because IDs start at 0, then post-increment
+
     await timeout(300);
     assert.strictEqual(observed.length, 1);
     assert.strictEqual(observed[0].scheduleItem, 'i1');
@@ -120,8 +124,15 @@ describe('IntervalScheduler', () => {
     assert.strictEqual(observed.length, 3);
     assert.isTrue(observed[1].scheduleItem === 'i2' || observed[2].scheduleItem === 'i2');
 
-    s.removeInterval(i1);
-    s.removeInterval(i2);
+    assert.isTrue(s.hasSchedule(i1));
+    assert.isTrue(s.hasInterval(i2));
+    const r = s.removeAllSchedules();
+
+    assert.strictEqual(r.length, 2);
+    assert.isTrue((r[0] === i1 && r[1] === i2) || (r[0] === i2 && r[1] === i1));
+    
+    assert.isFalse(s.hasInterval(i1));
+    assert.isFalse(s.hasSchedule(i2));
   });
 
   it('should honor disabled intervals and not execute them', async() => {
