@@ -9,7 +9,7 @@ const { assert, expect } = require('chai')
 
 
 describe('Scheduler', function() {
-  it('should be partially abstract', done => {
+  it('should be partially abstract', async() => {
     assert.throws(() => {
       const s = new Scheduler('foo');
       s.addSchedule(new Schedule());
@@ -30,7 +30,8 @@ describe('Scheduler', function() {
       s.removeAllSchedules();
     }, /abstract\smethod/i);
 
-    done();
+    const s = new Schedule();
+    await s.teardown(); // This one is not abstract and should not throw!
   });
 
   it('should work using the sync base-method for adding schedules', done => {

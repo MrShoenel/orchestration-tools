@@ -106,7 +106,7 @@ describe('JobQueueCapabilities', () => {
     assert.approximately(q.capabilitiesFree, 0.5, 1e-12);
     assert.strictEqual(q.numJobsRunning, 1);
 
-    await timeout(75);
+    await timeout(100);
     assert.isTrue(j1.isDone && j2.isRunning);
     assert.strictEqual(q.numJobsDone, 1);
     assert.strictEqual(q.numJobsFailed, 0);

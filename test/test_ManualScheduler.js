@@ -70,8 +70,15 @@ describe('ManualScheduler', () => {
     assert.strictEqual(observed[0].scheduleItem, 'm1');
     assert.strictEqual(observed[1].scheduleItem, 'm2');
 
-    m.removeManualSchedule(m1);
-    m.removeManualSchedule(m2);
+    assert.isTrue(m.hasSchedule(m1));
+    assert.isTrue(m.hasManualSchedule(m2));
+    const r = m.removeAllSchedules();
+
+    assert.strictEqual(r.length, 2);
+    assert.isTrue((r[0] === m1 && r[1] === m2) || (r[0] === m2 && r[1] === m1));
+    
+    assert.isFalse(m.hasManualSchedule(m1));
+    assert.isFalse(m.hasSchedule(m2));
   });
 
   it('should be possible to observe only particular schedules', async() => {

@@ -299,8 +299,9 @@ describe('CalendarScheduler', () => {
   });
 
   it('should throw if given invalid parameters', async() => {
+    const cx = new Calendar('bla', () => '', 5000);
+
     await assertThrowsAsync(async() => {
-      const cx = new Calendar('bla', () => '', 5000);
       let threw = false;
       let _e = null;
       try {
@@ -322,7 +323,7 @@ describe('CalendarScheduler', () => {
     assert.throws(() => {
       const c = new CalendarScheduler();
       c.getObservableForSchedule(cx);
-    });
+    }, /^The\scalendar\swith\sID/i);
 
     assert.throws(() => {
       new Calendar('bla', () => '', 4900);;
@@ -368,19 +369,75 @@ describe('CalendarScheduler', () => {
       const c = new CalendarScheduler();
       c.removeCalendar(null);
     });
+
+    assert.throws(() => {
+      const s = new CalendarScheduler();
+      s.lookAheadSecs = s.scheduleIntervalSecs - 1;
+    }, /lookAheadSecs is not a number or less than scheduleIntervalSecs/i);
+
+    assert.throws(() => {
+      const s = new CalendarScheduler();
+      s.lookAheadSecs = true;
+    }, /lookAheadSecs is not a number or less than scheduleIntervalSecs/i);
+
+    assert.doesNotThrow(() => {
+      const s = new CalendarScheduler();
+      s.lookAheadSecs = s.scheduleIntervalSecs;
+    });
+
+    assert.strictEqual(CalendarScheduler.oneMinuteInSecs * 60, CalendarScheduler.oneHourInSecs);
+    assert.strictEqual(CalendarScheduler.oneHourInSecs * 24, CalendarScheduler.oneDayInSecs);
+    assert.strictEqual(CalendarScheduler.oneDayInSecs * 7, CalendarScheduler.oneWeekInSecs);
   });
 
-  it('should apply and remove filters from Calendars', done => {
-    const c = new Calendar('cal', () => {});
-    const i = () => ['something else'];
+  it('should not throw when adding calendars that fail to update', async() => {
+    const c = new Calendar('c', async() => { await timeout(20); throw '42'; });
+    const s = new CalendarScheduler();
 
-    c.setFilter(i);
-    assert.strictEqual(c._filter()[0], 'something else');
-    assert.strictEqual(c._filter, i);
+    await s.addCalendar(c, true);
+    s.removeCalendar(c);
+
+    const now = +new Date;
+    await s.addCalendar(c, false);
+    assert.isBelow((+new Date) - now, 10); // because we are not waiting!
+    s.removeAllSchedules();
+  });
+
+  it('should schedule its global updates automatically when adding a calendar', async() => {
+    const c = createEmptyCalendar('foo');
+    const orgIcs = c.icsProvider;
+    c.refreshInterval = 100;
+    let scheduled = 0;
+    c.icsProvider = async() => {
+      scheduled++;
+      return await orgIcs();
+    };
+
+    const s = new CalendarScheduler();
+    assert.strictEqual(s.scheduleIntervalSecs, CalendarScheduler.oneMinuteInSecs * .5); // The default
+
+    await s.addSchedule(c);
+    await timeout(150);
+    // This test will make sure that scheduling has happened in coverage
+    assert.isAtLeast(scheduled, 1);
+    s.removeCalendar(c);
+  });
+
+  it('should apply and remove filters from Calendars', async() => {
+    const vCal = createVCalendar([ createVEvent(new Date, '123') ]);
+    const c = new Calendar('cal', () => vCal);
+    await c.refresh();
+
+    const f = evt => evt.uid === '456';
+
+    c.setFilter(f);
+    assert.strictEqual(c._filter, f);
+    assert.strictEqual(c.events.length, 0);
 
     c.removeFilter();
-    assert.notEqual(c._filter, i);
-    done();
+    assert.notEqual(c._filter, f);
+    assert.strictEqual(c.events.length, 1);
+    assert.strictEqual(c.events[0].uid, '123');
   });
 
   it('should not allow duplicate calendars or removing of unknown calendars', async() => {
@@ -669,19 +726,6 @@ describe('CalendarScheduler', () => {
 
     cs.removeCalendar(c_all);
   });
-
-  // it('should not throw when updating empty calendars', async() => {
-  //   const c = new Calendar('xcv', async() => '');
-
-  //   let threw = false;
-  //   try {
-  //     await c.refresh();
-  //   } catch (e) {
-  //     threw = true;
-  //   } finally {
-  //     assert.isFalse(threw);
-  //   }
-  // });
 });
 
 
