@@ -20,6 +20,8 @@ const Rx = require('rxjs')
 , { deepCloneObject, mergeObjects } = require('./tools/Objects')
 , { getRandomNumber } = require('./tools/Random')
 , { Resolve } = require('./tools/Resolve')
+, { throwError, wrapError } = require('./tools/Error')
+, { formatError, formatValue } = require('./tools/Format')
 , { EqualityComparer, DefaultEqualityComparer } = require('./lib/collections/EqualityComparer')
 , { Collection } = require('./lib/collections/Collection')
 , { Queue, ConstrainedQueue } = require('./lib/collections/Queue')
@@ -46,6 +48,8 @@ module.exports = {
   deepCloneObject, mergeObjects,
   getRandomNumber,
   Resolve,
+  throwError, wrapError,
+  formatError, formatValue,
   EqualityComparer, DefaultEqualityComparer,
   Collection,
   Queue, ConstrainedQueue,
