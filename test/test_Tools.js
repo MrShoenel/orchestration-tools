@@ -1,7 +1,9 @@
 const { assert, expect } = require('chai')
 , { timeout, defer, deferMocha } = require('../tools/Defer')
 , { assertThrowsAsync } = require('../tools/AssertAsync')
-, { deepCloneObject, mergeObjects } = require('../tools/Objects');
+, { deepCloneObject, mergeObjects } = require('../tools/Objects')
+, { throwError, wrapError } = require('../tools/Error')
+, { formatError, formatValue } = require('../tools/Format')
 
 
 describe('Tools', () => {
@@ -207,5 +209,63 @@ describe('Tools', () => {
     await timeout(10); // just in case..
 
     assert.strictEqual(e, 'my Error');
+  });
+
+  it('should format any kind of value properly', done => {
+    let r = formatValue();
+    assert.strictEqual(r, '<undefined>');
+    r = formatValue(null);
+    assert.strictEqual(r, '<null>');
+    r = formatValue('asd');
+    assert.strictEqual(r, 'asd');
+
+    let v = Object.create(null); // no prototype..
+    v.asd = { foo: true };
+    r = formatValue(v);
+    assert.strictEqual(r, "{ asd: { foo: true } }");
+    r = formatValue({ foo: true });
+    assert.strictEqual(r, "{ foo: true }");
+
+    class A {
+      toString() {
+        return 'A=42';
+      };
+    };
+    r = formatValue(new A);
+    assert.strictEqual(r, 'A=42');
+
+    r = formatValue([1, [2, true, new A()]]);
+    assert.strictEqual(r, '[ 1, [ 2, true, A=42 ] ]');
+
+    done();
+  });
+
+  it('should format any kind of error properly as well', done => {
+    let r = formatError();
+    assert.strictEqual(r, 'Error: <undefined>');
+
+    let threw = false;
+    try {
+      throwError({ foo: true });
+    } catch (e) {
+      threw = true;
+      assert.isTrue(e instanceof Error);
+      /** @type {Error} */
+      const err = e;
+      assert.strictEqual(err.message, '{ foo: true }');
+      
+      r = formatError(e);
+      assert.isTrue(r.startsWith('Error: { foo: true } Stack: '));
+      e.stack = '';
+      r = formatError(e);
+      assert.strictEqual(r, 'Error: { foo: true }');
+    } finally {
+      assert.isTrue(threw);
+    }
+
+    const e = new Error('any');
+    assert.strictEqual(wrapError(e), e);
+
+    done();
   });
 });
