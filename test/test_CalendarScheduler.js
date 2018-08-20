@@ -1,7 +1,7 @@
 const { assert, expect } = require('chai')
 , { timeout } = require('../tools/Defer')
 , { assertThrowsAsync } = require('../tools/AssertAsync')
-, { Calendar, CalendarEventSimple, CalendarScheduler, symbolCalendarEvent } = require('../lib/CalendarScheduler')
+, { Calendar, CalendarEventSimple, CalendarScheduler, symbolCalendarEvent, CalendarError } = require('../lib/CalendarScheduler')
 , ical = require('ical.js');
 
 
@@ -388,6 +388,20 @@ describe('CalendarScheduler', () => {
     assert.strictEqual(CalendarScheduler.oneMinuteInSecs * 60, CalendarScheduler.oneHourInSecs);
     assert.strictEqual(CalendarScheduler.oneHourInSecs * 24, CalendarScheduler.oneDayInSecs);
     assert.strictEqual(CalendarScheduler.oneDayInSecs * 7, CalendarScheduler.oneWeekInSecs);
+
+    const cs = new CalendarScheduler();
+    const c8 = createEmptyCalendar('c8');
+    assert.throws(() => {
+      new CalendarError(42, c8);
+    }, /The given scheduler is not an instance of CalendarScheduler./i);
+    assert.throws(() => {
+      new CalendarError(cs, true);
+    }, /The given calendar is not an instance of Calendar./i);
+    assert.doesNotThrow(() => {
+      const ce = new CalendarError(cs, c8);
+      assert.isTrue(ce.error instanceof Error);
+      assert.strictEqual(ce.error.message, '<undefined>');
+    });
   });
 
   it('should not throw when adding calendars that fail to update', async() => {
