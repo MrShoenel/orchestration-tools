@@ -25,3 +25,4 @@ Please note that between `v1.8.0` and `v2.0.0` there were breaking changes regar
 * __Collection__, __Queue__, __ConstrainedQueue__ (a queue with limited size), __Stack__ and __LinkedList__\*/__LinkedListNode__\* provide fully tested collections that are often needed in JavaScript (since `v2.9.0`/\*`v2.10.0`)
 * __EqualityComparer__ and __DefaultEqualityComparer__ are used within the *collections* to provide default- and custom-capabilities for comparing items (since `v2.9.0`)
 * __Comparer__ and __DefaultComparer__ to equate items in terms of size (e.g. for sorting) (since `v2.10.0`)
+* __formatValue__, __formatError__, __wrapError__ and __throwError__ are the first of new tools for values and Errors (since `v2.19.0`)
