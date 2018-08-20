@@ -726,6 +726,40 @@ describe('CalendarScheduler', () => {
 
     cs.removeCalendar(c_all);
   });
+
+  it('should provide preliminary events of all of its schedules', async() => {
+    const now = new Date;
+    const cs = new CalendarScheduler();
+    const c1 = new Calendar('c1', () => createVCalendar([
+      createVEvent(new Date(+now + 1e3), 'c1e1')
+    ]));
+    const c2 = new Calendar('c2', () => createVCalendar([
+      createVEvent(new Date(+now + 2e3), 'c2e1')
+    ]));
+
+    // The expander is not init'ed so it shouldn't yield any events..
+    let pEvents = [...c1.preliminaryEvents(new Date(+now - 5e3), new Date(+now + 5e3))];
+    assert.strictEqual(pEvents.length, 0);
+
+    await Promise.all([ c1.refresh(), c2.refresh() ]);
+
+    pEvents = [...c1.preliminaryEvents(new Date(+now - 5e3), now)];
+    assert.strictEqual(pEvents.length, 0);
+    pEvents = [...c1.preliminaryEvents(new Date(+now + 500), new Date(+now + 1500))];
+    assert.strictEqual(pEvents.length, 1);
+
+
+    await cs.addCalendar(c1);
+    await cs.addCalendar(c2);
+
+    pEvents = [...cs.preliminaryEvents(now, new Date(+now + 2.5e3))]
+      .sort((p1, p2) => +p1.dateTime < +p2.dateTime ? -1 : 1);
+    assert.strictEqual(pEvents.length, 2);
+    assert.strictEqual(pEvents[0].schedule, c1);
+    assert.strictEqual(pEvents[1].schedule, c2);
+    
+    cs.removeAllSchedules();
+  });
 });
 
 

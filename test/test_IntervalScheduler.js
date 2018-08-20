@@ -256,4 +256,64 @@ describe('IntervalScheduler', () => {
 
     s.removeInterval(i1);
   });
+
+  it('should provide preliminary events according to the settings', done => {
+    // triggerInitially=true, maxNum = 3
+    const i = new Interval(50, null, 3, true, true);
+    const exR = /after and\/or before must be Date objects. Interval does not support unbounded intervals./i;
+
+    assert.throws(() => {
+      [...i.preliminaryEvents()];
+    }, exR);
+    assert.throws(() => {
+      [...i.preliminaryEvents(new Date)];
+    }, exR);
+    assert.throws(() => {
+      [...i.preliminaryEvents(void 0, new Date)];
+    }, exR);
+    assert.throws(() => {
+      const st = new Date;
+      // start after end..
+      [...i.preliminaryEvents(new Date(+st + 100), new Date(+st))];
+    }, /The Date for after happens after the Date for before./i);
+
+    // trigger once + once within the 75 msecs
+    let start = new Date;
+    let pEvents = [...i.preliminaryEvents(start, new Date(+start + 75))];
+    assert.strictEqual(pEvents.length, 2);
+    assert.strictEqual(+pEvents[0].dateTime, +start);
+    assert.strictEqual(+pEvents[1].dateTime, +start + 50);
+
+    pEvents = [...i.preliminaryEvents(start, new Date(+start + 5000))];
+    assert.strictEqual(pEvents.length, 3); // maxNumTriggers..
+
+    // Now let's disable triggerInitially..
+    i.triggerInitially = false;
+    pEvents = [...i.preliminaryEvents(start, new Date(+start + 75))];
+    assert.strictEqual(pEvents.length, 1);
+    assert.strictEqual(+pEvents[0].dateTime, +start + 50);
+
+    done();
+  });
+
+  it('should provide preliminary events of all of its schedules', done => {
+    const s = new IntervalScheduler();
+    const i1 = new Interval(50, null, 3, true, true);
+    const i2 = new Interval(30, null, 3, true, false); // triggerInit=false
+
+    s.addInterval(i1).addSchedule(i2);
+
+    const start = new Date;
+    const pEvents = [...s.preliminaryEvents(start, new Date(+start + 75))]
+      .sort((p1, p2) => +p1.dateTime < +p2.dateTime ? -1 : 1);
+    assert.strictEqual(pEvents.length, 4);
+    assert.strictEqual(pEvents[0].schedule, i1);
+    assert.strictEqual(pEvents[1].schedule, i2);
+    assert.strictEqual(pEvents[2].schedule, i1);
+    assert.strictEqual(pEvents[3].schedule, i2);
+
+    s.removeAllSchedules();
+
+    done();
+  });
 });

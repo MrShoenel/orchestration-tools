@@ -4,11 +4,31 @@ const { assert, expect } = require('chai')
 , { Calendar, CalendarScheduler } = require('../lib/CalendarScheduler')
 , { Interval, IntervalScheduler} = require('../lib/IntervalScheduler')
 , { ManualSchedule, ManualScheduler } = require('../lib/ManualScheduler')
-, { Schedule } = require('../lib/Schedule')
+, { Schedule, PreliminaryScheduleEvent } = require('../lib/Schedule')
 , { Scheduler } = require('../lib/Scheduler');
 
 
 describe('Scheduler', function() {
+  it('should throw if improperly initialized', async() => {
+    const s = new Schedule();
+    
+    assert.throws(() => {
+      new PreliminaryScheduleEvent(42, s);
+    }, /dateTime\sis\snot\sa\sDate/i);
+
+    assert.throws(() => {
+      new PreliminaryScheduleEvent(new Date, 42);
+    }, /schedule\sis\snot\sa\sSchedule/i);
+
+    assert.doesNotThrow(() => {
+      const p1 = new PreliminaryScheduleEvent(new Date, s);
+      assert.strictEqual(p1.preliminaryItem, void 0);
+
+      const p2 = new PreliminaryScheduleEvent(new Date, s, 43);
+      assert.strictEqual(p2.preliminaryItem, 43);
+    });
+  });
+
   it('should be partially abstract', async() => {
     assert.throws(() => {
       const s = new Scheduler('foo');
@@ -32,6 +52,17 @@ describe('Scheduler', function() {
 
     const s = new Schedule();
     await s.teardown(); // This one is not abstract and should not throw!
+
+    // This is not abstract either, but yields just not items..
+    let pEvents = [...s.preliminaryEvents()];
+    assert.isTrue(Array.isArray(pEvents));
+    assert.strictEqual(pEvents.length, 0);
+
+    // This is not abstract either, but yields just not items..
+    const sr = new Scheduler('foo');
+    pEvents = [...sr.preliminaryEvents()];
+    assert.isTrue(Array.isArray(pEvents));
+    assert.strictEqual(pEvents.length, 0);
   });
 
   it('should work using the sync base-method for adding schedules', done => {
