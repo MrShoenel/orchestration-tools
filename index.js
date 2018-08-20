@@ -4,7 +4,7 @@ const Rx = require('rxjs')
   } = require('./lib/JobQueue')
 , { JobQueueCapabilities } = require('./lib/JobQueueCapabilities')
 , { Progress, ProgressNumeric, symbolProgress } = require('./lib/Progress')
-, { CalendarScheduler, Calendar, CalendarEventSimple, symbolCalendarEvent
+, { CalendarScheduler, Calendar, CalendarEventSimple, symbolCalendarEvent, CalendarError
   } = require('./lib/CalendarScheduler')
 , { Scheduler } = require('./lib/Scheduler')
 , { Schedule, ScheduleEvent, symbolScheduleError, symbolScheduleComplete, PreliminaryScheduleEvent
@@ -20,6 +20,8 @@ const Rx = require('rxjs')
 , { deepCloneObject, mergeObjects } = require('./tools/Objects')
 , { getRandomNumber } = require('./tools/Random')
 , { Resolve } = require('./tools/Resolve')
+, { throwError, wrapError } = require('./tools/Error')
+, { formatError, formatValue } = require('./tools/Format')
 , { EqualityComparer, DefaultEqualityComparer } = require('./lib/collections/EqualityComparer')
 , { Collection } = require('./lib/collections/Collection')
 , { Queue, ConstrainedQueue } = require('./lib/collections/Queue')
@@ -34,7 +36,7 @@ module.exports = {
   Job, JobEvent, JobQueue, JobQueueEvent, symbolRun, symbolDone, symbolFailed, symbolIdle,
   JobQueueCapabilities,
   Progress, ProgressNumeric, symbolProgress,
-  CalendarScheduler, Calendar, CalendarEventSimple, symbolCalendarEvent,
+  CalendarScheduler, Calendar, CalendarEventSimple, symbolCalendarEvent, CalendarError,
   Scheduler,
   Schedule, ScheduleEvent, symbolScheduleError, symbolScheduleComplete, PreliminaryScheduleEvent,
   Interval, IntervalEventSimple, IntervalScheduler, symbolIntervalEvent,
@@ -46,6 +48,8 @@ module.exports = {
   deepCloneObject, mergeObjects,
   getRandomNumber,
   Resolve,
+  throwError, wrapError,
+  formatError, formatValue,
   EqualityComparer, DefaultEqualityComparer,
   Collection,
   Queue, ConstrainedQueue,
