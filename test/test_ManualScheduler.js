@@ -1,7 +1,7 @@
 const { assert, expect } = require('chai')
 , { timeout } = require('../tools/Defer')
 , { assertThrowsAsync } = require('../tools/AssertAsync')
-, { Schedule, ScheduleEvent } = require('../lib/Schedule')
+, { Schedule, ScheduleEvent, PreliminaryScheduleEvent } = require('../lib/Schedule')
 , { ManualSchedule, ManualScheduler, ManualScheduleEventSimple, symbolManualSchedulerEvent
   } = require('../lib/ManualScheduler');
 
@@ -153,5 +153,42 @@ describe('ManualScheduler', () => {
     assert.isFalse(wasCompleteS);
 
     s.removeSchedule(m);
-  })
+  });
+
+  it('should provide preliminary events of all of its schedules', done => {
+    const ms = new ManualScheduler();
+    ms.addSchedule(new ManualSchedule(true));
+
+    // There are no preliminary events for ManualSchedule and ManualScheduler.
+    // However, sub-classes of ManualSchedule may yield preliminary events.
+    let pEvents = [...ms.preliminaryEvents()];
+    assert.isTrue(Array.isArray(pEvents));
+    assert.strictEqual(pEvents.length, 0);
+
+
+    class MySched extends ManualSchedule {
+      constructor() {
+        super(true);
+        this.bla = 42;
+      };
+
+      /**
+       * @returns {IterableIterator.<PreliminaryScheduleEvent.<MySched, number>>}
+       */
+      *preliminaryEvents() {
+        while (this.bla <= 43) {
+          yield new PreliminaryScheduleEvent(new Date, this, this.bla++);
+        }
+      };
+    };
+
+    ms.addManualSchedule(new MySched());
+    pEvents = [...ms.preliminaryEvents()];
+    assert.isTrue(Array.isArray(pEvents));
+    assert.strictEqual(pEvents.length, 2);
+    assert.strictEqual(pEvents[0].preliminaryItem, 42);
+    assert.strictEqual(pEvents[1].preliminaryItem, 43);
+
+    done();
+  });
 });
