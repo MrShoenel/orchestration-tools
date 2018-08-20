@@ -7,7 +7,8 @@ const Rx = require('rxjs')
 , { CalendarScheduler, Calendar, CalendarEventSimple, symbolCalendarEvent
   } = require('./lib/CalendarScheduler')
 , { Scheduler } = require('./lib/Scheduler')
-, { Schedule, ScheduleEvent, symbolScheduleError, symbolScheduleComplete } = require('./lib/Schedule')
+, { Schedule, ScheduleEvent, symbolScheduleError, symbolScheduleComplete, PreliminaryScheduleEvent
+  } = require('./lib/Schedule')
 , { Interval, IntervalEventSimple, IntervalScheduler, symbolIntervalEvent
   } = require('./lib/IntervalScheduler')
 , { ManualSchedule, ManualScheduleEventSimple, ManualScheduler, symbolManualSchedulerEvent
@@ -35,7 +36,7 @@ module.exports = {
   Progress, ProgressNumeric, symbolProgress,
   CalendarScheduler, Calendar, CalendarEventSimple, symbolCalendarEvent,
   Scheduler,
-  Schedule, ScheduleEvent, symbolScheduleError, symbolScheduleComplete,
+  Schedule, ScheduleEvent, symbolScheduleError, symbolScheduleComplete, PreliminaryScheduleEvent,
   Interval, IntervalEventSimple, IntervalScheduler, symbolIntervalEvent,
   ManualSchedule, ManualScheduleEventSimple, ManualScheduler, symbolManualSchedulerEvent,
   ProcessResult, ProcessErrorResult, ProcessExit,
