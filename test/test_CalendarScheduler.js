@@ -456,13 +456,12 @@ describe('CalendarScheduler', () => {
 
   it('should not allow duplicate calendars or removing of unknown calendars', async() => {
     const cs = new CalendarScheduler();
-    const c1 = createEmptyCalendar('a');
-    const c2 = createEmptyCalendar('a');
+    const c1 = createEmptyCalendar('c1');
     
     await cs.addCalendar(c1, true);
 
     await assertThrowsAsync(async () => {
-      await cs.addCalendar(c2);
+      await cs.addCalendar(c1);
     });
 
     assert.throws(() => {
@@ -520,15 +519,15 @@ describe('CalendarScheduler', () => {
     cs.observable.subscribe(subscriber);
     await cs.addCalendar(c);
 
-    // access internal property for this test:
-    assert.isTrue(cs._scheduledEvents.hasOwnProperty('foo'));
-    assert.isTrue(cs._scheduledEvents.foo.hasOwnProperty('e1.start'));
-    assert.isTrue(cs._scheduledEvents.foo.hasOwnProperty('e2.start'));
+    const fooEvents = cs._scheduledEvents.get(c);
+    assert.strictEqual(fooEvents.length, 2);
+    assert.isTrue(fooEvents[0].eventId.startsWith('e1.start_') || fooEvents[0].eventId.startsWith('e2.start_'));
+    assert.isTrue(fooEvents[1].eventId.startsWith('e1.start_') || fooEvents[1].eventId.startsWith('e2.start_'));
 
     await timeout(3000); // both events should have triggered in the meantime
 
     assert.strictEqual(numEventsOcurred, 2);
-    assert.strictEqual(Object.keys(cs._scheduledEvents.foo).length, 0);
+    assert.strictEqual(fooEvents.length, 0);
 
     // Important, otherwise it will keep setting timeout to update itself.
     // This would lead to mocha hanging.
@@ -552,9 +551,10 @@ describe('CalendarScheduler', () => {
 
     await cs.addCalendar(c);
     // access internal property for this test:
-    assert.isTrue(cs._scheduledEvents.hasOwnProperty('foo'));
-    assert.isTrue(cs._scheduledEvents.foo.hasOwnProperty('e1.start'));
-    assert.isTrue(cs._scheduledEvents.foo.hasOwnProperty('e2.start'));
+    const fooEvents = cs._scheduledEvents.get(c);
+    assert.strictEqual(fooEvents.length, 2);
+    assert.isTrue(fooEvents[0].eventId.startsWith('e1.start_') || fooEvents[0].eventId.startsWith('e2.start_'));
+    assert.isTrue(fooEvents[1].eventId.startsWith('e1.start_') || fooEvents[1].eventId.startsWith('e2.start_'));
 
     await timeout(200);
     cs.removeCalendar(c);
@@ -576,9 +576,10 @@ describe('CalendarScheduler', () => {
 
     await cs.addCalendar(c, true);
     // access internal property for this test:
-    assert.isTrue(cs._scheduledEvents.hasOwnProperty('foo'));
-    assert.isTrue(cs._scheduledEvents.foo.hasOwnProperty('e1.start'));
-    assert.isTrue(cs._scheduledEvents.foo.hasOwnProperty('e1.end'));
+    const fooEvents = cs._scheduledEvents.get(c);
+    assert.strictEqual(fooEvents.length, 2);
+    assert.isTrue(fooEvents[0].eventId.startsWith('e1.start_') || fooEvents[0].eventId.startsWith('e2.start_'));
+    assert.isTrue(fooEvents[1].eventId.startsWith('e1.start_') || fooEvents[1].eventId.startsWith('e2.start_'));
 
     cs.removeCalendar(c);
   });
@@ -646,7 +647,7 @@ describe('CalendarScheduler', () => {
     c.isEnabled = false;
     await timeout(3500);
 
-    assert.isTrue(Object.keys(cs._scheduledEvents.foo).length === 0);
+    assert.strictEqual(cs._scheduledEvents.get(c).length, 0);
     cs.removeCalendar(c);
   });
 
@@ -664,7 +665,8 @@ describe('CalendarScheduler', () => {
 
     await cs.addCalendar(c, true);
 
-    expect(cs._scheduledEvents).to.deep.equal({ foo: {} });
+    assert.strictEqual(cs._scheduledEvents.get(c).length, 0);
+    expect(cs._scheduledEvents.get(c)).to.deep.equal([]);
 
     cs.removeCalendar(c);
   });
