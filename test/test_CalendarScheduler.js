@@ -1,8 +1,8 @@
 const { assert, expect } = require('chai')
 , { timeout } = require('../tools/Defer')
 , { assertThrowsAsync } = require('../tools/AssertAsync')
-, { Calendar, CalendarEventSimple, CalendarScheduler, symbolCalendarEvent, CalendarError } = require('../lib/CalendarScheduler')
-, ical = require('ical.js');
+, { Calendar, CalendarEventSimple, CalendarScheduler, CalendarError } = require('../lib/CalendarScheduler')
+, IcalExpander = require('ical-expander');
 
 
 Date.prototype.stdTimezoneOffset = function () {
@@ -274,7 +274,7 @@ const createVCalendar = events => {
 
 describe('CalendarScheduler', () => {
   it ('should work with our iCal generator', done => {
-    ical.parse(createVCalendar([createVEvent(new Date, 'foo')]));
+    new IcalExpander({ ics: createVCalendar([createVEvent(new Date, 'foo')]) });
     done();
   });
 
