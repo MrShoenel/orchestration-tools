@@ -221,8 +221,12 @@ describe('Tools', () => {
 
     let v = Object.create(null); // no prototype..
     v.asd = { foo: true };
-    r = formatValue(v);
-    assert.strictEqual(r, "{ asd: { foo: true } }");
+		r = formatValue(v);
+		// Newer version of nodejs' util.inspect will include
+		// the [Object: null prototype] at the beginning
+		assert.isTrue(r.endsWith('{ asd: { foo: true } }'));
+		assert.isTrue(r.startsWith('{') || r.startsWith('[Object: null prototype] {'));
+		
     r = formatValue({ foo: true });
     assert.strictEqual(r, "{ foo: true }");
 
