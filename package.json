@@ -33,7 +33,7 @@
   "homepage": "https://github.com/MrShoenel/orchestration-tools#readme",
   "devDependencies": {
     "coveralls": "^3.0.2",
-    "nyc": "^13.3.0"
+    "nyc": "^14.0.0"
   },
   "dependencies": {
     "chai": "^4.2.0",
