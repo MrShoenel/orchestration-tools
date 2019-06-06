@@ -1,4 +1,8 @@
 .vscode
+.vs/
+
+# Generated docs
+out/
 
 # Logs
 logs
