@@ -1,9 +1,9 @@
 # OrchestrationTools
 Collection of `orchestration-tools` that help building an infrastructure or to orchestrate resources through NodeJS. Also comes with universal tools such as collections.
 
-|Version|Coverage|Maintenance|Master|Master-pre-v2.0.0|
-|:-|:-|:-|:-|:-|
-|[![Current Version](https://img.shields.io/npm/v/sh.orchestration-tools.svg)](https://www.npmjs.com/package/sh.orchestration-tools)|[![Coverage Status](https://coveralls.io/repos/github/MrShoenel/orchestration-tools/badge.svg?branch=master)](https://coveralls.io/github/MrShoenel/orchestration-tools?branch=master)|[![Greenkeeper badge](https://badges.greenkeeper.io/MrShoenel/orchestration-tools.svg)](https://greenkeeper.io/)|[![Build Status](https://api.travis-ci.org/MrShoenel/orchestration-tools.svg?branch=master)](https://travis-ci.org/MrShoenel/orchestration-tools)|[![Build Status](https://api.travis-ci.org/MrShoenel/orchestration-tools.svg?branch=master-pre-v2.0.0)](https://travis-ci.org/MrShoenel/orchestration-tools)|
+|Version|Coverage|Master|Master-pre-v2.0.0|
+|:-|:-|:-|:-|
+|[![Current Version](https://img.shields.io/npm/v/sh.orchestration-tools.svg)](https://www.npmjs.com/package/sh.orchestration-tools)|[![Coverage Status](https://coveralls.io/repos/github/MrShoenel/orchestration-tools/badge.svg?branch=master)](https://coveralls.io/github/MrShoenel/orchestration-tools?branch=master)|[![Build Status](https://api.travis-ci.org/MrShoenel/orchestration-tools.svg?branch=master)](https://travis-ci.org/MrShoenel/orchestration-tools)|[![Build Status](https://api.travis-ci.org/MrShoenel/orchestration-tools.svg?branch=master-pre-v2.0.0)](https://travis-ci.org/MrShoenel/orchestration-tools)|
 
 
 ## Install from npm
