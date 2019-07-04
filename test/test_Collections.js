@@ -4,7 +4,15 @@ const { assert, expect } = require('chai')
 , { Queue, ConstrainedQueue } = require('../lib/collections/Queue')
 , { Stack } = require('../lib/collections/Stack')
 , { LinkedList, LinkedListNode } = require('../lib/collections/LinkedList')
+, { Dictionary } = require('../lib/collections/Dictionary')
 , { Comparer, DefaultComparer } = require('../lib/collections/Comparer');
+
+
+class NoEq extends EqualityComparer {
+	equals(x, y) {
+		return false;
+	};
+};
 
 
 describe('EqualityComparer', function() {
@@ -429,7 +437,8 @@ describe('LinkedList', function() {
 
 
     assert.isTrue(l.hasNode(n43));
-    assert.isTrue(l.has(43));
+		assert.isTrue(l.has(43));
+		assert.isFalse(l.has(43, new NoEq()));
 
     const n43_detached = l.removeLast();
 
@@ -482,4 +491,102 @@ describe('LinkedList', function() {
 
     done();
   });
+});
+
+
+
+describe(Dictionary.name, function() {
+  it('should throw if given invalid parameters', done => {
+		const d = new Dictionary();
+
+		assert.throws(() => {
+			d.get('42');
+		});
+		assert.throws(() => {
+			d.remove('42');
+		});
+		assert.throws(() => {
+			d.set(true, null);
+		});
+		assert.throws(() => {
+			d.set('__proto__', 42);
+		});
+		assert.doesNotThrow(() => {
+			assert.isTrue(d.size === 0);
+			d.set('__proto--', 42);
+			assert.isTrue(d.size === 1);
+			d.remove('__proto--');
+			assert.isTrue(d.size === 0);
+		});
+
+
+		assert.doesNotThrow(() => {
+			d.set('true', null);
+			const s = Symbol('true');
+			d.set(s, null);
+
+			assert.isTrue(d.hasKey('true'));
+			assert.isTrue(d.hasKey(s));
+			assert.isTrue(d.has(null));
+			assert.isTrue(d.get(s) === null);
+		});
+
+    done();
+	});
+	
+	it('should not increase the size if a key is overwritten', done => {
+		const d = new Dictionary();
+
+		d.set('k', 42);
+		assert.isTrue(d.size === 1);
+		d.set('k', 43);
+		assert.isTrue(d.size === 1);
+		assert.isTrue(d.get('k') === 43);
+		d.clear();
+		assert.isTrue(d.size === 0 && d.isEmpty);
+
+		done();
+	});
+
+	it('should support generators for entries and reverse entries as well', done => {
+		const d = new Dictionary();
+
+		d.set('k0', 42);
+		d.set('k1', 43);
+
+		const c1 = Array.from(d.entries());
+		assert.deepStrictEqual(c1, [{ k0: 42 }, { k1: 43 }]);
+		const c2 = Array.from(d.entriesReversed());
+		assert.deepStrictEqual(c2, [{ k1: 43 }, { k0: 42 }]);
+
+		const s1 = Symbol('s1');
+		d.set(s1, 'symb');
+		const c3 = Array.from(d.keys());
+		assert.deepStrictEqual(c3, ['k0', 'k1', s1]);
+
+		assert.isTrue(d.hasKey(s1));
+		assert.isTrue(d.hasKeyEq(s1));
+		d.remove(s1);
+		assert.isTrue(d.size === 2);
+		assert.isFalse(d.hasKey(s1));
+		assert.isFalse(d.hasKeyEq(s1));
+
+		done();
+	});
+
+	it('should support has/has not/hasKey, even with custom EQ', done => {
+		const d = new Dictionary();
+
+		assert.isFalse(d.has('k0'));
+		assert.isFalse(d.hasKey('k0'));
+		assert.isFalse(d.hasKeyEq('k0'));
+		d.set('k0', 42);
+		assert.isTrue(d.has(42));
+		assert.isFalse(d.has(42, new NoEq()));
+
+		assert.isTrue(d.hasKeyEq('k0'));
+		assert.isFalse(d.hasKeyEq('k0', new NoEq()));
+
+		done();
+	});
 });
