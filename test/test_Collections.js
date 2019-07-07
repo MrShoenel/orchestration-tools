@@ -4,9 +4,10 @@ const { assert, expect } = require('chai')
 , { Queue, ConstrainedQueue } = require('../lib/collections/Queue')
 , { Stack } = require('../lib/collections/Stack')
 , { LinkedList, LinkedListNode } = require('../lib/collections/LinkedList')
-, { Dictionary } = require('../lib/collections/Dictionary')
+, { Dictionary, DictionaryMapBased } = require('../lib/collections/Dictionary')
 , { Cache, EvictionPolicy } = require('../lib/collections/Cache')
-, { Comparer, DefaultComparer } = require('../lib/collections/Comparer');
+, { Comparer, DefaultComparer } = require('../lib/collections/Comparer')
+, JSBI = require('jsbi');
 
 
 class NoEq extends EqualityComparer {
@@ -645,7 +646,7 @@ describe(Cache.name, function() {
 		// .. and now k0 twice:
 		c.get('k0');
 		c.get('k0');
-		assert.isTrue(c._dict['k1'].accessCount === 1 && c._dict['k0'].accessCount === 2);
+		assert.isTrue(c._map.get('k1').accessCount === 1 && c._map.get('k0').accessCount === 2);
 		c.evictionPolicy = EvictionPolicy.LFU;
 		evict = Array.from(c._evictNext());
 		assert.isTrue(evict[0].key === 'k1' && evict[1].key === 'k0');
@@ -672,7 +673,7 @@ describe(Cache.name, function() {
 		c.set('k1', 43);
 
 		// The last item inserted has a larger timestamp
-		assert.isTrue(c._dict['k0'].timeStamp < c._dict['k1'].timeStamp);
+		assert.isTrue(JSBI.subtract(c._map.get('k0').timeStamp, c._map.get('k1').timeStamp) < 0);
 
 		// k1 is more recent right now, so k0 is evicted first in LRU
 		let evict = Array.from(c._evictNext());
@@ -740,7 +741,7 @@ describe(Cache.name, function() {
 		});
 
 		const peek = c.peekEvict(2); // With FIFO, this affects k2, k3
-		assert.deepStrictEqual(peek, [{ k2: 44 }, { k3: 45 }]);
+		assert.deepStrictEqual(peek, [['k2', 44], ['k3', 45]]);
 
 		// Now we change the capacity, so that automatic truncation happens:
 		c.evictionPolicy = EvictionPolicy.MRU;
@@ -770,9 +771,9 @@ describe(Cache.name, function() {
 		c.set('k1', 43);
 		c.set('k2', 44);
 
-		assert.isTrue(c.has(43));
-		assert.isFalse(c.has(45));
-		assert.isTrue(c.has(44, EqualityComparer.default));
+		assert.isTrue(c.hasValue(43));
+		assert.isFalse(c.hasValue(45));
+		assert.isTrue(c.hasValue(44, EqualityComparer.default));
 
 		assert.equal(
 			Array.from(c.values()).reduce((a, b) => a + b, 0),
@@ -782,6 +783,111 @@ describe(Cache.name, function() {
 		const ent = Array.from(c.entries());
 		const entR = Array.from(c.entriesReversed()).reverse();
 		assert.deepEqual(ent, entR);
+
+		done();
+	});
+});
+
+
+
+describe(DictionaryMapBased.name, function() {
+	it('should throw if given invalid parameters', done => {
+		const d = new DictionaryMapBased();
+		assert.throws(() => {
+			d.get('foo');
+		});
+		assert.doesNotThrow(() => {
+			d.set('foo', 42);
+			assert.isTrue(d.get('foo') === 42);
+			d.has('foo');
+			d.delete('foo');
+		});
+		assert.throws(() => {
+			d.delete('bar');
+		});
+		assert.doesNotThrow(() => {
+			d.set('bar');
+			d.delete('bar');
+		});
+		assert.throws(() => {
+			d.forEach(null);
+		});
+		assert.doesNotThrow(() => {
+			d.forEach(() => {});
+			d.forEach(function(){});
+			d.forEach(async() => {});
+			d.forEach(async function() {});
+		});
+
+		done();
+	});
+
+	it('should forward calls to the underlying map', done => {
+		const d = new DictionaryMapBased();
+
+		assert.isTrue(d.isEmpty && d.size === 0);
+		d.set('k0', 0);
+		assert.isTrue(!d.isEmpty && d.size === 1);
+		d.set('k0', 1);
+		assert.isTrue(!d.isEmpty && d.size === 1);
+		d.set('k1', 42);
+		assert.isTrue(!d.isEmpty && d.size === 2);
+
+		assert.isTrue(d.has('k0') && d.has('k1'));
+		assert.isFalse(d.has('k17'));
+
+		assert.deepStrictEqual(Array.from(d.entries()), [
+			['k0', 1],
+			['k1', 42]
+		]);
+		assert.deepStrictEqual(Array.from(d.entriesReversed()), [
+			['k1', 42],
+			['k0', 1]
+		]);
+		assert.deepStrictEqual(Array.from(d.keys()), ['k0', 'k1']);
+		assert.deepStrictEqual(Array.from(d.values()), [1, 42]);
+
+		d.clear();
+		assert.isTrue(d.isEmpty && d.size === 0);
+
+		done();
+	});
+
+	it('should support custom equality comparers', done => {
+		const d = new DictionaryMapBased();
+
+		d.set('bar', 42);
+		assert.isTrue(d.hasValue(42)); // uses ===
+		assert.isFalse(d.hasValue('42'));
+		assert.isFalse(d.hasValue(43));
+
+		assert.isFalse(d.hasValue(42, new NoEq()));
+
+		done();
+	});
+
+	it('should emulate and extend forEach() properly', done => {
+		const d = new DictionaryMapBased();
+
+		d.set('k0', 42);
+		d.set('k1', 43);
+
+		d.forEach((val, key, idx) => {
+			if (idx === 0) {
+				assert.isTrue(val === 42 && key === 'k0');
+			} else if (idx === 1) {
+				assert.isTrue(val === 43 && key === 'k1');
+			}
+			assert.isTrue(this !== 888); // does not work on arrow funcs
+		}, 888);
+
+		d.forEach(function() {
+			assert.equal(this, 888);
+		}, 888);
+
+		d.forEach((v, k, idx, dict) => {
+			assert.isTrue(dict === d);
+		});
 
 		done();
 	});
