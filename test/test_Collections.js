@@ -4,9 +4,11 @@ const { assert, expect } = require('chai')
 , { Queue, ConstrainedQueue } = require('../lib/collections/Queue')
 , { Stack } = require('../lib/collections/Stack')
 , { LinkedList, LinkedListNode } = require('../lib/collections/LinkedList')
-, { Dictionary } = require('../lib/collections/Dictionary')
-, { Cache, EvictionPolicy } = require('../lib/collections/Cache')
-, { Comparer, DefaultComparer } = require('../lib/collections/Comparer');
+, { Dictionary, DictionaryMapBased } = require('../lib/collections/Dictionary')
+, { Cache, CacheMapBased, CacheWithLoad, EvictionPolicy } = require('../lib/collections/Cache')
+, { Comparer, DefaultComparer } = require('../lib/collections/Comparer')
+, JSBI = require('jsbi')
+, { timeout } = require('../tools/Defer');
 
 
 class NoEq extends EqualityComparer {
@@ -16,7 +18,7 @@ class NoEq extends EqualityComparer {
 };
 
 
-describe('EqualityComparer', function() {
+describe(EqualityComparer.name, function() {
   it('should be an abstract base-class', done => {
     assert.throws(() => {
       (new EqualityComparer().equals(1, 1));
@@ -38,7 +40,7 @@ describe('EqualityComparer', function() {
 
 
 
-describe('Comparer', function() {
+describe(Comparer.name, function() {
   it('should be an abstract base-class', done => {
     const c = new Comparer();
 
@@ -68,7 +70,7 @@ describe('Comparer', function() {
 
 
 
-describe('Collection', function() {
+describe(Collection.name, function() {
   it('should throw if given invalid arguments or behave correctly using defaults', done => {
     assert.throws(() => {
       new Collection(new Date);
@@ -143,7 +145,7 @@ describe('Collection', function() {
 
 
 
-describe('Queue', function() {
+describe(Queue.name, function() {
   it('should enqueue at the end and dequeue at the head', done => {
     const q = new Queue();
 
@@ -217,7 +219,7 @@ describe('Queue', function() {
 
 
 
-describe('Stack', function() {
+describe(Stack.name, function() {
   it('should put items on top and remove them there as well', done => {
     const s = new Stack();
 
@@ -247,7 +249,7 @@ describe('Stack', function() {
 
 
 
-describe('LinkedList', function() {
+describe(LinkedList.name, function() {
   it('should throw if given invalid parameters', done => {
     const l = new LinkedList();
 
@@ -672,7 +674,7 @@ describe(Cache.name, function() {
 		c.set('k1', 43);
 
 		// The last item inserted has a larger timestamp
-		assert.isTrue(c._dict['k0'].timeStamp < c._dict['k1'].timeStamp);
+		assert.isTrue(JSBI.subtract(c._dict['k0'].timeStamp, c._dict['k1'].timeStamp) < 0);
 
 		// k1 is more recent right now, so k0 is evicted first in LRU
 		let evict = Array.from(c._evictNext());
@@ -717,6 +719,20 @@ describe(Cache.name, function() {
 		done();
 	});
 
+	it('should allow self-expiration of k/v pairs using a timeout', async() => {
+		const c = new Cache(EvictionPolicy.FIFO, 3);
+
+		c.set('k0', 42);
+		c.set('k1', 43, 25); // expire this one after 50 msecs
+		c.set('k2', 43);
+
+		let evict = Array.from(c._evictNext());
+		assert.isTrue(evict[0].key === 'k0' && evict[1].key === 'k1' && evict[2].key === 'k2');
+
+		await timeout(50);evict = Array.from(c._evictNext());
+		assert.isTrue(evict[0].key === 'k0' && evict[1].key === 'k2');
+	});
+
 	it('should properly evict in all situations', done => {
 		const c = new Cache(EvictionPolicy.FIFO, 3);
 
@@ -740,12 +756,22 @@ describe(Cache.name, function() {
 		});
 
 		const peek = c.peekEvict(2); // With FIFO, this affects k2, k3
-		assert.deepStrictEqual(peek, [{ k2: 44 }, { k3: 45 }]);
+		assert.deepStrictEqual(peek, [{ 'k2': 44 }, { 'k3': 45 }]);
 
 		// Now we change the capacity, so that automatic truncation happens:
 		c.evictionPolicy = EvictionPolicy.MRU;
 		c.capacity = Number.MAX_SAFE_INTEGER;
 		assert.isTrue(c.size === 3);
+
+		// Make sure it throws without proper policy:
+		const polBefore = c.evictionPolicy;
+		c.evictionPolicy = EvictionPolicy.None;
+		assert.throws(() => {
+			c.capacity = c.size - 1;
+		});
+		c.evictionPolicy = polBefore;
+
+		// Now do the truncation
 		c.capacity = 1; // truncation of k4 and k3 with MRU
 		assert.isTrue(c.size === 1);
 		assert.isTrue(c.get('k2') === 44);
@@ -758,6 +784,33 @@ describe(Cache.name, function() {
 		c.capacity = 0;
 		assert.isTrue(c.isEmpty);
 		assert.isTrue(c.isFull); // Paradox, but no space is left, so it's true
+
+		// We have to test random eviction, too, but we're only making sure
+		// that all evicted elements were in fact inserted earlier.
+		// We are checking that the elements are not returned in the
+		// same order they were inserted (that might happen, but the
+		// probability for that is very low with 10 elements (~1/10!))
+		c.evictionPolicy = EvictionPolicy.Random;
+		c.capacity = 10;
+		c.set('k0', 42);
+		c.set('k1', 43);
+		c.set('k2', 44);
+		c.set('k3', 45);
+		c.set('k4', 46);
+		c.set('k5', 47);
+		c.set('k6', 48);
+		c.set('k7', 49);
+		c.set('k8', 50);
+		c.set('k9', 51);
+
+		evict = Array.from(c.evictMany(c.size));
+		assert.isTrue(evict.length === 10);
+		assert.equal(
+			evict.reduce((a, b) => a + b, 0),
+			42 + 43 + 44 + 45 + 46 + 47 + 48 + 49 + 50 + 51
+		);
+
+		assert.notDeepEqual(evict, [42, 43, 44, 45, 46, 47, 48, 49, 50, 51]);
 
 		done();
 	});
@@ -784,5 +837,447 @@ describe(Cache.name, function() {
 		assert.deepEqual(ent, entR);
 
 		done();
+	});
+});
+
+
+
+
+describe(CacheMapBased.name, function() {
+	it('should throw if given invalid parameters', done => {
+		assert.throws(() => {
+			new CacheMapBased(42);
+		});
+		assert.throws(() => {
+			new CacheMapBased(EvictionPolicy.None, 0.5);
+		});
+		assert.throws(() => {
+			new CacheMapBased(EvictionPolicy.None, -1);
+		});
+		assert.doesNotThrow(() => {
+			new CacheMapBased(EvictionPolicy.None, 0);
+			new CacheMapBased(EvictionPolicy.None, 1);
+			new CacheMapBased(EvictionPolicy.None, 12341345);
+		});
+
+		const c = new CacheMapBased(EvictionPolicy.None);
+		assert.throws(() => {
+			Array.from(c._evictNext());
+		});
+		assert.throws(() => {
+			c.peekEvict(0);
+		});
+		assert.throws(() => {
+			c.peekEvict(1.2);
+		});
+		assert.throws(() => {
+			c.peekEvict(true);
+		});
+
+		done();
+	});
+
+	it('should evict items according to algo LFU/MFU', done => {
+		const c = new CacheMapBased(EvictionPolicy.LFU, 2); // access counts
+		
+		c.set('k0', 42);
+		c.set('k1', 43);
+
+		// Now access k1 once
+		c.get('k1');
+		let evict = Array.from(c._evictNext());
+		assert.isTrue(evict[0].key === 'k0' && evict[1].key === 'k1');
+		c.evictionPolicy = EvictionPolicy.MFU;
+		evict = Array.from(c._evictNext());
+		assert.isTrue(evict[0].key === 'k1' && evict[1].key === 'k0');
+
+		// .. and now k0 twice:
+		c.get('k0');
+		c.get('k0');
+		assert.isTrue(c._map.get('k1').accessCount === 1 && c._map.get('k0').accessCount === 2);
+		c.evictionPolicy = EvictionPolicy.LFU;
+		evict = Array.from(c._evictNext());
+		assert.isTrue(evict[0].key === 'k1' && evict[1].key === 'k0');
+		c.evictionPolicy = EvictionPolicy.MFU;
+		evict = Array.from(c._evictNext());
+		assert.isTrue(evict[0].key === 'k0' && evict[1].key === 'k1');
+
+		evict = c.evictMany(10);
+		assert.isTrue(evict[0] === 42 && evict[1] === 43);
+
+		assert.throws(() => {
+			c.evict();
+		});
+
+		done();
+	});
+
+	// This may fail if BigInt is not available; rewriting it using
+	// async and some waiting would however definitely work.
+	it('should evict items according to algo LRU/MRU', done => {
+		const c = new CacheMapBased(EvictionPolicy.LRU, 2); // timestamps
+
+		c.set('k0', 42);
+		c.set('k1', 43);
+
+		// The last item inserted has a larger timestamp
+		assert.isTrue(JSBI.subtract(c._map.get('k0').timeStamp, c._map.get('k1').timeStamp) < 0);
+
+		// k1 is more recent right now, so k0 is evicted first in LRU
+		let evict = Array.from(c._evictNext());
+		assert.isTrue(evict[0].key === 'k0' && evict[1].key === 'k1');
+		// Now touch k0:
+		c.get('k0');
+		evict = Array.from(c._evictNext());
+		assert.isTrue(evict[0].key === 'k1' && evict[1].key === 'k0');
+
+		// Now change policy:
+		c.evictionPolicy = EvictionPolicy.MRU;
+		evict = Array.from(c._evictNext());
+		assert.isTrue(evict[0].key === 'k0' && evict[1].key === 'k1');
+		// .. touch k0:
+		c.get('k1');
+		evict = Array.from(c._evictNext());
+		assert.isTrue(evict[0].key === 'k1' && evict[1].key === 'k0');
+
+		done();
+	});
+
+	it('should evict items according to algo FIFO/LIFO', done => {
+		const c = new CacheMapBased(EvictionPolicy.FIFO, 2); // Queue, Stack
+
+		c.set('k0', 42);
+		c.set('k1', 43);
+
+		// k0 went in first, so it's the first to be evicted
+		let evict = Array.from(c._evictNext());
+		assert.isTrue(evict[0].key === 'k0' && evict[1].key === 'k1');
+
+		// TEST: Switch to MRU
+		c.evictionPolicy = EvictionPolicy.MRU;
+		evict = Array.from(c._evictNext());
+		assert.isTrue(evict[0].key === 'k1' && evict[1].key === 'k0');
+
+		// Switch to LIFO:
+		c.evictionPolicy = EvictionPolicy.LIFO;
+		evict = Array.from(c._evictNext());
+		assert.isTrue(evict[0].key === 'k1' && evict[1].key === 'k0');
+
+		done();
+	});
+
+	it('should allow self-expiration of k/v pairs using a timeout', async() => {
+		const c = new CacheMapBased(EvictionPolicy.FIFO, 3);
+
+		c.set('k0', 42);
+		c.set('k1', 43, 25); // expire this one after 50 msecs
+		c.set('k2', 43);
+
+		let evict = Array.from(c._evictNext());
+		assert.isTrue(evict[0].key === 'k0' && evict[1].key === 'k1' && evict[2].key === 'k2');
+
+		await timeout(50);evict = Array.from(c._evictNext());
+		assert.isTrue(evict[0].key === 'k0' && evict[1].key === 'k2');
+	});
+
+	it('should properly evict in all situations', done => {
+		const c = new CacheMapBased(EvictionPolicy.FIFO, 3);
+
+		c.set('k0', 42); // With FIFO, this will be deleted first
+		c.set('k1', 43);
+		c.set('k2', 44);
+		c.set('k3', 45);
+
+		let evict = Array.from(c._evictNext()).map(w => w.item);
+		assert.deepStrictEqual(evict, [43, 44, 45]);
+
+		// Assert that no automatic eviction happens if forbidden:
+		const k4 = Symbol('46');
+		c.evictionPolicy = EvictionPolicy.None;
+		assert.throws(() => {
+			c.set(k4, 46);
+		});
+		c.evictionPolicy = EvictionPolicy.FIFO;
+		assert.doesNotThrow(() => {
+			c.set(k4, 46);
+		});
+
+		const peek = c.peekEvict(2); // With FIFO, this affects k2, k3
+		assert.deepStrictEqual(peek, [['k2', 44], ['k3', 45]]);
+
+		// Now we change the capacity, so that automatic truncation happens:
+		c.evictionPolicy = EvictionPolicy.MRU;
+		c.capacity = Number.MAX_SAFE_INTEGER;
+		assert.isTrue(c.size === 3);
+
+		// Make sure it throws without proper policy:
+		const polBefore = c.evictionPolicy;
+		c.evictionPolicy = EvictionPolicy.None;
+		assert.throws(() => {
+			c.capacity = c.size - 1;
+		});
+		c.evictionPolicy = polBefore;
+
+		// Now do the truncation
+		c.capacity = 1; // truncation of k4 and k3 with MRU
+		assert.isTrue(c.size === 1);
+		assert.isTrue(c.get('k2') === 44);
+
+		evict = Array.from(c._evictNext());
+		// switch to undetermined:
+		c.evictionPolicy = EvictionPolicy.Undetermined;
+		assert.deepStrictEqual(evict, Array.from(c._evictNext()));
+
+		c.capacity = 0;
+		assert.isTrue(c.isEmpty);
+		assert.isTrue(c.isFull); // Paradox, but no space is left, so it's true
+
+		// We have to test random eviction, too, but we're only making sure
+		// that all evicted elements were in fact inserted earlier.
+		// We are checking that the elements are not returned in the
+		// same order they were inserted (that might happen, but the
+		// probability for that is very low with 10 elements (~1/10!))
+		c.evictionPolicy = EvictionPolicy.Random;
+		c.capacity = 10;
+		c.set('k0', 42);
+		c.set('k1', 43);
+		c.set('k2', 44);
+		c.set('k3', 45);
+		c.set('k4', 46);
+		c.set('k5', 47);
+		c.set('k6', 48);
+		c.set('k7', 49);
+		c.set('k8', 50);
+		c.set('k9', 51);
+
+		evict = Array.from(c.evictMany(c.size));
+		assert.isTrue(evict.length === 10);
+		assert.equal(
+			evict.reduce((a, b) => a + b, 0),
+			42 + 43 + 44 + 45 + 46 + 47 + 48 + 49 + 50 + 51
+		);
+
+		assert.notDeepEqual(evict, [42, 43, 44, 45, 46, 47, 48, 49, 50, 51]);
+
+		done();
+	});
+
+	it('should be possible to access all values and entries', done => {
+		const c = new CacheMapBased();
+		c.capacity = 3;
+
+		c.set('k0', 42);
+		c.set('k1', 43);
+		c.set('k2', 44);
+
+		assert.isTrue(c.hasValue(43));
+		assert.isFalse(c.hasValue(45));
+		assert.isTrue(c.hasValue(44, EqualityComparer.default));
+
+		assert.equal(
+			Array.from(c.values()).reduce((a, b) => a + b, 0),
+			42 + 43 + 44
+		);
+
+		const ent = Array.from(c.entries());
+		const entR = Array.from(c.entriesReversed()).reverse();
+		assert.deepEqual(ent, entR);
+
+		done();
+	});
+});
+
+
+
+describe(DictionaryMapBased.name, function() {
+	it('should throw if given invalid parameters', done => {
+		const d = new DictionaryMapBased();
+		assert.throws(() => {
+			d.get('foo');
+		});
+		assert.doesNotThrow(() => {
+			d.set('foo', 42);
+			assert.isTrue(d.get('foo') === 42);
+			d.has('foo');
+			d.delete('foo');
+		});
+		assert.throws(() => {
+			d.delete('bar');
+		});
+		assert.doesNotThrow(() => {
+			d.set('bar');
+			d.delete('bar');
+		});
+		assert.throws(() => {
+			d.forEach(null);
+		});
+		assert.doesNotThrow(() => {
+			d.forEach(() => {});
+			d.forEach(function(){});
+			d.forEach(async() => {});
+			d.forEach(async function() {});
+		});
+
+		done();
+	});
+
+	it('should forward calls to the underlying map', done => {
+		const d = new DictionaryMapBased();
+
+		assert.isTrue(d.isEmpty && d.size === 0);
+		d.set('k0', 0);
+		assert.isTrue(!d.isEmpty && d.size === 1);
+		d.set('k0', 1);
+		assert.isTrue(!d.isEmpty && d.size === 1);
+		d.set('k1', 42);
+		assert.isTrue(!d.isEmpty && d.size === 2);
+
+		assert.isTrue(d.has('k0') && d.has('k1'));
+		assert.isFalse(d.has('k17'));
+
+		assert.deepStrictEqual(Array.from(d.entries()), [
+			['k0', 1],
+			['k1', 42]
+		]);
+		assert.deepStrictEqual(Array.from(d.entriesReversed()), [
+			['k1', 42],
+			['k0', 1]
+		]);
+		assert.deepStrictEqual(Array.from(d.keys()), ['k0', 'k1']);
+		assert.deepStrictEqual(Array.from(d.values()), [1, 42]);
+
+		d.clear();
+		assert.isTrue(d.isEmpty && d.size === 0);
+
+		done();
+	});
+
+	it('should support custom equality comparers', done => {
+		const d = new DictionaryMapBased();
+
+		d.set('bar', 42);
+		assert.isTrue(d.hasValue(42)); // uses ===
+		assert.isFalse(d.hasValue('42'));
+		assert.isFalse(d.hasValue(43));
+
+		assert.isFalse(d.hasValue(42, new NoEq()));
+
+		done();
+	});
+
+	it('should emulate and extend forEach() properly', done => {
+		const d = new DictionaryMapBased();
+
+		d.set('k0', 42);
+		d.set('k1', 43);
+
+		d.forEach((val, key, idx) => {
+			if (idx === 0) {
+				assert.isTrue(val === 42 && key === 'k0');
+			} else if (idx === 1) {
+				assert.isTrue(val === 43 && key === 'k1');
+			}
+			assert.isTrue(this !== 888); // does not work on arrow funcs
+		}, 888);
+
+		d.forEach(function() {
+			assert.equal(this, 888);
+		}, 888);
+
+		d.forEach((v, k, idx, dict) => {
+			assert.isTrue(dict === d);
+		});
+
+		done();
+	});
+});
+
+
+describe(CacheWithLoad.name, function() {
+	it('should throw if given invalid values', done => {
+		const c = new CacheWithLoad();
+
+		assert.throws(() => {
+			new CacheWithLoad(EvictionPolicy.Random, 10, -1);
+		});
+		assert.throws(() => {
+			new CacheWithLoad(EvictionPolicy.Random, 10, "foo");
+		});
+		assert.throws(() => {
+			new CacheWithLoad(EvictionPolicy.Random, 10, Number.POSITIVE_INFINITY);
+		});
+
+		done();
+	});
+
+	it('should evict based on the load as well', done => {
+		const c = new CacheWithLoad(EvictionPolicy.FIFO, 999, 5);
+
+		c.set('k0', 42, 1.5);
+		c.set('k1', 43, 2.5);
+
+		c.set('k2', 44, 2); // will evict k0
+		assert.closeTo(c.load, 4.5, 1e-9);
+
+		c.set('k3', 45, 4.99); // will evict all others
+		assert.closeTo(c.load, 4.99, 1e-9);
+		assert.isTrue(c.size === 1);
+
+		const polBefore = c.evictionPolicy;
+		assert.throws(() => {
+			c.evictionPolicy = EvictionPolicy.None;
+			c.maxLoad = c.load - 1;
+		});
+		c.evictionPolicy = polBefore;
+
+		let evict = c.evictMany(10); // up to 10, we have 1
+		assert.isTrue(evict.length === 1 && evict[0] === 45);
+
+		c.set('kx', 55, 4); // 5 is the limit currently
+		c.maxLoad = 3.9;
+		assert.isTrue(c.isEmpty && c.size === 0);
+		assert.closeTo(c.maxLoad, 3.9, 1e-9);
+
+		assert.throws(() => {
+			c.set('kx', 55, 4);
+		});
+
+		c.capacity = 1;
+		c.evictionPolicy = EvictionPolicy.None;
+		c.set('ky0', 56, 2);
+		assert.throws(() => {
+			c.set('ky1', 57, 1);
+		});
+
+		c.evictionPolicy = EvictionPolicy.Undetermined;
+		assert.doesNotThrow(() => {
+			c.set('ky1', 57, 1);
+		});
+		
+		done();
+	});
+
+	it('should report the current load adequately', async() => {
+		const c = new CacheWithLoad(EvictionPolicy.None, 9999, 5);
+
+		assert.isTrue(c.load === 0 && c.loadFree === 5 && c.maxLoad === 5);
+
+		c.set('k0', 42, 1.5);
+		c.set('k1', 43, 2.5, 25); // expire after 25msecs
+
+		assert.throws(() => {
+			c.set('k2', 44, 1.1); // too much load and no auto-evict
+		});
+
+		assert.closeTo(c.load, 4, 1e-9);
+		assert.doesNotThrow(() => {
+			c.set('k2', 44, 1);
+		});
+
+		assert.closeTo(c.load, 5, 1e-9);
+
+		await timeout(50);
+
+		assert.closeTo(c.load, 2.5, 1e-9);
 	});
 });
