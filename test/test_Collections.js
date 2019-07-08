@@ -747,6 +747,16 @@ describe(Cache.name, function() {
 		c.evictionPolicy = EvictionPolicy.MRU;
 		c.capacity = Number.MAX_SAFE_INTEGER;
 		assert.isTrue(c.size === 3);
+
+		// Make sure it throws without proper policy:
+		const polBefore = c.evictionPolicy;
+		c.evictionPolicy = EvictionPolicy.None;
+		assert.throws(() => {
+			c.capacity = c.size - 1;
+		});
+		c.evictionPolicy = polBefore;
+
+		// Now do the truncation
 		c.capacity = 1; // truncation of k4 and k3 with MRU
 		assert.isTrue(c.size === 1);
 		assert.isTrue(c.get('k2') === 44);
@@ -759,6 +769,33 @@ describe(Cache.name, function() {
 		c.capacity = 0;
 		assert.isTrue(c.isEmpty);
 		assert.isTrue(c.isFull); // Paradox, but no space is left, so it's true
+
+		// We have to test random eviction, too, but we're only making sure
+		// that all evicted elements were in fact inserted earlier.
+		// We are checking that the elements are not returned in the
+		// same order they were inserted (that might happen, but the
+		// probability for that is very low with 10 elements (~1/10!))
+		c.evictionPolicy = EvictionPolicy.Random;
+		c.capacity = 10;
+		c.set('k0', 42);
+		c.set('k1', 43);
+		c.set('k2', 44);
+		c.set('k3', 45);
+		c.set('k4', 46);
+		c.set('k5', 47);
+		c.set('k6', 48);
+		c.set('k7', 49);
+		c.set('k8', 50);
+		c.set('k9', 51);
+
+		evict = Array.from(c.evictMany(c.size));
+		assert.isTrue(evict.length === 10);
+		assert.equal(
+			evict.reduce((a, b) => a + b, 0),
+			42 + 43 + 44 + 45 + 46 + 47 + 48 + 49 + 50 + 51
+		);
+
+		assert.notDeepEqual(evict, [42, 43, 44, 45, 46, 47, 48, 49, 50, 51]);
 
 		done();
 	});
