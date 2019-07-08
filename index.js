@@ -28,7 +28,7 @@ const Rx = require('rxjs')
 , { Stack } = require('./lib/collections/Stack')
 , { LinkedList, LinkedListNode } = require('./lib/collections/LinkedList')
 , { Dictionary, DictionaryMapBased } = require('./lib/collections/Dictionary')
-, { Cache, EvictionPolicy } = require('./lib/collections/Cache')
+, { Cache, CacheMapBased, EvictionPolicy } = require('./lib/collections/Cache')
 , { Comparer, DefaultComparer } = require('./lib/collections/Comparer')
 , docs = require('./docs');
 
@@ -58,7 +58,7 @@ module.exports = {
   Stack,
   LinkedList, LinkedListNode,
   Dictionary, DictionaryMapBased,
-  Cache, EvictionPolicy,
+  Cache, CacheMapBased, EvictionPolicy,
   Comparer, DefaultComparer,
   docs
 };
