@@ -7,7 +7,8 @@ const { assert, expect } = require('chai')
 , { Dictionary, DictionaryMapBased } = require('../lib/collections/Dictionary')
 , { Cache, CacheMapBased, CacheWithLoad, EvictionPolicy } = require('../lib/collections/Cache')
 , { Comparer, DefaultComparer } = require('../lib/collections/Comparer')
-, JSBI = require('jsbi');
+, JSBI = require('jsbi')
+, { timeout } = require('../tools/Defer');
 
 
 class NoEq extends EqualityComparer {
@@ -718,6 +719,20 @@ describe(Cache.name, function() {
 		done();
 	});
 
+	it('should allow self-expiration of k/v pairs using a timeout', async() => {
+		const c = new Cache(EvictionPolicy.FIFO, 3);
+
+		c.set('k0', 42);
+		c.set('k1', 43, 25); // expire this one after 50 msecs
+		c.set('k2', 43);
+
+		let evict = Array.from(c._evictNext());
+		assert.isTrue(evict[0].key === 'k0' && evict[1].key === 'k1' && evict[2].key === 'k2');
+
+		await timeout(50);evict = Array.from(c._evictNext());
+		assert.isTrue(evict[0].key === 'k0' && evict[1].key === 'k2');
+	});
+
 	it('should properly evict in all situations', done => {
 		const c = new Cache(EvictionPolicy.FIFO, 3);
 
@@ -951,6 +966,20 @@ describe(CacheMapBased.name, function() {
 		done();
 	});
 
+	it('should allow self-expiration of k/v pairs using a timeout', async() => {
+		const c = new CacheMapBased(EvictionPolicy.FIFO, 3);
+
+		c.set('k0', 42);
+		c.set('k1', 43, 25); // expire this one after 50 msecs
+		c.set('k2', 43);
+
+		let evict = Array.from(c._evictNext());
+		assert.isTrue(evict[0].key === 'k0' && evict[1].key === 'k1' && evict[2].key === 'k2');
+
+		await timeout(50);evict = Array.from(c._evictNext());
+		assert.isTrue(evict[0].key === 'k0' && evict[1].key === 'k2');
+	});
+
 	it('should properly evict in all situations', done => {
 		const c = new CacheMapBased(EvictionPolicy.FIFO, 3);
 
@@ -1169,13 +1198,86 @@ describe(CacheWithLoad.name, function() {
 		const c = new CacheWithLoad();
 
 		assert.throws(() => {
-			new CacheWithLoad(
-				EvictionPolicy.Random,
-				10,
-				-1
-			);
+			new CacheWithLoad(EvictionPolicy.Random, 10, -1);
+		});
+		assert.throws(() => {
+			new CacheWithLoad(EvictionPolicy.Random, 10, "foo");
+		});
+		assert.throws(() => {
+			new CacheWithLoad(EvictionPolicy.Random, 10, Number.POSITIVE_INFINITY);
 		});
 
 		done();
+	});
+
+	it('should evict based on the load as well', done => {
+		const c = new CacheWithLoad(EvictionPolicy.FIFO, 999, 5);
+
+		c.set('k0', 42, 1.5);
+		c.set('k1', 43, 2.5);
+
+		c.set('k2', 44, 2); // will evict k0
+		assert.closeTo(c.load, 4.5, 1e-9);
+
+		c.set('k3', 45, 4.99); // will evict all others
+		assert.closeTo(c.load, 4.99, 1e-9);
+		assert.isTrue(c.size === 1);
+
+		const polBefore = c.evictionPolicy;
+		assert.throws(() => {
+			c.evictionPolicy = EvictionPolicy.None;
+			c.maxLoad = c.load - 1;
+		});
+		c.evictionPolicy = polBefore;
+
+		let evict = c.evictMany(10); // up to 10, we have 1
+		assert.isTrue(evict.length === 1 && evict[0] === 45);
+
+		c.set('kx', 55, 4); // 5 is the limit currently
+		c.maxLoad = 3.9;
+		assert.isTrue(c.isEmpty && c.size === 0);
+		assert.closeTo(c.maxLoad, 3.9, 1e-9);
+
+		assert.throws(() => {
+			c.set('kx', 55, 4);
+		});
+
+		c.capacity = 1;
+		c.evictionPolicy = EvictionPolicy.None;
+		c.set('ky0', 56, 2);
+		assert.throws(() => {
+			c.set('ky1', 57, 1);
+		});
+
+		c.evictionPolicy = EvictionPolicy.Undetermined;
+		assert.doesNotThrow(() => {
+			c.set('ky1', 57, 1);
+		});
+		
+		done();
+	});
+
+	it('should report the current load adequately', async() => {
+		const c = new CacheWithLoad(EvictionPolicy.None, 9999, 5);
+
+		assert.isTrue(c.load === 0 && c.loadFree === 5 && c.maxLoad === 5);
+
+		c.set('k0', 42, 1.5);
+		c.set('k1', 43, 2.5, 25); // expire after 25msecs
+
+		assert.throws(() => {
+			c.set('k2', 44, 1.1); // too much load and no auto-evict
+		});
+
+		assert.closeTo(c.load, 4, 1e-9);
+		assert.doesNotThrow(() => {
+			c.set('k2', 44, 1);
+		});
+
+		assert.closeTo(c.load, 5, 1e-9);
+
+		await timeout(50);
+
+		assert.closeTo(c.load, 2.5, 1e-9);
 	});
 });
