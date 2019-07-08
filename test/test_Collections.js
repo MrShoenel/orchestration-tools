@@ -646,7 +646,7 @@ describe(Cache.name, function() {
 		// .. and now k0 twice:
 		c.get('k0');
 		c.get('k0');
-		assert.isTrue(c._map.get('k1').accessCount === 1 && c._map.get('k0').accessCount === 2);
+		assert.isTrue(c._dict['k1'].accessCount === 1 && c._dict['k0'].accessCount === 2);
 		c.evictionPolicy = EvictionPolicy.LFU;
 		evict = Array.from(c._evictNext());
 		assert.isTrue(evict[0].key === 'k1' && evict[1].key === 'k0');
@@ -673,7 +673,7 @@ describe(Cache.name, function() {
 		c.set('k1', 43);
 
 		// The last item inserted has a larger timestamp
-		assert.isTrue(JSBI.subtract(c._map.get('k0').timeStamp, c._map.get('k1').timeStamp) < 0);
+		assert.isTrue(JSBI.subtract(c._dict['k0'].timeStamp, c._dict['k1'].timeStamp) < 0);
 
 		// k1 is more recent right now, so k0 is evicted first in LRU
 		let evict = Array.from(c._evictNext());
@@ -741,7 +741,7 @@ describe(Cache.name, function() {
 		});
 
 		const peek = c.peekEvict(2); // With FIFO, this affects k2, k3
-		assert.deepStrictEqual(peek, [['k2', 44], ['k3', 45]]);
+		assert.deepStrictEqual(peek, [{ 'k2': 44 }, { 'k3': 45 }]);
 
 		// Now we change the capacity, so that automatic truncation happens:
 		c.evictionPolicy = EvictionPolicy.MRU;
@@ -771,9 +771,9 @@ describe(Cache.name, function() {
 		c.set('k1', 43);
 		c.set('k2', 44);
 
-		assert.isTrue(c.hasValue(43));
-		assert.isFalse(c.hasValue(45));
-		assert.isTrue(c.hasValue(44, EqualityComparer.default));
+		assert.isTrue(c.has(43));
+		assert.isFalse(c.has(45));
+		assert.isTrue(c.has(44, EqualityComparer.default));
 
 		assert.equal(
 			Array.from(c.values()).reduce((a, b) => a + b, 0),
