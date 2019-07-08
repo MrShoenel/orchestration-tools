@@ -5,7 +5,7 @@ const { assert, expect } = require('chai')
 , { Stack } = require('../lib/collections/Stack')
 , { LinkedList, LinkedListNode } = require('../lib/collections/LinkedList')
 , { Dictionary, DictionaryMapBased } = require('../lib/collections/Dictionary')
-, { Cache, EvictionPolicy, CacheMapBased } = require('../lib/collections/Cache')
+, { Cache, CacheMapBased, CacheWithLoad, EvictionPolicy } = require('../lib/collections/Cache')
 , { Comparer, DefaultComparer } = require('../lib/collections/Comparer')
 , JSBI = require('jsbi');
 
@@ -17,7 +17,7 @@ class NoEq extends EqualityComparer {
 };
 
 
-describe('EqualityComparer', function() {
+describe(EqualityComparer.name, function() {
   it('should be an abstract base-class', done => {
     assert.throws(() => {
       (new EqualityComparer().equals(1, 1));
@@ -39,7 +39,7 @@ describe('EqualityComparer', function() {
 
 
 
-describe('Comparer', function() {
+describe(Comparer.name, function() {
   it('should be an abstract base-class', done => {
     const c = new Comparer();
 
@@ -69,7 +69,7 @@ describe('Comparer', function() {
 
 
 
-describe('Collection', function() {
+describe(Collection.name, function() {
   it('should throw if given invalid arguments or behave correctly using defaults', done => {
     assert.throws(() => {
       new Collection(new Date);
@@ -144,7 +144,7 @@ describe('Collection', function() {
 
 
 
-describe('Queue', function() {
+describe(Queue.name, function() {
   it('should enqueue at the end and dequeue at the head', done => {
     const q = new Queue();
 
@@ -218,7 +218,7 @@ describe('Queue', function() {
 
 
 
-describe('Stack', function() {
+describe(Stack.name, function() {
   it('should put items on top and remove them there as well', done => {
     const s = new Stack();
 
@@ -248,7 +248,7 @@ describe('Stack', function() {
 
 
 
-describe('LinkedList', function() {
+describe(LinkedList.name, function() {
   it('should throw if given invalid parameters', done => {
     const l = new LinkedList();
 
@@ -1157,6 +1157,23 @@ describe(DictionaryMapBased.name, function() {
 
 		d.forEach((v, k, idx, dict) => {
 			assert.isTrue(dict === d);
+		});
+
+		done();
+	});
+});
+
+
+describe(CacheWithLoad.name, function() {
+	it('should throw if given invalid values', done => {
+		const c = new CacheWithLoad();
+
+		assert.throws(() => {
+			new CacheWithLoad(
+				EvictionPolicy.Random,
+				10,
+				-1
+			);
 		});
 
 		done();
