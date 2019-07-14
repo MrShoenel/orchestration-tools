@@ -3,7 +3,7 @@ const { assert, expect } = require('chai')
 , { Collection } = require('../lib/collections/Collection')
 , { Queue, ConstrainedQueue } = require('../lib/collections/Queue')
 , { Stack } = require('../lib/collections/Stack')
-, { LinkedList, LinkedListNode } = require('../lib/collections/LinkedList')
+, { LinkedList, LinkedListNode, LinkedListEvent } = require('../lib/collections/LinkedList')
 , { Dictionary, DictionaryMapBased } = require('../lib/collections/Dictionary')
 , { Cache, CacheMapBased, CacheWithLoad, EvictionPolicy } = require('../lib/collections/Cache')
 , { Comparer, DefaultComparer } = require('../lib/collections/Comparer')
@@ -464,7 +464,7 @@ describe(LinkedList.name, function() {
     assert.strictEqual(n42.next, null);
     assert.strictEqual(n42.prev, null);
 
-    assert.isTrue(l.isEmpty);
+    assert.isTrue(l.isEmpty && l._lookupSet.size === 0);
     assert.strictEqual(l.size, 0);
 
 
@@ -493,7 +493,52 @@ describe(LinkedList.name, function() {
     assert.strictEqual(n43.prev, null);
 
     done();
-  });
+	});
+	
+	it('should emit the right events', done => {
+		/** @type {LinkedList.<Number>} */
+		const l = new LinkedList();
+
+		/** @type {Array.<LinkedListEvent.<Number>>} */
+		const added = [];
+		/** @type {Array.<LinkedListEvent.<Number>>} */
+		const removed = [];
+		l.observableNodeAdd.subscribe(evt => {
+			added.push(evt);
+		});
+		l.observableNodeRemove.subscribe(evt => {
+			removed.push(evt);
+		});
+
+		let node = l.addFirst(42);
+		assert.isTrue(added.length === 1);
+		let e = added[0];
+		assert.isTrue(e.item.item === 42 && e.added && !e.removed && e.firstNode && e.lastNode);
+
+		node = l.addAfter(node, 43);
+		assert.isTrue(added.length === 2);
+		e = added[1];
+		assert.isTrue(e.item.item === 43 && e.added && !e.removed && !e.firstNode && e.lastNode);
+
+		l.addLast(44);
+		assert.isTrue(added.length === 3);
+
+		l.remove(node);
+		assert.isTrue(removed.length === 1);
+		e = removed[0];
+		assert.isTrue(e.item.item === 43 && !e.added && e.removed && !e.firstNode && !e.lastNode);
+		
+		l.removeLast();
+		assert.isTrue(removed.length === 2);
+		e = removed[1];
+		assert.isTrue(e.item.item === 44 && !e.added && e.removed && !e.firstNode && e.lastNode);
+		l.removeFirst();
+		assert.isTrue(removed.length === 3);
+		e = removed[2];
+		assert.isTrue(e.item.item === 42 && !e.added && e.removed && e.firstNode && e.lastNode);
+
+		done();
+	});
 });
 
 
@@ -878,6 +923,7 @@ describe(CacheMapBased.name, function() {
 	});
 
 	it('should evict items according to algo LFU/MFU', done => {
+		/** @type {CacheMapBased.<String, Number>} */
 		const c = new CacheMapBased(EvictionPolicy.LFU, 2); // access counts
 		
 		c.set('k0', 42);
@@ -902,8 +948,13 @@ describe(CacheMapBased.name, function() {
 		evict = Array.from(c._evictNext());
 		assert.isTrue(evict[0].key === 'k0' && evict[1].key === 'k1');
 
+		const obsEvicted = [];
+		c.observableEvict.subscribe(evt => {
+			obsEvicted.push(...evt.item);
+		});
 		evict = c.evictMany(10);
 		assert.isTrue(evict[0] === 42 && evict[1] === 43);
+		assert.deepStrictEqual(evict, obsEvicted);
 
 		assert.throws(() => {
 			c.evict();
