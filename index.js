@@ -23,11 +23,13 @@ const Rx = require('rxjs')
 , { throwError, wrapError } = require('./tools/Error')
 , { formatError, formatValue } = require('./tools/Format')
 , { EqualityComparer, DefaultEqualityComparer } = require('./lib/collections/EqualityComparer')
-, { Collection } = require('./lib/collections/Collection')
-, { Queue, ConstrainedQueue } = require('./lib/collections/Queue')
-, { Stack } = require('./lib/collections/Stack')
-, { LinkedList, LinkedListNode } = require('./lib/collections/LinkedList')
-, { Dictionary, DictionaryMapBased } = require('./lib/collections/Dictionary')
+, { Collection, CollectionEvent, symbolClear } = require('./lib/collections/Collection')
+, { Queue, ConstrainedQueue, symbolQueueDequeue, symbolQueueEnqueue } = require('./lib/collections/Queue')
+, { Stack, symbolStackPop, symbolStackPush } = require('./lib/collections/Stack')
+, { LinkedList, LinkedListNode, LinkedListEvent, symbolLinkedListAdd, symbolLinkedListRemove
+	} = require('./lib/collections/LinkedList')
+, { Dictionary, DictionaryMapBased, symbolDictionaryDelete, symbolDictionaryGet, symbolDictionarySet
+	} = require('./lib/collections/Dictionary')
 , { Cache, CacheMapBased, CacheWithLoad, EvictionPolicy } = require('./lib/collections/Cache')
 , { Comparer, DefaultComparer } = require('./lib/collections/Comparer')
 , docs = require('./docs');
@@ -53,11 +55,11 @@ module.exports = {
   throwError, wrapError,
   formatError, formatValue,
   EqualityComparer, DefaultEqualityComparer,
-  Collection,
-  Queue, ConstrainedQueue,
-  Stack,
-  LinkedList, LinkedListNode,
-  Dictionary, DictionaryMapBased,
+  Collection, CollectionEvent, symbolClear,
+  Queue, ConstrainedQueue, symbolQueueDequeue, symbolQueueEnqueue,
+  Stack, symbolStackPop, symbolStackPush,
+  LinkedList, LinkedListNode, LinkedListEvent, symbolLinkedListAdd, symbolLinkedListRemove,
+  Dictionary, DictionaryMapBased, symbolDictionaryDelete, symbolDictionaryGet, symbolDictionarySet,
   Cache, CacheMapBased, CacheWithLoad, EvictionPolicy,
   Comparer, DefaultComparer,
   docs
