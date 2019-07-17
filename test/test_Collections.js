@@ -164,6 +164,15 @@ describe(Queue.name, function() {
     assert.throws(() => {
       q.peekLast();
 		});
+		assert.throws(() => {
+			q.peekIndex(-1);
+		});
+		assert.throws(() => {
+			q.peekIndex(0);
+		});
+		assert.throws(() => {
+			q.peekIndex(1);
+		});
 		
 		assert.equal(numEnq, 0);
 		assert.equal(numDeq, 0);
@@ -187,7 +196,29 @@ describe(Queue.name, function() {
     });
 
     done();
-  });
+	});
+	
+	it('should work correctly with indexes as well', done => {
+		const q = new Queue();
+
+		q.enqueue(42).enqueue(43).enqueue(44);
+
+		assert.equal(q.peekIndex(0), 42);
+		assert.equal(q.peekIndex(1), 43);
+		assert.equal(q.peekIndex(2), 44);
+
+		assert.equal(q.size, 3);
+		
+		assert.throws(() => {
+			q.takeOutItem(43, new NoEq());
+		});
+		assert.equal(q.takeOutItem(43), 43);
+		assert.equal(q.size, 2);
+		assert.equal(q.peekIndex(0), 42);
+		assert.equal(q.peekIndex(1), 44);
+
+		done();
+	});
 
   it('should behave correctly with constrained queues', done => {
     assert.throws(() => {
