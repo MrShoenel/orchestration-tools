@@ -25,7 +25,7 @@ describe('JobQueue', () => {
       new JobQueue(-15);
     });
     assert.throws(() => {
-      (new JobQueue(1)).addSyncJob(42);
+      (new JobQueue()).addSyncJob(42);
     });
 
     (() => {
@@ -86,7 +86,7 @@ describe('JobQueue', () => {
   });
 
   it('should handle misconfigured or failed jobs', async function() {
-    const q = new JobQueue(1);
+    const q = new JobQueue();
     q.pause();
 
     const j1 = new Job(() => { return 42; });
@@ -201,7 +201,7 @@ describe('JobQueue', () => {
   });
 
   it('should not do work on queues that are paused', async() => {
-    const q = new JobQueue(1);
+    const q = new JobQueue();
 
     let idleReceived = false;
     q.observableIdle.subscribe(next => {
@@ -221,13 +221,13 @@ describe('JobQueue', () => {
 
     await timeout(50); // wait some time just to make sure
 
-    assert.strictEqual(q.currentJobs.length, 0);
-    assert.strictEqual(q.queue.length, 1);
+    assert.strictEqual(q.currentJobs.size, 0);
+    assert.strictEqual(q.queue.size, 1);
 
     const jobs = q.clearBacklog();
     assert.strictEqual(jobs.length, 1);
-    assert.strictEqual(q.currentJobs.length, 0);
-    assert.strictEqual(q.queue.length, 0);
+    assert.strictEqual(q.currentJobs.size, 0);
+    assert.strictEqual(q.queue.size, 0);
   });
 
   it('should respect pausing and resuming a queue', async() => {
@@ -297,12 +297,12 @@ describe('JobQueue', () => {
     // The queue is not paused so these will be run right away
     await timeout(25);
     assert.strictEqual(q.numJobsDone, 2);
-    assert.strictEqual(q.currentJobs.length, 1);
+    assert.strictEqual(q.currentJobs.size, 1);
     assert.strictEqual(q.backlog, 1);
     
     await q.runToCompletion();
     assert.strictEqual(q.numJobsDone, 4);
-    assert.strictEqual(q.currentJobs.length, 0);
+    assert.strictEqual(q.currentJobs.size, 0);
     assert.strictEqual(q.backlog, 0);
 
     idleSubs.unsubscribe();
