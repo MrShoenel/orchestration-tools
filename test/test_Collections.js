@@ -3,12 +3,13 @@ const { assert, expect } = require('chai')
 , { Collection } = require('../lib/collections/Collection')
 , { Queue, ConstrainedQueue } = require('../lib/collections/Queue')
 , { Stack } = require('../lib/collections/Stack')
-, { LinkedList, LinkedListNode } = require('../lib/collections/LinkedList')
+, { LinkedList, LinkedListNode, LinkedListEvent } = require('../lib/collections/LinkedList')
 , { Dictionary, DictionaryMapBased } = require('../lib/collections/Dictionary')
 , { Cache, CacheMapBased, CacheWithLoad, EvictionPolicy } = require('../lib/collections/Cache')
 , { Comparer, DefaultComparer } = require('../lib/collections/Comparer')
 , JSBI = require('jsbi')
-, { timeout } = require('../tools/Defer');
+, { timeout } = require('../tools/Defer')
+, { Resolve } = require('../tools/Resolve');
 
 
 class NoEq extends EqualityComparer {
@@ -147,23 +148,46 @@ describe(Collection.name, function() {
 
 describe(Queue.name, function() {
   it('should enqueue at the end and dequeue at the head', done => {
-    const q = new Queue();
+		const q = new Queue();
+		
+		let numEnq = 0, numDeq = 0;
+		q.observableEnqueue.subscribe(evt => {
+			numEnq++;
+		});
+		q.observableDequeue.subscribe(evt => {
+			numDeq++;
+		});
 
     assert.throws(() => {
       q.peek();
     });
     assert.throws(() => {
       q.peekLast();
-    });
+		});
+		assert.throws(() => {
+			q.peekIndex(-1);
+		});
+		assert.throws(() => {
+			q.peekIndex(0);
+		});
+		assert.throws(() => {
+			q.peekIndex(1);
+		});
+		
+		assert.equal(numEnq, 0);
+		assert.equal(numDeq, 0);
 
-    q.enqueue(42).enqueue(43);
+		q.enqueue(42).enqueue(43);
+		assert.equal(numEnq, 2);
 
     assert.strictEqual(q.peek(), 42);
     assert.strictEqual(q.size, 2);
 
-    assert.strictEqual(q.dequeue(), 42);
+		assert.strictEqual(q.dequeue(), 42);
+		assert.equal(numDeq, 1);
     assert.strictEqual(q.size, 1);
     assert.strictEqual(q.dequeue(), 43);
+		assert.equal(numDeq, 2);
     assert.strictEqual(q.size, 0);
     assert.isTrue(q.isEmpty);
 
@@ -172,7 +196,29 @@ describe(Queue.name, function() {
     });
 
     done();
-  });
+	});
+	
+	it('should work correctly with indexes as well', done => {
+		const q = new Queue();
+
+		q.enqueue(42).enqueue(43).enqueue(44);
+
+		assert.equal(q.peekIndex(0), 42);
+		assert.equal(q.peekIndex(1), 43);
+		assert.equal(q.peekIndex(2), 44);
+
+		assert.equal(q.size, 3);
+		
+		assert.throws(() => {
+			q.takeOutItem(43, new NoEq());
+		});
+		assert.equal(q.takeOutItem(43), 43);
+		assert.equal(q.size, 2);
+		assert.equal(q.peekIndex(0), 42);
+		assert.equal(q.peekIndex(1), 44);
+
+		done();
+	});
 
   it('should behave correctly with constrained queues', done => {
     assert.throws(() => {
@@ -222,6 +268,14 @@ describe(Queue.name, function() {
 describe(Stack.name, function() {
   it('should put items on top and remove them there as well', done => {
     const s = new Stack();
+		
+		let hasPopped = false, numPushed = 0;
+		s.observablePop.subscribe(evt => {
+			hasPopped = true;
+		});
+		s.observablePush.subscribe(evt => {
+			numPushed++;
+		});
 
     assert.throws(() => {
       s.peek();
@@ -231,15 +285,20 @@ describe(Stack.name, function() {
     });
     assert.throws(() => {
       s.pop();
-    });
+		});
+
+		assert.equal(numPushed, 0);
     
-    s.push(41).push(42);
+		s.push(41).push(42);
+		assert.equal(numPushed, 2);
+		assert.isFalse(hasPopped);
 
     assert.strictEqual(s.size, 2);
     assert.strictEqual(s.peek(), 42);
     assert.strictEqual(s.peekBottom(), 41);
 
     assert.strictEqual(s.pop(), 42);
+		assert.isTrue(hasPopped);
     assert.strictEqual(s.size, 1);
     assert.strictEqual(s.peek(), 41);
 
@@ -464,7 +523,7 @@ describe(LinkedList.name, function() {
     assert.strictEqual(n42.next, null);
     assert.strictEqual(n42.prev, null);
 
-    assert.isTrue(l.isEmpty);
+    assert.isTrue(l.isEmpty && l._lookupSet.size === 0);
     assert.strictEqual(l.size, 0);
 
 
@@ -493,7 +552,52 @@ describe(LinkedList.name, function() {
     assert.strictEqual(n43.prev, null);
 
     done();
-  });
+	});
+	
+	it('should emit the right events', done => {
+		/** @type {LinkedList.<Number>} */
+		const l = new LinkedList();
+
+		/** @type {Array.<LinkedListEvent.<Number>>} */
+		const added = [];
+		/** @type {Array.<LinkedListEvent.<Number>>} */
+		const removed = [];
+		l.observableNodeAdd.subscribe(evt => {
+			added.push(evt);
+		});
+		l.observableNodeRemove.subscribe(evt => {
+			removed.push(evt);
+		});
+
+		let node = l.addFirst(42);
+		assert.isTrue(added.length === 1);
+		let e = added[0];
+		assert.isTrue(e.item.item === 42 && e.added && !e.removed && e.firstNode && e.lastNode);
+
+		node = l.addAfter(node, 43);
+		assert.isTrue(added.length === 2);
+		e = added[1];
+		assert.isTrue(e.item.item === 43 && e.added && !e.removed && !e.firstNode && e.lastNode);
+
+		l.addLast(44);
+		assert.isTrue(added.length === 3);
+
+		l.remove(node);
+		assert.isTrue(removed.length === 1);
+		e = removed[0];
+		assert.isTrue(e.item.item === 43 && !e.added && e.removed && !e.firstNode && !e.lastNode);
+		
+		l.removeLast();
+		assert.isTrue(removed.length === 2);
+		e = removed[1];
+		assert.isTrue(e.item.item === 44 && !e.added && e.removed && !e.firstNode && e.lastNode);
+		l.removeFirst();
+		assert.isTrue(removed.length === 3);
+		e = removed[2];
+		assert.isTrue(e.item.item === 42 && !e.added && e.removed && e.firstNode && e.lastNode);
+
+		done();
+	});
 });
 
 
@@ -878,6 +982,7 @@ describe(CacheMapBased.name, function() {
 	});
 
 	it('should evict items according to algo LFU/MFU', done => {
+		/** @type {CacheMapBased.<String, Number>} */
 		const c = new CacheMapBased(EvictionPolicy.LFU, 2); // access counts
 		
 		c.set('k0', 42);
@@ -902,8 +1007,13 @@ describe(CacheMapBased.name, function() {
 		evict = Array.from(c._evictNext());
 		assert.isTrue(evict[0].key === 'k0' && evict[1].key === 'k1');
 
+		const obsEvicted = [];
+		c.observableEvict.subscribe(evt => {
+			obsEvicted.push(...evt.item);
+		});
 		evict = c.evictMany(10);
 		assert.isTrue(evict[0] === 42 && evict[1] === 43);
+		assert.deepStrictEqual(evict, obsEvicted);
 
 		assert.throws(() => {
 			c.evict();
@@ -1120,6 +1230,47 @@ describe(DictionaryMapBased.name, function() {
 
 		done();
 	});
+	
+	it('should not increase the size if a key is overwritten', done => {
+		const d = new DictionaryMapBased();
+
+		let s = [], g = [], del = [], cleared = false;
+		d.observableClear.subscribe(evt => {
+			cleared = true;
+		});
+		d.observableSet.subscribe(evt => {
+			assert.isTrue(Array.isArray(evt.item) && evt.item.length === 2);
+			s.push(evt.item);
+		});
+		d.observableGet.subscribe(evt => {
+			assert.isTrue(Array.isArray(evt.item) && evt.item.length === 2);
+			g.push(evt.item);
+		});
+		d.observableDelete.subscribe(evt => {
+			assert.isTrue(Array.isArray(evt.item) && evt.item.length === 2);
+			del.push(evt.item);
+		});
+
+		d.set('k', 42);
+		assert.isTrue(d.size === 1);
+		d.set('k', 43);
+		assert.isTrue(d.size === 1);
+		assert.deepStrictEqual(s, [['k', 42], ['k', 43]]);
+		assert.isTrue(g.length === 0);
+		assert.isTrue(d.get('k') === 43);
+		assert.deepStrictEqual(g, [['k', 43]]);
+		assert.isFalse(cleared);
+		d.clear();
+		assert.isTrue(cleared);
+		assert.isTrue(d.size === 0 && d.isEmpty);
+
+		d.set('h', 77);
+		assert.isTrue(del.length === 0);
+		d.delete('h');
+		assert.deepStrictEqual(del, [['h', 77]]);
+
+		done();
+	});
 
 	it('should forward calls to the underlying map', done => {
 		const d = new DictionaryMapBased();
@@ -1146,7 +1297,12 @@ describe(DictionaryMapBased.name, function() {
 		assert.deepStrictEqual(Array.from(d.keys()), ['k0', 'k1']);
 		assert.deepStrictEqual(Array.from(d.values()), [1, 42]);
 
+		let clearObserved = false;
+		d.observableClear.subscribe(evt => {
+			clearObserved = true;
+		})
 		d.clear();
+		assert.isTrue(clearObserved);
 		assert.isTrue(d.isEmpty && d.size === 0);
 
 		done();
