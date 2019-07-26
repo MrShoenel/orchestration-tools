@@ -1,5 +1,6 @@
 const { assert, expect } = require('chai')
 , { timeout } = require('../tools/Defer')
+, { EqualityComparer } = require('../lib/collections/EqualityComparer')
 , { assertThrowsAsync } = require('../tools/AssertAsync')
 , { ProgressNumeric } = require('../lib/Progress')
 , { Job, JobQueue, symbolRun, symbolDone, symbolFailed, symbolIdle } = require('../lib/JobQueue')
@@ -9,6 +10,13 @@ const { assert, expect } = require('chai')
 //   console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
 //   // application specific logging, throwing an error, or other logic here
 // });
+
+
+class NoEq extends EqualityComparer {
+  equals(x, y) {
+    return false;
+  };
+};
 
 describe('JobQueue', () => {
   it('should throw if given invalid parameters', () => {
@@ -324,5 +332,51 @@ describe('JobQueue', () => {
 
     await timeout(25);
     assert.isFalse(idleReceived);
+  });
+
+  it('should allow removing jobs while they are on the backlog', async() => {
+    const q = new JobQueue(1).pause();
+
+    const j1 = new Job(async() => await timeout(100), 'j1')
+    , j2 = new Job(async() => await timeout(75));
+
+    assert.isTrue(j1.name === 'j1' && j2.name === void 0);
+    assert.throws(() => {
+      j2.name = 5;
+    });
+    assert.doesNotThrow(() => {
+      j2.name = void 0;
+      j2.name = 'j2';
+    });
+
+    assert.isFalse(q.hasJob(j1));
+    assert.isFalse(q.hasJob(j2));
+    assert.isFalse(q.isJobRunning(j1));
+    assert.isFalse(q.isJobRunning(j2));
+
+    q.addJob(j1).resume();
+    await timeout(25);
+    assert.isTrue(q.isJobRunning(j1));
+    assert.throws(() => {
+      q.removeJobFromBacklog(j1);
+    });
+    q.addJob(j2);
+    await timeout(25);
+    assert.isTrue(q.isJobRunning(j1));
+    assert.isTrue(q.hasJob(j2));
+    assert.isFalse(q.isJobRunning(j2));
+
+    assert.throws(() => {
+      q.removeJobFromBacklog(j2, new NoEq());
+    });
+    assert.doesNotThrow(() => {
+      q.removeJobFromBacklog(j2);
+    });
+    assert.isFalse(q.hasJob(j2));
+
+    await timeout(75);
+    assert.isFalse(q.isJobRunning(j1));
+    assert.isTrue(j1.isDone);
+    assert.isFalse(j2.isDone);
   });
 });
