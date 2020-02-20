@@ -18,7 +18,36 @@ class NoEq extends EqualityComparer {
   };
 };
 
-describe('JobQueue', () => {
+
+describe(Job.name, () => {
+  it('should allow for additional properties', async() => {
+    const j = new Job(async() => await timeout(50), "foo");
+
+    assert.strictEqual(j.name, "foo");
+    j.properties.set('batz', 1337);
+    j.properties.set('blah', 42);
+    assert.strictEqual(j.properties.get('batz'), 1337);
+    assert.strictEqual(j.properties.get('blah'), 42);
+
+    assert.isTrue(j.createTime instanceof Date);
+    assert.isFalse(j.wasStarted);
+    assert.isFalse(j.isStopped);
+    assert.strictEqual(0, j.runDurationMs);
+
+    assert.throws(() => j.startTime);
+    assert.throws(() => j.stopTime);
+
+    const rp = j.run();
+    assert.doesNotThrow(() => j.startTime);
+    await timeout(10);
+    assert.isAtLeast(j.runDurationMs, 10);
+    await rp;
+    assert.doesNotThrow(() => j.stopTime);
+    assert.isAtLeast(j.runDurationMs, 50);
+  });
+});
+
+describe(JobQueue.name, () => {
   it('should throw if given invalid parameters', () => {
     assert.throws(() => {
       new Job();
