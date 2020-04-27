@@ -100,8 +100,25 @@ if (idx >= 0) {
     this.timeout(5000);
     const pw = new ProcessWrapper('node', [thisFile, 'proctest2']);
 
+    assert.isFalse(pw.isRunning);
+    assert.isFalse(pw.wasStarted);
+    assert.throws(() => {
+      const p = pw.process;
+    })
+
     await assertThrowsAsync(async () => {
-      await pw.run(false);
+      const prom = pw.run(false);
+      await timeout(5);
+
+      assert.isTrue(pw.isRunning);
+      assert.isTrue(pw.wasStarted);
+      assert.doesNotThrow(() => {
+        const p = pw.process;
+        assert.isAbove(p.pid, 0);
+      });
+
+      await prom;
+      assert.isFalse(pw.isRunning);
     });
 
     assert.isTrue(pw.result instanceof ProcessExit);
