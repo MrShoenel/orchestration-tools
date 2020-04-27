@@ -4,6 +4,7 @@ Collection of `orchestration-tools` that help building an infrastructure or to o
 |Version|Coverage|Vulnerabilities|Master|Master-pre-v2.0.0|
 |:-|:-|:-|:-|:-|
 |[![Current Version](https://img.shields.io/npm/v/sh.orchestration-tools.svg)](https://www.npmjs.com/package/sh.orchestration-tools)|[![Coverage Status](https://coveralls.io/repos/github/MrShoenel/orchestration-tools/badge.svg?branch=master)](https://coveralls.io/github/MrShoenel/orchestration-tools?branch=master)|[![Vulnerabilities](https://snyk.io/test/github/MrShoenel/orchestration-tools/badge.svg)](https://snyk.io/test/github/MrShoenel/orchestration-tools)|[![Build Status](https://api.travis-ci.org/MrShoenel/orchestration-tools.svg?branch=master)](https://travis-ci.org/MrShoenel/orchestration-tools)|[![Build Status](https://api.travis-ci.org/MrShoenel/orchestration-tools.svg?branch=master-pre-v2.0.0)](https://travis-ci.org/MrShoenel/orchestration-tools)|
+||||[![Build Status](https://github.com/MrShoenel/orchestration-tools/workflows/Node.js%20CI/badge.svg?branch=master)](https://github.com/MrShoenel/orchestration-tools/actions?query=workflow%3A%22Node.js+CI%22)||
 
 
 ## Install from npm
