@@ -1,7 +1,7 @@
 const Rx = require('rxjs')
 , Observable = Rx.Observable
-, { Job, JobEvent, JobQueue, JobQueueEvent, symbolRun, symbolDone, symbolFailed, symbolIdle
-  } = require('./lib/JobQueue')
+, { Job, JobEvent, JobQueue, JobQueueEvent, symbolRun, symbolDone, symbolFailed,
+  symbolIdle, JobQueueCapacityPolicy } = require('./lib/JobQueue')
 , { JobQueueCapabilities } = require('./lib/JobQueueCapabilities')
 , { Progress, ProgressNumeric, symbolProgress } = require('./lib/Progress')
 , { CalendarScheduler, Calendar, CalendarEventSimple, symbolCalendarEvent, CalendarError
@@ -38,7 +38,7 @@ const Rx = require('rxjs')
 module.exports = {
   Rx, Observable,
   Job, JobEvent, JobQueue, JobQueueEvent, symbolRun, symbolDone, symbolFailed, symbolIdle,
-  JobQueueCapabilities,
+  JobQueueCapabilities, JobQueueCapacityPolicy,
   Progress, ProgressNumeric, symbolProgress,
   CalendarScheduler, Calendar, CalendarEventSimple, symbolCalendarEvent, CalendarError,
   Scheduler,

@@ -1,8 +1,7 @@
-const { assert, expect } = require('chai')
-, { deferMocha, timeout } = require('../tools/Defer')
-, { Job } = require('../lib/JobQueue')
-, { JobQueueCapabilities } = require('../lib/JobQueueCapabilities')
-, { symbolRun, symbolDone, symbolFailed } = require('../lib/JobQueue');
+const { assert } = require('chai')
+, { timeout } = require('../tools/Defer')
+, { Job, JobQueueCapacityPolicy } = require('../lib/JobQueue')
+, { JobQueueCapabilities } = require('../lib/JobQueueCapabilities');
 
 
 
@@ -127,5 +126,60 @@ describe('JobQueueCapabilities', () => {
     assert.isTrue(!q.isWorking && !q.isBusy && j2.isDone && j3.hasFailed);
     assert.strictEqual(q.numJobsFailed, 1);
     assert.approximately(q.workFailed, 3.33, 1e-12);
+  });
+
+  it('should handle constrained capacities well', async() => {
+    let q = new JobQueueCapabilities(1, false, 2, JobQueueCapacityPolicy.Ignore).pause();
+
+    const makeJobs = () => {
+      return {
+        j1: new Job(async() => { await timeout(50); return 42; }),
+        j2: new Job(async() => 43),
+        j3: new Job(async() => 44)
+      };
+    };
+
+    let { j1, j2, j3 } = makeJobs();
+    // This should run all jobs, because adding jobs beyond capacity is ignored.
+    await q.addJob(j1, 0.6).addJob(j2, 0.6).addJob(j3, 0.1).runToCompletion();
+    assert.equal(j1.result, 42);
+    assert.equal(j2.result, 43);
+    assert.equal(j3.result, 44);
+
+
+    q = new JobQueueCapabilities(1, false, 2, JobQueueCapacityPolicy.Discard).pause();
+    ({ j1, j2, j3 } = makeJobs());
+    // This should never execute j3:
+    await q.addJob(j1, 0.6).addJob(j2, 0.6).addJob(j3, 0.1).runToCompletion();
+    assert.equal(j1.result, 42);
+    assert.equal(j2.result, 43);
+    assert.isFalse(j3.wasStarted);
+
+
+
+    q = new JobQueueCapabilities(1, false, 2, JobQueueCapacityPolicy.ThrowError).pause();
+    ({ j1, j2, j3 } = makeJobs());
+    q.addJob(j1, 0.6).addJob(j2, 0.6);
+    assert.throws(() => {
+      q.addJob(j3, 0.1);
+    }, /maximum capacity/i);
+    
+    q.resume();
+    await timeout(1);
+    assert.isTrue(q.isWorking);
+    assert.equal(q.backlog, 1);
+    assert.throws(() => {
+      q.addJob(j3, 0.1);
+    }, /maximum capacity/i);
+
+    await q.runToCompletion();
+
+
+
+    // policy 1337 does not exist..
+    q = new JobQueueCapabilities(1, false, 0, 1337).pause();
+    assert.throws(() => {
+      q.addJob(j1, 0.1);
+    }, /not known/i);
   });
 });
