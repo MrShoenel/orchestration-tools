@@ -2,7 +2,7 @@ const { assert, expect } = require('chai')
 , { EqualityComparer, DefaultEqualityComparer } = require('../lib/collections/EqualityComparer')
 , { Collection } = require('../lib/collections/Collection')
 , { Queue, ConstrainedQueue } = require('../lib/collections/Queue')
-, { Stack } = require('../lib/collections/Stack')
+, { Stack, ConstrainedStack } = require('../lib/collections/Stack')
 , { LinkedList, LinkedListNode, LinkedListEvent } = require('../lib/collections/LinkedList')
 , { Dictionary, DictionaryMapBased } = require('../lib/collections/Dictionary')
 , { Cache, CacheMapBased, CacheWithLoad, EvictionPolicy } = require('../lib/collections/Cache')
@@ -231,15 +231,22 @@ describe(Queue.name, function() {
     const q1 = new ConstrainedQueue();
     assert.strictEqual(q1.maxSize, Number.MAX_SAFE_INTEGER);
 
+	/** @type {ConstrainedQueue.<Number>} */
     const q = new ConstrainedQueue(2);
 
     q.enqueue(42).enqueue(43);
 
     assert.strictEqual(q.peek(), 42);
     assert.strictEqual(q.peekLast(), 43);
-    assert.strictEqual(q.size, 2);
-
-    q.enqueue(44);
+	assert.strictEqual(q.size, 2);
+	
+	const observed = [];
+	q.observableDequeue.subscribe(next => {
+		observed.push(next.item);
+	});
+	q.enqueue(44);
+	assert.strictEqual(observed.length, 1);
+	assert.strictEqual(observed[0], 42);
 
     assert.strictEqual(q.peek(), 43);
     assert.strictEqual(q.peekLast(), 44);
@@ -269,13 +276,13 @@ describe(Stack.name, function() {
   it('should put items on top and remove them there as well', done => {
     const s = new Stack();
 		
-		let hasPopped = false, numPushed = 0;
-		s.observablePop.subscribe(evt => {
-			hasPopped = true;
-		});
-		s.observablePush.subscribe(evt => {
-			numPushed++;
-		});
+	let hasPopped = false, numPushed = 0;
+	s.observablePop.subscribe(evt => {
+		hasPopped = true;
+	});
+	s.observablePush.subscribe(evt => {
+		numPushed++;
+	});
 
     assert.throws(() => {
       s.peek();
@@ -285,13 +292,16 @@ describe(Stack.name, function() {
     });
     assert.throws(() => {
       s.pop();
-		});
+	});
+	assert.throws(() => {
+		s.popBottom();
+	});
 
-		assert.equal(numPushed, 0);
-    
-		s.push(41).push(42);
-		assert.equal(numPushed, 2);
-		assert.isFalse(hasPopped);
+	assert.equal(numPushed, 0);
+
+	s.push(41).push(42);
+	assert.equal(numPushed, 2);
+	assert.isFalse(hasPopped);
 
     assert.strictEqual(s.size, 2);
     assert.strictEqual(s.peek(), 42);
@@ -304,6 +314,84 @@ describe(Stack.name, function() {
 
     done();
   });
+
+  it('should properly pop from the bottom', done => {
+	  const s = new Stack();
+
+	  s.push(1).push(2).push(3);
+	  assert.strictEqual(s.size, 3);
+	  assert.strictEqual(s.peekBottom(), 1);
+	  assert.strictEqual(s.peek(), 3);
+
+	  assert.strictEqual(s.popBottom(), 1);
+	  assert.strictEqual(s.size, 2);
+	  assert.strictEqual(s.peekBottom(), 2);
+	  assert.strictEqual(s.peek(), 3);
+
+	  done();
+  });
+});
+
+
+
+describe(ConstrainedStack.name, function() {
+	it('should pop from the bottom if full', done => {
+		/** @type {ConstrainedStack.<Number>} */
+		const cs = new ConstrainedStack(2);
+
+		assert.throws(() => {
+			cs.maxSize = 0;
+		}, /less than/i);
+		assert.throws(() => {
+			cs.maxSize = 'foo';
+		}, /not a number/i);
+
+		const observed = [];
+		cs.observablePopBottom.subscribe(next => {
+			observed.push(next.item);
+		});
+
+		cs.push(42).push(43);
+		assert.strictEqual(cs.size, 2);
+		assert.strictEqual(observed.length, 0);
+
+		cs.push(44);
+		assert.strictEqual(cs.size, 2);
+		assert.strictEqual(observed.length, 1);
+		assert.strictEqual(cs.peekBottom(), 43);
+		assert.strictEqual(cs.peek(), 44);
+
+		done();
+	});
+
+	it('should truncate properly from the bottom', done => {
+		const cs = new ConstrainedStack(3);
+
+		cs.push(1).push(2).push(3).push(4).push(5);
+
+		assert.strictEqual(cs.size, 3);
+		assert.deepEqual(cs._items, [3,4,5]);
+
+		assert.strictEqual(cs.popBottom(), 3);
+		assert.strictEqual(cs.pop(), 5);
+		assert.deepEqual(cs._items, [4]);
+
+		cs.push(6).push(7);
+		assert.strictEqual(cs.size, 3);
+		assert.deepEqual(cs._items, [4,6,7]);
+
+		cs.push(8);
+		assert.strictEqual(cs.size, 3);
+		assert.deepEqual(cs._items, [6,7,8]);
+
+		done();
+	});
+
+	it('should allow using the large default max-size', done => {
+		const cs = new ConstrainedStack();
+		assert.strictEqual(cs.maxSize, Number.MAX_SAFE_INTEGER);
+		done();
+	});
 });
 
 
