@@ -1434,6 +1434,27 @@ describe(DictionaryMapBased.name, function() {
 
 		done();
 	});
+
+	it('should be invertible', done => {
+		/** @type {DictionaryMapBased.<String, Number>} */
+		const d = new DictionaryMapBased();
+
+		d.set('A', 42).set('B', 42).set('C', 43);
+
+		let inv = d.invert();
+
+		assert.strictEqual(inv.size, 2);
+		assert.deepEqual(inv.get(42), ['A', 'B']);
+		assert.deepEqual(inv.get(43), ['C']);
+
+		inv = d.invert(EqualityComparer.default);
+
+		assert.strictEqual(inv.size, 2);
+		assert.deepEqual(inv.get(42), ['A', 'B']);
+		assert.deepEqual(inv.get(43), ['C']);
+
+		done();
+	});
 });
 
 
