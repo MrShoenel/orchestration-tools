@@ -25,7 +25,8 @@ const Rx = require('rxjs')
 , { EqualityComparer, DefaultEqualityComparer } = require('./lib/collections/EqualityComparer')
 , { Collection, CollectionEvent, symbolCollectionClear } = require('./lib/collections/Collection')
 , { Queue, ConstrainedQueue, symbolQueueDequeue, symbolQueueEnqueue, symbolQueueTakeOut } = require('./lib/collections/Queue')
-, { Stack, symbolStackPop, symbolStackPush } = require('./lib/collections/Stack')
+, { Stack, ConstrainedStack, symbolStackPop, symbolStackPush, symbolStackPopBottom
+  } = require('./lib/collections/Stack')
 , { LinkedList, LinkedListNode, LinkedListEvent, symbolLinkedListAdd, symbolLinkedListRemove
 	} = require('./lib/collections/LinkedList')
 , { Dictionary, DictionaryMapBased, symbolDictionaryDelete, symbolDictionaryGet, symbolDictionarySet
@@ -57,7 +58,7 @@ module.exports = {
   EqualityComparer, DefaultEqualityComparer,
   Collection, CollectionEvent, symbolCollectionClear,
   Queue, ConstrainedQueue, symbolQueueDequeue, symbolQueueEnqueue, symbolQueueTakeOut,
-  Stack, symbolStackPop, symbolStackPush,
+  Stack, ConstrainedStack, symbolStackPop, symbolStackPush, symbolStackPopBottom,
   LinkedList, LinkedListNode, LinkedListEvent, symbolLinkedListAdd, symbolLinkedListRemove,
   Dictionary, DictionaryMapBased, symbolDictionaryDelete, symbolDictionaryGet, symbolDictionarySet,
   Cache, CacheMapBased, CacheWithLoad, EvictionPolicy,
