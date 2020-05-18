@@ -231,15 +231,22 @@ describe(Queue.name, function() {
     const q1 = new ConstrainedQueue();
     assert.strictEqual(q1.maxSize, Number.MAX_SAFE_INTEGER);
 
+	/** @type {ConstrainedQueue.<Number>} */
     const q = new ConstrainedQueue(2);
 
     q.enqueue(42).enqueue(43);
 
     assert.strictEqual(q.peek(), 42);
     assert.strictEqual(q.peekLast(), 43);
-    assert.strictEqual(q.size, 2);
-
-    q.enqueue(44);
+	assert.strictEqual(q.size, 2);
+	
+	const observed = [];
+	q.observableDequeue.subscribe(next => {
+		observed.push(next.item);
+	});
+	q.enqueue(44);
+	assert.strictEqual(observed.length, 1);
+	assert.strictEqual(observed[0], 42);
 
     assert.strictEqual(q.peek(), 43);
     assert.strictEqual(q.peekLast(), 44);
