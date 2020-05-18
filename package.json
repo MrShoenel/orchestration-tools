@@ -1,13 +1,13 @@
 {
   "name": "sh.orchestration-tools",
-  "version": "2.27.0",
+  "version": "2.28.0",
   "description": "A collection of tools that help building infrastructures or to orchestrate resources.",
   "main": "index.js",
   "scripts": {
     "test": "mocha",
     "test_ci": "nyc --reporter=html --reporter=text mocha",
-    "posttest_ci": "npm run coverage",
-    "coverage": "nyc report --reporter=text-lcov | coveralls"
+    "_posttest_ci": "npm run coverage",
+    "_coverage": "nyc report --reporter=text-lcov | coveralls"
   },
   "repository": {
     "type": "git",
@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "chai": "^4.2.*",
-    "ical-expander": "^2.1.0",
+    "ical-expander": "^2.1.*",
     "jsbi": "^3.1.*",
     "rxjs": "^6.5.*"
   }
