@@ -165,6 +165,16 @@ describe('Tools', () => {
 		done();
 	});
 
+	it('should create new Arrays instead of copying the reference', done => {
+		const o1 = { arr: [42, 43, null, true] }
+		, result = mergeObjects({}, o1);
+
+		assert.isFalse(result.arr === o1.arr);
+		assert.deepEqual(result.arr, o1.arr);
+
+		done();
+	});
+
 	it('should deep-clone objects using JSON-stringify/parse', done => {
 		const o1 = {
 			a: {
