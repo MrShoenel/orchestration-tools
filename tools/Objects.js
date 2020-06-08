@@ -37,7 +37,6 @@ const mergeObjects = (...objects) => {
 
       switch (nextType) {
         case '[object Null]':
-        case '[object Array]': // Maybe later implement something here and for the next cases
         case '[object Number]':
         case '[object String]':
         case '[object Boolean]':
@@ -46,6 +45,10 @@ const mergeObjects = (...objects) => {
         case '[object Undefined]':
         case '[object RegExp]':
           prev[key] = next[key];
+          break;
+        case '[object Array]':
+          // While the contents stay the same, the array itself is not copied.
+          prev[key] = Array.prototype.slice.call(next[key], 0);
           break;
 
         case '[object Object]':
