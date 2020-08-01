@@ -1,6 +1,6 @@
 {
   "name": "sh.orchestration-tools",
-  "version": "2.29.1",
+  "version": "2.29.2",
   "description": "A collection of tools that help building infrastructures or to orchestrate resources.",
   "main": "index.js",
   "scripts": {
@@ -33,13 +33,13 @@
   "homepage": "https://github.com/MrShoenel/orchestration-tools#readme",
   "devDependencies": {
     "coveralls": "^3.1.*",
-    "mocha": "^7.1.*",
-    "nyc": "^15.0.*"
+    "mocha": "^8.1.*",
+    "nyc": "^15.1.*"
   },
   "dependencies": {
     "chai": "^4.2.*",
     "ical-expander": "^2.1.*",
     "jsbi": "^3.1.*",
-    "rxjs": "^6.5.*"
+    "rxjs": "^6.6.*"
   }
 }
