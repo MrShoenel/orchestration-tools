@@ -1,9 +1,9 @@
 const { assert, expect } = require('chai')
-, { timeout, defer, deferMocha } = require('../tools/Defer')
-, { assertThrowsAsync } = require('../tools/AssertAsync')
-, { deepCloneObject, mergeObjects } = require('../tools/Objects')
-, { throwError, wrapError } = require('../tools/Error')
-, { formatError, formatValue } = require('../tools/Format')
+, { timeout, defer, deferMocha } = require('../lib/tools/Defer')
+, { assertThrowsAsync } = require('../lib/tools/AssertAsync')
+, { deepCloneObject, mergeObjects } = require('../lib/tools/Objects')
+, { throwError, wrapError } = require('../lib/tools/Error')
+, { formatError, formatValue } = require('../lib/tools/Format')
 
 
 describe('Tools', () => {

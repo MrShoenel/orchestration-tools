@@ -1,13 +1,14 @@
 {
   "name": "sh.orchestration-tools",
-  "version": "2.30.0",
+  "version": "2.30.1",
   "description": "A collection of tools that help building infrastructures or to orchestrate resources.",
   "main": "index.js",
   "scripts": {
     "test": "mocha",
     "test_ci": "nyc --reporter=html --reporter=text mocha",
     "posttest_ci": "npm run coverage",
-    "coverage": "nyc report --reporter=text-lcov | coveralls"
+    "coverage": "nyc report --reporter=text-lcov | coveralls",
+    "jsdoc": "./node_modules/.bin/jsdoc --package package.json -R readme.md --access \"public,undefined\" -r lib/"
   },
   "repository": {
     "type": "git",
