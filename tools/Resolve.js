@@ -124,7 +124,7 @@ class Resolve {
    * 
    * @see {Resolve.isTypeOf}
    * @template T
-   * @param {any|T|(() => T)|Promise.<T>} value a literal value or an (async) function
+   * @param {any|T|(producerHandler.<T>)|Promise.<T>} value a literal value or an (async) function
    * or Promise that may produce a value of the expected type or exemplary value.
    * @param {any|string|T} [exampleOrTypeOrClassName] Optional. If not given, will only
    * resolve functions and promises to a value that is not a function and not a Promise.
@@ -180,7 +180,7 @@ class Resolve {
    * Convenience method for resolving functions and/or Promises to values. Calls
    * toValue() without an example which leads to resolving the given function or
    * Promise until it yields a value that is not a function and not a Promise.
-   * @param {(() => (T|Promise.<T>))|Promise.<T>} asyncFuncOrPromise An (async)
+   * @param {producerHandler.<T|Promise.<T>>|Promise.<T>} asyncFuncOrPromise An (async)
    * function or a Promise.
    * @returns {T} The result of deeply resolving the given function or Promise.
    */

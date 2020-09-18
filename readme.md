@@ -12,6 +12,10 @@ This package can be installed using the following command: `npm install sh.orche
 
 Please note that between `v1.8.0` and `v2.0.0` there were breaking changes regarding `Progress` itself and how it is handled in conjunction with `Job`. If you therefore need to stick with `v1.x.x`, please use the latest stable from the `master-pre-v2.0.0`-branch.
 
+## JSDoc
+
+The tools come fully typed in JSDoc, and the documentation for all released versions can also be found here: <https://mrshoenel.github.io/orchestration-tools/>.
+
 ## Current list of included tools
 * __Job__ - a class that can encapsulate and represent any (asynchronous) work. Supports `Promise`-based work, enhanced states, simple eventing and progress. As of `v2.1.0`, __JobWithCost__ has been removed and cost is now supported by Job.
 * __JobQueue__ - a queue that supports parallel jobs with free degree of parallelism.
@@ -23,7 +27,7 @@ Please note that between `v1.8.0` and `v2.0.0` there were breaking changes regar
 * __ProcessWrapper__ and related classes (such as `ProcessResult` and `ProcessOutput`) to encapsulate child processes and let them run as `Promises` or `Obervable`s (since `v1.8.0`).
 * __Resolve__ - a class containing helpers to determine types of variables and to resolve functions and `Promise`s to values of any type (since `v2.6.0`).
 * __ManualScheduler__ and __ManualSchedule__ provide mechanisms that align with the scheduler-concept and allow to trigger events manually (since `v2.7.0`).
-* __Collection__, __Queue__, __ConstrainedQueue__ (a queue with limited size), __Stack__, __ConstrainedStack__ (a stack with limited size, since `v2.28.0`) and __LinkedList__\*/__LinkedListNode__\* provide fully tested collections that are often needed in JavaScript (since `v2.9.0`/\*`v2.10.0`)
+* __Collection__, __Queue__, __ConstrainedQueue__ (a queue with limited size), __ProducerConsumerQueue__ (a queue where producers add (defer if full) and consumers obtain items (defer if empty), since `v2.30.0`), __Stack__, __ConstrainedStack__ (a stack with limited size, since `v2.28.0`) and __LinkedList__\*/__LinkedListNode__\* provide fully tested collections that are often needed in JavaScript (since `v2.9.0`/\*`v2.10.0`)
 * __Dictionary__ and __Cache__ (which extends it) are fully generic dictionaries that support strings and `Symbol`s as keys. __Cache__ is a capacity-constrained dictionary that supports eviction-policies such as `LRU/MRU`, `LFU/MFU`, `FIFO/LIFO` etc. Also, it supports eviction based on an optional timeout per value (like a weak map) (since `v2.21.0`; both are deprecated, use __DictionaryMapBased__ and __CacheMapBased__ instead as of `v2.22.0`)
 * __CacheWithLoad__, an extension of __CacheMapBased__ that introduces a second concept of size constrainment based on a load (since `v2.22.0`).
 * __EqualityComparer__ and __DefaultEqualityComparer__ are used within the *collections* to provide default- and custom-capabilities for comparing items (since `v2.9.0`)

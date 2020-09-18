@@ -1,15 +1,14 @@
 const { assert, expect } = require('chai')
 , { EqualityComparer, DefaultEqualityComparer } = require('../lib/collections/EqualityComparer')
 , { Collection } = require('../lib/collections/Collection')
-, { Queue, ConstrainedQueue } = require('../lib/collections/Queue')
+, { Queue, ConstrainedQueue, ProducerConsumerQueue } = require('../lib/collections/Queue')
 , { Stack, ConstrainedStack } = require('../lib/collections/Stack')
 , { LinkedList, LinkedListNode, LinkedListEvent } = require('../lib/collections/LinkedList')
 , { Dictionary, DictionaryMapBased } = require('../lib/collections/Dictionary')
 , { Cache, CacheMapBased, CacheWithLoad, EvictionPolicy } = require('../lib/collections/Cache')
 , { Comparer, DefaultComparer } = require('../lib/collections/Comparer')
 , JSBI = require('jsbi')
-, { timeout } = require('../tools/Defer')
-, { Resolve } = require('../tools/Resolve');
+, { timeout } = require('../tools/Defer');
 
 
 class NoEq extends EqualityComparer {
@@ -268,6 +267,62 @@ describe(Queue.name, function() {
 
     done();
   });
+});
+
+
+
+describe(ProducerConsumerQueue.name, function() {
+	it('should defer enqueueing new items if no space available', async() => {
+		/** @type {ProducerConsumerQueue.<Number>} */
+		const q = new ProducerConsumerQueue(2);
+
+		await q.enqueue(42);
+		await q.enqueue(43);
+
+		const p = q.enqueue(44);
+
+		assert.deepStrictEqual(q._items, [42, 43]);
+		assert.strictEqual(q._deferredEnqueues.size, 1);
+
+		assert.strictEqual(await q.dequeue(), 42);
+		
+		await timeout(5);
+		// now the enqueue should have gone through
+		assert.strictEqual(await p, q);
+		assert.deepStrictEqual(q._items, [43, 44]);
+		assert.strictEqual(q._deferredEnqueues.size, 0);
+	});
+
+	it('should defer dequeueing if no items are available', async() => {
+		/** @type {ProducerConsumerQueue.<Number>} */
+		const q = new ProducerConsumerQueue();
+
+		/** @type {String[]} */
+		const vals = [];
+
+		const req1 = q.dequeue().then(v => vals.push(v))
+		, req2 = q.dequeue().then(v => vals.push(v))
+		, req3 = q.dequeue().then(v => vals.push(v));
+
+		await timeout(10);
+		// Still no request is fulfilled
+		assert.isTrue(vals.length === 0);
+
+		await q.enqueue('42');
+		await req1;
+		assert.deepStrictEqual(vals, ['42']);
+
+		const p = q.enqueue('43');
+		// hasn't yet been dequeued..
+		assert.strictEqual(q.size, 1);
+		await p;
+		await req2;
+
+		await q.enqueue('44');
+		await req3;
+		
+		assert.deepStrictEqual(vals, ['42', '43', '44']);
+	});
 });
 
 

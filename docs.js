@@ -2,8 +2,69 @@
  * @template T
  * @typedef Deferred
  * @property {Promise.<T>} promise the underyling Promise
- * @property {(val?: any) => void} resolve the resolve function
+ * @property {(val?: T) => void} resolve the resolve function
  * @property {(err?: any) => void} reject the reject function
+ */
+
+
+/**
+ * @template T
+ * @callback callbackHandler
+ * @param {T} value
+ * @return {any}
+ */
+
+
+/**
+ * @template T
+ * @callback producerHandler
+ * @return {T}
+ */
+
+
+/**
+ * @template T1, TResult
+ * @callback consumerProducer1ArgHandler
+ * @param {T1} value1
+ * @returns {TResult} 
+ */
+
+
+/**
+ * @template T1, T2, TResult
+ * @callback consumerProducer2ArgHandler
+ * @param {T1} value1
+ * @param {T2} value2
+ * @returns {TResult} 
+ */
+
+
+/**
+ * @template T1, T2, T3, TResult
+ * @callback consumerProducer3ArgHandler
+ * @param {T1} value1
+ * @param {T2} value2
+ * @param {T3} value3
+ * @returns {TResult} 
+ */
+
+
+/**
+ * @template T1, T2, T3, T4, TResult
+ * @callback consumerProducer4ArgHandler
+ * @param {T1} value1
+ * @param {T2} value2
+ * @param {T3} value3
+ * @param {T4} value4
+ * @returns {TResult} 
+ */
+
+
+/**
+ * @template T1
+ * @callback predicate1Arg
+ * @param {T1} value1
+ * @returns {boolean}
  */
 
 
