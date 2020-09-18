@@ -23,67 +23,67 @@ const deepCloneObject = obj => JSON.parse(JSON.stringify(obj));
  * @returns {Object} the result of the merge
  */
 const mergeObjects = (...objects) => {
-  if (objects.length === 0) {
-    throw new Error('No objects were given.');
-  } else if (objects.length === 1) {
-    return objects[0];
-  }
+	if (objects.length === 0) {
+		throw new Error('No objects were given.');
+	} else if (objects.length === 1) {
+		return objects[0];
+	}
 
-  const target = {};
-  
-  objects.reduce((prev, next) => {
-    for (const key of Object.keys(next)) {
-      const nextType = Object.prototype.toString.call(next[key]);
+	const target = {};
+	
+	objects.reduce((prev, next) => {
+		for (const key of Object.keys(next)) {
+			const nextType = Object.prototype.toString.call(next[key]);
 
-      switch (nextType) {
-        case '[object Null]':
-        case '[object Number]':
-        case '[object String]':
-        case '[object Boolean]':
-        case '[object Function]':
-        case '[object AsyncFunction]':
-        case '[object Undefined]':
-        case '[object RegExp]':
-          prev[key] = next[key];
-          break;
-        case '[object Array]':
-          // While the contents stay the same, the array itself is not copied.
-          prev[key] = Array.prototype.slice.call(next[key], 0);
-          break;
+			switch (nextType) {
+				case '[object Null]':
+				case '[object Number]':
+				case '[object String]':
+				case '[object Boolean]':
+				case '[object Function]':
+				case '[object AsyncFunction]':
+				case '[object Undefined]':
+				case '[object RegExp]':
+					prev[key] = next[key];
+					break;
+				case '[object Array]':
+					// While the contents stay the same, the array itself is not copied.
+					prev[key] = Array.prototype.slice.call(next[key], 0);
+					break;
 
-        case '[object Object]':
-          // Check if the current value is a class instance (ctor different from Object):
-          try {
-            const proto = Object.getPrototypeOf(next[key]);
-            if (proto.constructor !== Object) {
-              prev[key] = next[key];
-              break;
-            }
-          } catch (e) { } // just move on
+				case '[object Object]':
+					// Check if the current value is a class instance (ctor different from Object):
+					try {
+						const proto = Object.getPrototypeOf(next[key]);
+						if (proto.constructor !== Object) {
+							prev[key] = next[key];
+							break;
+						}
+					} catch (e) { } // just move on
 
-          if (Object.prototype.toString.call(prev[key]) !== '[object Object]') {
-            prev[key] = {};
-          }
-          prev[key] = mergeObjects(prev[key], next[key]);
-          break;
+					if (Object.prototype.toString.call(prev[key]) !== '[object Object]') {
+						prev[key] = {};
+					}
+					prev[key] = mergeObjects(prev[key], next[key]);
+					break;
 
-        default:
-          // Unfortunately, nodejs does not yet support /\[object\s\p{Letter}[a-z0-9_\-]*\]/iu
-          if (/\[object\s[a-z_\-][a-z0-9_\-]*\]/i.test(nextType)) {
-            // This will match all other built-in types.
-            prev[key] = next[key];
-          }
-          continue;
-      }
-    }
-    return prev;
-  }, target);
+				default:
+					// Unfortunately, nodejs does not yet support /\[object\s\p{Letter}[a-z0-9_\-]*\]/iu
+					if (/\[object\s[a-z_\-][a-z0-9_\-]*\]/i.test(nextType)) {
+						// This will match all other built-in types.
+						prev[key] = next[key];
+					}
+					continue;
+			}
+		}
+		return prev;
+	}, target);
 
-  return target;
+	return target;
 };
 
 
 module.exports = Object.freeze({
-  deepCloneObject,
-  mergeObjects
+	deepCloneObject,
+	mergeObjects
 });

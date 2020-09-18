@@ -9,7 +9,7 @@ require('../docs');
  * the amount of milliseconds given.
  */
 const timeout = ms => new Promise((resolve, reject) => {
-  setTimeout(resolve, ms);
+	setTimeout(resolve, ms);
 });
 
 
@@ -20,19 +20,19 @@ const timeout = ms => new Promise((resolve, reject) => {
  * @returns {Deferred}
  */
 const defer = () => {
-  let _resolve = null;
-  let _reject = null;
+	let _resolve = null;
+	let _reject = null;
 
-  const promise = new Promise((resolve, reject) => {
-    _resolve = resolve;
-    _reject = reject;
-  });
+	const promise = new Promise((resolve, reject) => {
+		_resolve = resolve;
+		_reject = reject;
+	});
 
-  return {
-    promise,
-    resolve: _resolve,
-    reject: _reject
-  };
+	return {
+		promise,
+		resolve: _resolve,
+		reject: _reject
+	};
 };
 
 
@@ -49,19 +49,19 @@ const defer = () => {
  * promise.
  */
 const deferMocha = () => {
-  const deferred = defer();
+	const deferred = defer();
 
-  return [deferred.promise, error => {
-    if (error === void 0) {
-      deferred.resolve();
-    } else {
-      deferred.reject(error);
-    }
-  }];
+	return [deferred.promise, error => {
+		if (error === void 0) {
+			deferred.resolve();
+		} else {
+			deferred.reject(error);
+		}
+	}];
 };
 
 module.exports = Object.freeze({
-  timeout,
-  defer,
-  deferMocha
+	timeout,
+	defer,
+	deferMocha
 });
