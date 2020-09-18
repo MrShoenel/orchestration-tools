@@ -12,6 +12,10 @@ This package can be installed using the following command: `npm install sh.orche
 
 Please note that between `v1.8.0` and `v2.0.0` there were breaking changes regarding `Progress` itself and how it is handled in conjunction with `Job`. If you therefore need to stick with `v1.x.x`, please use the latest stable from the `master-pre-v2.0.0`-branch.
 
+## JSDoc
+
+The tools come fully typed in JSDoc, and the documentation for all released versions can also be found here: <https://mrshoenel.github.io/orchestration-tools/>.
+
 ## Current list of included tools
 * __Job__ - a class that can encapsulate and represent any (asynchronous) work. Supports `Promise`-based work, enhanced states, simple eventing and progress. As of `v2.1.0`, __JobWithCost__ has been removed and cost is now supported by Job.
 * __JobQueue__ - a queue that supports parallel jobs with free degree of parallelism.
