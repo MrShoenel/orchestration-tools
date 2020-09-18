@@ -21,7 +21,7 @@ class NoEq extends EqualityComparer {
 
 describe(Job.name, () => {
   it('should allow for additional properties', async() => {
-    const j = new Job(async() => await timeout(50), "foo");
+    const j = new Job(async() => await timeout(55), "foo");
 
     assert.strictEqual(j.name, "foo");
     j.properties.set('batz', 1337);
@@ -39,7 +39,7 @@ describe(Job.name, () => {
 
     const rp = j.run();
     assert.doesNotThrow(() => j.startTime);
-    await timeout(10);
+    await timeout(15);
     assert.isAtLeast(j.runDurationMs, 10);
     await rp;
     assert.doesNotThrow(() => j.stopTime);
