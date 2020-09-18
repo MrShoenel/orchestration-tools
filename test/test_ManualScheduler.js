@@ -1,6 +1,6 @@
 const { assert, expect } = require('chai')
-, { timeout } = require('../tools/Defer')
-, { assertThrowsAsync } = require('../tools/AssertAsync')
+, { timeout } = require('../lib/tools/Defer')
+, { assertThrowsAsync } = require('../lib/tools/AssertAsync')
 , { Schedule, ScheduleEvent, PreliminaryScheduleEvent } = require('../lib/Schedule')
 , { ManualSchedule, ManualScheduler, ManualScheduleEventSimple, symbolManualSchedulerEvent
 	} = require('../lib/ManualScheduler');

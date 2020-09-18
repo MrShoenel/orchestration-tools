@@ -1,8 +1,8 @@
 require('../docs');
 
 const { assert, expect } = require('chai')
-, { assertThrowsAsync } = require('../tools/AssertAsync')
-, { Resolve } = require('../tools/Resolve');
+, { assertThrowsAsync } = require('../lib/tools/AssertAsync')
+, { Resolve } = require('../lib/tools/Resolve');
 
 
 class TestClass {};

@@ -1,7 +1,7 @@
 const { assert, expect } = require('chai')
-, { timeout } = require('../tools/Defer')
+, { timeout } = require('../lib/tools/Defer')
 , { EqualityComparer } = require('../lib/collections/EqualityComparer')
-, { assertThrowsAsync } = require('../tools/AssertAsync')
+, { assertThrowsAsync } = require('../lib/tools/AssertAsync')
 , { ProgressNumeric } = require('../lib/Progress')
 , { Job, JobQueue, symbolRun, symbolDone, symbolFailed, symbolIdle } = require('../lib/JobQueue')
 , { JobQueueCapabilities } = require('../lib/JobQueueCapabilities');

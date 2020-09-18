@@ -8,7 +8,7 @@ const { assert, expect } = require('chai')
 , { Cache, CacheMapBased, CacheWithLoad, EvictionPolicy } = require('../lib/collections/Cache')
 , { Comparer, DefaultComparer } = require('../lib/collections/Comparer')
 , JSBI = require('jsbi')
-, { timeout } = require('../tools/Defer');
+, { timeout } = require('../lib/tools/Defer');
 
 
 class NoEq extends EqualityComparer {

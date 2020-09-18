@@ -1,5 +1,5 @@
 const { assert } = require('chai')
-, { timeout } = require('../tools/Defer')
+, { timeout } = require('../lib/tools/Defer')
 , { Job, JobQueueCapacityPolicy } = require('../lib/JobQueue')
 , { JobQueueCapabilities } = require('../lib/JobQueueCapabilities');
 

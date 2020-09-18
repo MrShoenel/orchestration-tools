@@ -1,5 +1,5 @@
 const { assert, expect } = require('chai')
-, { timeout } = require('../tools/Defer')
+, { timeout } = require('../lib/tools/Defer')
 , { Job, JobQueue } = require('../lib/JobQueue')
 , { Progress, ProgressNumeric } = require('../lib/Progress');
 

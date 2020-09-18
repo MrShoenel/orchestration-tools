@@ -1,7 +1,7 @@
 const { assert, expect } = require('chai')
 , path = require('path')
-, { timeout, defer } = require('../tools/Defer')
-, { assertThrowsAsync } = require('../tools/AssertAsync')
+, { timeout, defer } = require('../lib/tools/Defer')
+, { assertThrowsAsync } = require('../lib/tools/AssertAsync')
 , { ProcessOutput, ProcessWrapper, ProcessResult, ProcessExit, ProcessErrorResult, symbolProcessOutput } = require('../lib/ProcessWrapper')
 , { Progress } = require('../lib/Progress')
 , { Job } = require('../lib/JobQueue');
