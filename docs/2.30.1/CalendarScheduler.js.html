@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: CalendarScheduler.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: CalendarScheduler.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>require('../docs');
+
+const { Scheduler } = require('./Scheduler')
+, { Schedule, ScheduleEvent, PreliminaryScheduleEvent, symbolScheduleError } = require('./Schedule')
+, { wrapError } = require('./tools/Error')
+, IcalExpander = require('ical-expander')
+, Rx = require('rxjs')
+, Observable = Rx.Observable // we do this for annotations
+, fromEvent = Rx.fromEvent
+, symbolCalendarEvent = Symbol('calendarEvent');
+
+
+/**
+ * @author Sebastian Hönel &lt;development@hoenel.net>
+ */
+class MyIcalExpander extends IcalExpander {
+	constructor(opts) {
+		super(opts);
+	};
+
+	/**
+	 * @param {Date} after
+	 * @param {Date} before
+	 * @returns {{ events: Array.&lt;Event>, occurrences: Array.&lt;Event> }}
+	 */
+	betweenWithExceptions(after, before) {
+		function isEventWithinRange(startTime, endTime) {
+			return (!after || endTime >= after.getTime()) &amp;&amp;
+			(!before || startTime &lt;= before.getTime());
+		}
+
+		function getTimes(eventOrOccurrence) {
+			const startTime = eventOrOccurrence.startDate.toJSDate().getTime();
+			let endTime = eventOrOccurrence.endDate.toJSDate().getTime();
+
+			// If it is an all day event, the end date is set to 00:00 of the next day
+			// So we need to make it be 23:59:59 to compare correctly with the given range
+			if (eventOrOccurrence.endDate.isDate &amp;&amp; (endTime > startTime)) {
+				endTime -= 1;
+			}
+
+			return { startTime, endTime };
+		}
+
+		const exceptions = [];
+
+		this.events.forEach((event) => {
+			if (event.isRecurrenceException()) exceptions.push(event);
+		});
+
+		const ret = {
+			events: [],
+			occurrences: []
+		};
+
+		this.events/*.filter(e => !e.isRecurrenceException())*/.forEach((event) => {
+			const exdates = [];
+
+			event.component.getAllProperties('exdate').forEach((exdateProp) => {
+				const exdate = exdateProp.getFirstValue();
+				exdates.push(exdate.toJSDate().getTime());
+			});
+
+			// Recurring event is handled differently
+			if (event.isRecurring()) {
+				const iterator = event.iterator();
+
+				let next;
+				let i = 0;
+
+				do {
+					i += 1;
+					next = iterator.next();
+					if (next) {
+						const occurrence = event.getOccurrenceDetails(next);
+
+						const { startTime, endTime } = getTimes(occurrence);
+
+						const isOccurrenceExcluded = exdates.indexOf(startTime) !== -1;
+
+						// TODO check that within same day?
+						const exception = exceptions.find(ex => ex.uid === event.uid &amp;&amp; ex.recurrenceId.toJSDate().getTime() === occurrence.startDate.toJSDate().getTime());
+
+						// We have passed the max date, stop
+						if (before &amp;&amp; startTime > before.getTime()) break;
+
+						// Check that we are within our range
+						if (isEventWithinRange(startTime, endTime)) {
+							if (exception) {
+								ret.events.push(exception);
+							} else if (!isOccurrenceExcluded) {
+								ret.occurrences.push(occurrence);
+							}
+						}
+					}
+				}
+				while (next &amp;&amp; (!this.maxIterations || i &lt; this.maxIterations));
+
+				return;
+			}
+
+			// Non-recurring event:
+			const { startTime, endTime } = getTimes(event);
+
+			if (isEventWithinRange(startTime, endTime)) ret.events.push(event);
+		});
+
+		return ret;
+	};
+};
+
+
+/**
+ * @author Sebastian Hönel &lt;development@hoenel.net>
+ */
+class CalendarError {
+	/**
+	 * @param {CalendarScheduler} scheduler The CalendarScheduler
+	 * @param {Calendar} calendar The Calendar
+	 * @param {Error|any} error The error that occurred.
+	 */
+	constructor(scheduler, calendar, error) {
+		if (!(scheduler instanceof CalendarScheduler)) {
+			throw new Error('The given scheduler is not an instance of CalendarScheduler.');
+		}
+		if (!(calendar instanceof Calendar)) {
+			throw new Error('The given calendar is not an instance of Calendar.');
+		}
+
+		this.scheduler = scheduler;
+		this.calendar = calendar;
+		this.error = wrapError(error);
+	};
+};
+
+
+/**
+ * @author Sebastian Hönel &lt;development@hoenel.net>
+ */
+class CalendarEventSimple extends ScheduleEvent {
+	/**
+	 * @param {Calendar} calendar the Calendar this event is coming from
+	 * @param {Event|iCalEvent} event
+	 * @param {boolean} isBeginOfEvent should be true if this event
+	 * marks the start/beginning of the event
+	 * @param {boolean} isEndOfEvent should be true if this event
+	 * marks the end of the event
+	 */
+	constructor(calendar, event, isBeginOfEvent = true, isEndOfEvent = false) {
+		super(calendar, event);
+		this.calendar = calendar;
+		this.event = event;
+		this.isBeginOfEvent = isBeginOfEvent;
+		this.isEndOfEvent = isEndOfEvent;
+	};
+
+	/**
+	 * @returns {string}
+	 */
+	get id() {
+		return `${this.event.uid}`;
+	};
+
+	/**
+	 * @returns {string}
+	 */
+	get summary() {
+		return `${this.event.summary}`;
+	};
+
+	/**
+	 * @returns {string}
+	 */
+	get description() {
+		return `${this.event.description}`;
+	};
+
+	/**
+	 * This property is useful, if the description contains JSON.
+	 * This property will throw, if description does not contain
+	 * JSON and it is being accessed.
+	 * 
+	 * @returns {Object}
+	 */
+	get descriptionJson() {
+		return JSON.parse(this.description);
+	};
+};
+
+
+/**
+ * The CalendarScheduler is a Scheduler for Calendars that provide Events
+ * from ical.js. It periodically checks all the calendars added to it and
+ * schedules their events so that their are triggered. The periodicity as
+ * well as the look-ahead are configurable.
+ * 
+ * @author Sebastian Hönel &lt;development@hoenel.net>
+ */
+class CalendarScheduler extends Scheduler {
+	/**
+	 * @returns {number} Returns the amount of seconds a minute has.
+	 */
+	static get oneMinuteInSecs() {
+		return 60;
+	};
+
+	/**
+	 * @returns {number} Returns the amount of seconds an hour has.
+	 */
+	static get oneHourInSecs() {
+		return 3600;
+	};
+
+	/**
+	 * @returns {number} Returns the amount of seconds a day has.
+	 */
+	static get oneDayInSecs() {
+		return 86400;
+	};
+
+	/**
+	 * @returns {number} Returns the amount of seconds a week has.
+	 */
+	static get oneWeekInSecs() {
+		return 604800;
+	};
+
+	/**
+	 * @param {number} scheduleIntervalSecs an interval, in seconds, to check
+	 * all calendars and schedule their events (regardless of Calendar's update-
+	 * interval). Since a calendar is usually not required to be accurate to the
+	 * millisecond, the lowests allowed value is five (5) seconds. The recommen-
+	 * ded value is 30 seconds and there is no upper limit.
+	 * @param {number} [lookAheadSecs] Optional. Defaults to twice the amount of
+	 * scheduleIntervalSecs (60/one minute). The amount of seconds to look ahead
+	 * when scheduling all Calendars. This number must be equal to or larger than
+	 * scheduleIntervalSecs; otherwise, events will be missed.
+	 */
+	constructor(scheduleIntervalSecs = 0.5 * CalendarScheduler.oneMinuteInSecs, lookAheadSecs = CalendarScheduler.oneMinuteInSecs) {
+		super(symbolCalendarEvent);
+
+		/**
+		 * @type {number}
+		 * @protected
+		 */
+		this._scheduleIntervalSecs = null;
+		this.scheduleIntervalSecs = scheduleIntervalSecs;
+
+		/**
+		 * @type {number}
+		 * @protected
+		 */
+		this._lookAheadSecs = null;
+		this.lookAheadSecs = lookAheadSecs;
+
+		/** @type {Array.&lt;Calendar>} */
+		this.calendars = [];
+
+		/**
+		 * @type {Map.&lt;Calendar, Array.&lt;{ eventId: string, timeout: NodeJS.Timer }>>}
+		 * @protected
+		 */
+		this._scheduledEvents = new Map();
+
+		/**
+		 * @type {Object.&lt;string, number>}
+		 * @protected
+		 */
+		this._scheduledCalendarUpdates = {};
+
+		/**
+		 * @type {number}
+		 * @protected
+		 */
+		this._schedulerInterval = null;
+		this._initializeScheduler();
+
+		/**
+		 * @type {Observable.&lt;CalendarError>}
+		 * @protected
+		 */
+		this._observableScheduleError = fromEvent(this, symbolScheduleError);
+	};
+
+	/**
+	 * This Observable will emit all errors as emitted by the Calendars.
+	 * The corresponding events can be observed using symbolScheduleError.
+	 * 
+	 * @see {symbolScheduleError}
+	 * @returns {Observable.&lt;CalendarError>}
+	 */
+	get observableScheduleError() {
+		return this._observableScheduleError;
+	};
+
+	/**
+	 * @returns {number}
+	 */
+	get scheduleIntervalSecs() {
+		return this._scheduleIntervalSecs;
+	}
+
+	/**
+	 * @param {number} value
+	 */
+	set scheduleIntervalSecs(value) {
+		if (isNaN(value) || value &lt; 5) {
+			throw new Error('scheduleIntervalSecs must not be less than 5 seconds.');
+		}
+		this._scheduleIntervalSecs = value;
+	};
+
+	/**
+	 * @returns {number}
+	 */
+	get lookAheadSecs() {
+		return this._lookAheadSecs;
+	};
+
+	/**
+	 * @param {number} value
+	 */
+	set lookAheadSecs(value) {
+		if (isNaN(value) || value &lt; this.scheduleIntervalSecs) {
+			throw new Error('lookAheadSecs is not a number or less than scheduleIntervalSecs.');
+		}
+		this._lookAheadSecs = value;
+	};
+
+	/**
+	 * @protected
+	 * @param {Calendar} calendar
+	 * @returns {boolean} true, iff the given calendar is an instance of Calendar.
+	 */
+	_isCalendar(calendar) {
+		if (!(calendar instanceof Calendar)) {
+			throw new Error('The supplied calendar is not an instance of Calendar.');
+		}
+		return true;
+	};
+
+	/**
+	 * @protected
+	 */
+	_initializeScheduler() {
+		if (this._schedulerInterval !== null) {
+			// Then cancel any scheduling interval (if any)
+			clearInterval(this._schedulerInterval);
+			this._schedulerInterval = null;
+		}
+
+		if (this.calendars.length > 0) {
+			this._schedulerInterval = setInterval(() => {
+				this._scheduleAllCalendars();
+			}, this.scheduleIntervalSecs * 1e3);
+		}
+	};
+
+	/**
+	 * @protected
+	 * @param {Calendar} calendar
+	 * @returns {Promise.&lt;void>}
+	 */
+	async _updateCalendar(calendar) {
+		this._unscheduleCalendar(calendar);
+
+		const calId = calendar.nameOrId;
+		let threw = false;
+
+		try {
+			if (calendar.isEnabled) {
+				await calendar.refresh();
+			}
+		} catch (e) {
+			threw = true;
+			this.emit(symbolScheduleError, new CalendarError(this, calendar, e));
+		} finally {
+			// After 'await' has returned control to this function, we need
+			// to ascertain that its properties' values have not changed, as
+			// they potentially could have in the meantime.
+			if (!this.hasCalendar(calendar) || threw) {
+				return; // Could have been removed in the meantime..
+			}
+
+			if (calendar.isEnabled) {
+				// Could have been disabled in the meantime..
+				this._scheduleCalendar(calendar);
+			}
+
+			// Always do this so that a then-enabled Calendar gets scheduled.
+			this._scheduledCalendarUpdates[calId] = setTimeout(async () => {
+				this._scheduledCalendarUpdates[calId] = null;
+				delete this._scheduledCalendarUpdates[calId];
+				if (this.hasCalendar(calendar)) {
+					await this._updateCalendar(calendar);
+				}
+			}, calendar.refreshInterval);
+		}
+	};
+
+	/**
+	 * @protected
+	 */
+	_scheduleAllCalendars() {
+		for (const calendar of this.calendars) {
+			this._scheduleCalendar(calendar);
+		}
+	};
+
+	/**
+	 * @protected
+	 * @param {Calendar} calendar 
+	 */
+	_unscheduleCalendar(calendar) {
+		this._isCalendar(calendar);
+		
+		if (!this.hasCalendar(calendar)) {
+			throw new Error(`The calendar with ID/name "${calendar.nameOrId}" cannot be found.`);
+		}
+
+		const timeouts = this._scheduledEvents.get(calendar);
+
+		for (const timeout of timeouts) {
+			clearTimeout(timeout.timeout);
+		}
+
+		timeouts.splice(0, timeouts.length);
+	};
+
+	/**
+	 * @protected
+	 * @param {Calendar} calendar 
+	 */
+	_scheduleCalendar(calendar) {
+		this._unscheduleCalendar(calendar);
+
+		if (!calendar.isEnabled) {
+			return;
+		}
+
+		const timeouts = this._scheduledEvents.get(calendar);
+
+		/**
+		 * @param {string} eId 
+		 * @param {CalendarEventSimple} calSimpleEvt 
+		 * @param {number} timeoutMsecs
+		 */
+		const scheduleEvt = (eId, calSimpleEvt, timeoutMsecs) => {
+			timeouts.push({
+				eventId: eId,
+				timeout: setTimeout(() => {
+					timeouts.splice(timeouts.findIndex(t => t.eventId === eId), 1);
+					this.emit(symbolCalendarEvent, calSimpleEvt);
+				}, timeoutMsecs)
+			});
+		};
+
+		const lookAheadMs = this.lookAheadSecs * 1e3
+		, now = new Date()
+		, maxDate = new Date(+now + lookAheadMs);
+
+		if (calendar.needsRefresh) {
+			return;
+		}
+
+		const occurrences = calendar.expander.betweenWithExceptions(now, maxDate);
+		/** @type {Array.&lt;{ evt: iCalEvent, startDate: iCalTime, endDate: iCalTime }>} */
+		const arr = []
+			.concat(occurrences.events.map(e => {
+				return {
+					evt: e,
+					startDate: e.startDate,
+					endDate: e.endDate
+				};
+			})).concat(occurrences.occurrences.map(o => {
+				return {
+					evt: o.item,
+					startDate: o.startDate,
+					endDate: o.endDate
+				};
+			})).filter(occ => {
+				// Apply the Calendar's filter:
+				return calendar.events.findIndex(e => e.uid === occ.evt.uid) >= 0;
+			});
+
+		arr.forEach(occ => {
+			const eId = `${occ.evt.uid}.start_${+occ.evt.startDate.toJSDate()}`
+			, startDiff = (+occ.startDate.toJSDate() - +now);
+
+			if (startDiff > 0 &amp;&amp; startDiff &lt;= lookAheadMs) {
+				// Schedule the start of this event
+				scheduleEvt(
+					`${eId}`, new CalendarEventSimple(calendar, occ.evt, true, false), startDiff);
+
+			}
+
+			// Also check if the end of the event is within the lookahead:
+			const endDiff = (+occ.endDate.toJSDate() - +now);
+			if (endDiff > startDiff &amp;&amp; endDiff &lt;= lookAheadMs) {
+				// Schedule the end of this event
+				scheduleEvt(
+					`${eId}.end`, new CalendarEventSimple(calendar, occ.evt, false, true), endDiff);
+			}
+		});
+	};
+
+	/**
+	 * Calls removeCalendar() with the given Schedule.
+	 * 
+	 * @param {Calendar} schedule
+	 * @returns {this}
+	 */
+	removeSchedule(schedule) {
+		return this.removeCalendar(schedule);
+	};
+
+	/**
+	 * Removes all Calendars from this scheduler. This will lead to all
+	 * Calendars being un-scheduled.
+	 * 
+	 * @inheritDoc
+	 * @returns {Array.&lt;Calendar>}
+	 */
+	removeAllSchedules() {
+		const calendars = this.calendars.slice(0);
+		calendars.forEach(calendar => this.removeSchedule(calendar));
+		return calendars;
+	};
+
+	/**
+	 * @param {Calendar} calendar
+	 * @returns {this}
+	 */
+	removeCalendar(calendar) {
+		this._unscheduleCalendar(calendar);
+
+		const calId = calendar.nameOrId;
+		if (this._scheduledCalendarUpdates.hasOwnProperty(calId)) {
+			clearTimeout(this._scheduledCalendarUpdates[calId]);
+			this._scheduledCalendarUpdates[calId] = null;
+			delete this._scheduledCalendarUpdates[calId];
+		}
+
+		this._scheduledEvents.delete(calendar);
+
+		const idx = this.calendars.findIndex(c => c === calendar);
+		this.calendars.splice(idx, 1);
+		this._scheduleAllCalendars(); // Will remove events that come this calendar
+		this._initializeScheduler(); // This will cancel internal scheduling if no calendars
+		return this;
+	};
+
+	/**
+	 * Calls hasCalendar() with the given Schedule.
+	 * 
+	 * @param {Calendar} schedule
+	 * @returns {boolean}
+	 */
+	hasSchedule(schedule) {
+		return this.hasCalendar(schedule);
+	};
+
+	/**
+	 * @param {Calendar} calendar
+	 */
+	hasCalendar(calendar) {
+		return this._isCalendar(calendar)
+			&amp;&amp; this._scheduledEvents.has(calendar)
+			&amp;&amp; this.calendars.findIndex(c => c === calendar) >= 0;
+	};
+
+	/**
+	 * Calls addCalendar(schedule, waitForUpdate = false) so that the call
+	 * behaves synchronously.
+	 * 
+	 * @param {Calendar} schedule
+	 * @returns {this}
+	 */
+	addSchedule(schedule) {
+		this._isCalendar(schedule);
+		this.addCalendar(schedule, false);
+		return this;
+	};
+
+	/**
+	 * @param {Calendar} calendar
+	 * @param {boolean} waitForUpdate if true, will wait to resolve the promise
+	 * until the added calendar has been updated.
+	 * @return {Promise.&lt;this>}
+	 */
+	async addCalendar(calendar, waitForUpdate = true) {
+		this._isCalendar(calendar);
+		if (this._scheduledEvents.has(calendar)) {
+			throw new Error(`There is already a Calendar with the name/ID "${calendar.nameOrId}".`);
+		}
+
+		this._scheduledEvents.set(calendar, []);
+
+		this.calendars.push(calendar);
+		const updatePromise = this._updateCalendar(calendar).catch(_ => {});
+		if (waitForUpdate) {
+			await updatePromise;
+		}
+
+		// This is necessary if there were no Calendars previously
+		this._initializeScheduler();
+
+		return this;
+	};
+
+	/**
+	 * Returns an Rx.Observable that will emit events whenever they
+	 * are reported to its subscribers.
+	 * 
+	 * @returns {Observable.&lt;CalendarEventSimple>}
+	 */
+	get observable() {
+		return super.observable;
+	};
+
+	/**
+	 * Returns an Observable for the designated schedule (here: the
+	 * calendar).
+	 * 
+	 * @override
+	 * @param {Schedule|Calendar} calendar Must be an instance of Calendar.
+	 * @returns {Observable.&lt;CalendarEventSimple>}
+	 */
+	getObservableForSchedule(calendar) {
+		this._isCalendar(calendar);
+		if (!this.hasCalendar(calendar)) {
+			throw new Error(`The calendar with ID/name "${calendar.nameOrId}" cannot be found.`);
+		}
+		return super.getObservableForSchedule(calendar);
+	};
+	
+	/**
+	 * @inheritdoc
+	 * @param {Date} [after]
+	 * @param {Date} [before]
+	 * @returns {IterableIterator.&lt;PreliminaryScheduleEvent.&lt;Calendar, iCalTime>>}
+	 */
+	*preliminaryEvents(after, before) {
+		for (const cal of this.calendars) {
+			for (const pre of cal.preliminaryEvents(...arguments)) {
+				yield pre;
+			}
+		}
+	};
+};
+
+
+/**
+ * @author Sebastian Hönel &lt;development@hoenel.net>
+ */
+class Calendar extends Schedule {
+	/**
+	 * @param {String} nameOrId a name or ID for this calendar (should be
+	 * unique across all calendars).
+	 * @param {producerHandler.&lt;String|Promise.&lt;String>>} icsProvider a function that
+	 * returns the underlying iCal data as string.
+	 * @param {number} icsIntervalMsecs the interval in milliseconds, to
+	 * refresh this calendar and reload the iCal-data from the provider.
+	 * It is not recommended to refresh a calendar more often than every
+	 * 10 seconds. Of course, this depends on where your calendar is coming
+	 * from. If the interval is less than 5 seconds, the constructor throws.
+	 * @param {boolean} enabled if true, this Interval is enabled. Otherwise,
+	 * its events are ignored until it get enabled.
+	 */
+	constructor(nameOrId, icsProvider, icsIntervalMsecs = 10000, enabled = true) {
+		super(!!enabled);
+
+		if (typeof nameOrId !== 'string' || nameOrId.length === 0) {
+			throw new Error(`The name or ID must be a non-empty string and it must be unique across all calendars.`);
+		}
+		if (typeof icsProvider !== 'function') {
+			throw new Error(`The icsProvider is not a function.`);
+		}
+		if (isNaN(icsIntervalMsecs) || icsIntervalMsecs &lt; 5000) {
+			throw new Error(`The icsIntervalMsecs must be a reasonable large positive number.`);
+		}
+
+		this.nameOrId = nameOrId;
+		this.icsProvider = icsProvider;
+		this.refreshInterval = icsIntervalMsecs;
+
+		/**
+		 * @type {Array.&lt;Event|iCalEvent>}
+		 * @protected
+		 */
+		this._events = [];
+
+		/**
+		 * @type {consumerProducer1ArgHandler.&lt;Array.&lt;Event|iCalEvent>, boolean>}
+		 * @protected
+		 */
+		this._filter = _ => this._events;
+
+		/**
+		 * @type {MyIcalExpander}
+		 * @protected
+		 */
+		this._expander = null;
+	};
+
+	/**
+	 * @returns {MyIcalExpander}
+	 */
+	get expander() {
+		return this._expander;
+	};
+
+	/**
+	 * @returns {Boolean} true if this Calendar needs a refresh.
+	 */
+	get needsRefresh() {
+		return !(this.expander instanceof MyIcalExpander);
+	};
+
+	/**
+	 * @returns {Array.&lt;Event|iCalEvent>}
+	 */
+	get events() {
+		return this._events.filter(this._filter);
+	};
+
+	/**
+	 * Apply a filter to this Calendar's events. The filter must return true
+	 * if an entry shall be kept; false, otherwise.
+	 * 
+	 * @param {predicate1Arg.&lt;Event|iCalEvent>} filter 
+	 * @returns {this}
+	 */
+	setFilter(filter) {
+		if (!(filter instanceof Function)) {
+			throw new Error(`The filter must be a function`);
+		}
+		this._filter = filter;
+		return this;
+	};
+
+	/**
+	 * Removes a filter that was set by setFilter(). This Calendar then will
+	 * work with all its events again.
+	 * 
+	 * @returns {this}
+	 */
+	removeFilter() {
+		this._filter = _ => this._events;
+		return this;
+	};
+
+	/**
+	 * Called by the CalendarScheduler to query this Calendar's underlying
+	 * ICS-provider. This method is useful if the ICS-provider e.g. points
+	 * to web-based calendar.
+	 * 
+	 * @returns {Promise.&lt;this>}
+	 */
+	async refresh() {
+		let providerResult = this.icsProvider();
+
+		if (providerResult instanceof Promise) {
+			providerResult = await providerResult;
+		}
+
+		if (typeof providerResult !== 'string') {
+			throw new Error(`The icsProvider did not return valid iCal-data.`);
+		}
+
+		this._expander = new MyIcalExpander({ ics: providerResult });
+		this._events = this.expander.events;
+		
+		return this;
+	};
+
+	/**
+	 * @inheritdoc
+	 * @param {Date} [after]
+	 * @param {Date} [before]
+	 * @returns {IterableIterator.&lt;PreliminaryScheduleEvent.&lt;Calendar, iCalTime>>}
+	 */
+	*preliminaryEvents(after, before) {
+		if (!(this._expander instanceof MyIcalExpander)) {
+			return;
+		}
+
+		const between = this._expander.betweenWithExceptions(...arguments);
+		for (const evt of between.events) {
+			yield new PreliminaryScheduleEvent(evt.startDate.toJSDate(), this, evt);
+		}
+		for (const occurr of between.occurrences) {
+			yield new PreliminaryScheduleEvent(occurr.startDate.toJSDate(), this, occurr)
+		}
+	};
+
+	/**
+	 * Takes a predicate to filter this Calendar's events and returns a
+	 * new, derived Calendar. Calls to refresh() have been overridden in
+	 * the derived instance to await the underlying Calendar's refresh
+	 * and apply the filter afterwards.
+	 * 
+	 * @deprecated use setFilter() and removeFilter() instead. This method
+	 * will be removed in v3.x!
+	 * @param {predicate1Arg.&lt;Event|iCalEvent>} predicate Used to filter
+	 * this Calendar's events using some criteria.
+	 * @param {string} addName Used as a predicate to this Calendar's name
+	 * or ID so that we end up with a new, unique name or ID. Must not be
+	 * empty. The resulting name will be "calendar-name.addName".
+	 * @returns {Calendar}
+	 */
+	createFiltered(predicate, addName = 'filtered') {
+		if (typeof addName !== 'string' || addName.length === 0) {
+			throw new Error(`The value "${addName}" given for the parameter name is not valid.`);
+		}
+
+		const that = this;
+		return new class extends this.constructor {
+			constructor() {
+				super(`${that.nameOrId}.${addName}`, that.icsProvider, that.refreshInterval, that.isEnabled);
+			};
+
+			/**
+			 * @override
+			 */
+			async refresh() {
+				await super.refresh();
+				this._events = this._events.filter(predicate);
+				return this;
+			};
+		};
+	};
+};
+
+
+module.exports = Object.freeze({
+	Calendar,
+	CalendarEventSimple,
+	CalendarScheduler,
+	CalendarError,
+	symbolCalendarEvent
+});</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Cache.html">Cache</a></li><li><a href="CacheItem.html">CacheItem</a></li><li><a href="CacheItemWithLoad.html">CacheItemWithLoad</a></li><li><a href="CacheMapBased.html">CacheMapBased</a></li><li><a href="CacheWithLoad.html">CacheWithLoad</a></li><li><a href="Calendar.html">Calendar</a></li><li><a href="CalendarError.html">CalendarError</a></li><li><a href="CalendarEventSimple.html">CalendarEventSimple</a></li><li><a href="CalendarScheduler.html">CalendarScheduler</a></li><li><a href="Collection.html">Collection</a></li><li><a href="CollectionEvent.html">CollectionEvent</a></li><li><a href="Comparer.html">Comparer</a></li><li><a href="ConstrainedQueue.html">ConstrainedQueue</a></li><li><a href="ConstrainedStack.html">ConstrainedStack</a></li><li><a href="DefaultComparer.html">DefaultComparer</a></li><li><a href="DefaultEqualityComparer.html">DefaultEqualityComparer</a></li><li><a href="Dictionary.html">Dictionary</a></li><li><a href="DictionaryMapBased.html">DictionaryMapBased</a></li><li><a href="EqualityComparer.html">EqualityComparer</a></li><li><a href="Interval.html">Interval</a></li><li><a href="IntervalEventSimple.html">IntervalEventSimple</a></li><li><a href="IntervalScheduler.html">IntervalScheduler</a></li><li><a href="ItemAndDeferred.html">ItemAndDeferred</a></li><li><a href="Job.html">Job</a></li><li><a href="JobEvent.html">JobEvent</a></li><li><a href="JobQueue.html">JobQueue</a></li><li><a href="JobQueueCapabilities.html">JobQueueCapabilities</a></li><li><a href="JobQueueEvent.html">JobQueueEvent</a></li><li><a href="LinkedList.html">LinkedList</a></li><li><a href="LinkedListEvent.html">LinkedListEvent</a></li><li><a href="LinkedListNode.html">LinkedListNode</a></li><li><a href="ManualSchedule.html">ManualSchedule</a></li><li><a href="ManualScheduleEventSimple.html">ManualScheduleEventSimple</a></li><li><a href="ManualScheduler.html">ManualScheduler</a></li><li><a href="MyIcalExpander.html">MyIcalExpander</a></li><li><a href="PreliminaryScheduleEvent.html">PreliminaryScheduleEvent</a></li><li><a href="ProcessErrorResult.html">ProcessErrorResult</a></li><li><a href="ProcessExit.html">ProcessExit</a></li><li><a href="ProcessOutput.html">ProcessOutput</a></li><li><a href="ProcessResult.html">ProcessResult</a></li><li><a href="ProcessWrapper.html">ProcessWrapper</a></li><li><a href="ProducerConsumerQueue.html">ProducerConsumerQueue</a></li><li><a href="Progress.html">Progress</a></li><li><a href="ProgressNumeric.html">ProgressNumeric</a></li><li><a href="Queue.html">Queue</a></li><li><a href="Resolve.html">Resolve</a></li><li><a href="Schedule.html">Schedule</a></li><li><a href="ScheduleEvent.html">ScheduleEvent</a></li><li><a href="Scheduler.html">Scheduler</a></li><li><a href="Stack.html">Stack</a></li></ul><h3>Global</h3><ul><li><a href="global.html#assertThrowsAsync">assertThrowsAsync</a></li><li><a href="global.html#deepCloneObject">deepCloneObject</a></li><li><a href="global.html#defer">defer</a></li><li><a href="global.html#deferMocha">deferMocha</a></li><li><a href="global.html#Discard">Discard</a></li><li><a href="global.html#EvictionPolicy">EvictionPolicy</a></li><li><a href="global.html#FIFO">FIFO</a></li><li><a href="global.html#formatError">formatError</a></li><li><a href="global.html#formatValue">formatValue</a></li><li><a href="global.html#getRandomNumber">getRandomNumber</a></li><li><a href="global.html#Ignore">Ignore</a></li><li><a href="global.html#LFU">LFU</a></li><li><a href="global.html#LIFO">LIFO</a></li><li><a href="global.html#LRU">LRU</a></li><li><a href="global.html#mergeObjects">mergeObjects</a></li><li><a href="global.html#MFU">MFU</a></li><li><a href="global.html#MRU">MRU</a></li><li><a href="global.html#None">None</a></li><li><a href="global.html#Random">Random</a></li><li><a href="global.html#refresh">refresh</a></li><li><a href="global.html#ThrowError">ThrowError</a></li><li><a href="global.html#throwError">throwError</a></li><li><a href="global.html#timeout">timeout</a></li><li><a href="global.html#Undetermined">Undetermined</a></li><li><a href="global.html#wrapError">wrapError</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.5</a> on Fri Sep 18 2020 23:02:33 GMT+0200 (Central European Summer Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
