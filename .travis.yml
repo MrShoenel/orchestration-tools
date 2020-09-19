@@ -11,4 +11,5 @@ branches:
   - develop
   - master
   - master-pre-v2.0.0
+  - master-pre-v3.0.0
   - test-ical-fix
