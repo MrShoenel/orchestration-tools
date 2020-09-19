@@ -1,9 +1,9 @@
 const { assert, expect } = require('chai')
-, { timeout, defer, deferMocha } = require('../lib/tools/Defer')
-, { assertThrowsAsync } = require('../lib/tools/AssertAsync')
+, { timeout, deferMocha } = require('../lib/tools/Defer')
 , { deepCloneObject, mergeObjects } = require('../lib/tools/Objects')
 , { throwError, wrapError } = require('../lib/tools/Error')
 , { formatError, formatValue } = require('../lib/tools/Format')
+, { getRandomNumber } = require('../lib/tools/Random');
 
 
 describe('Tools', () => {
@@ -280,6 +280,18 @@ describe('Tools', () => {
 		const e = new Error('any');
 		assert.strictEqual(wrapError(e), e);
 
+		done();
+	});
+
+	it('should generate a few good random numbers', done => {
+		const s = new Set()
+		, testSize = 100;
+
+		for (let i = 0; i < testSize; i++) {
+			s.add(getRandomNumber());
+		}
+		
+		assert.strictEqual(s.size, testSize);
 		done();
 	});
 });
