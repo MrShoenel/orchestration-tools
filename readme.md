@@ -1,16 +1,14 @@
 # OrchestrationTools
 Collection of `orchestration-tools` that help building an infrastructure or to orchestrate resources through NodeJS. Also comes with universal tools such as collections.
 
-|Version|Coverage|Vulnerabilities|Master|Master-pre-v2.0.0|
-|:-|:-|:-|:-|:-|
-|[![Current Version](https://img.shields.io/npm/v/sh.orchestration-tools.svg)](https://www.npmjs.com/package/sh.orchestration-tools)|[![Coverage Status](https://coveralls.io/repos/github/MrShoenel/orchestration-tools/badge.svg?branch=master)](https://coveralls.io/github/MrShoenel/orchestration-tools?branch=master)|[![Vulnerabilities](https://snyk.io/test/github/MrShoenel/orchestration-tools/badge.svg)](https://snyk.io/test/github/MrShoenel/orchestration-tools)|[![Build Status](https://api.travis-ci.org/MrShoenel/orchestration-tools.svg?branch=master)](https://travis-ci.org/MrShoenel/orchestration-tools)|[![Build Status](https://api.travis-ci.org/MrShoenel/orchestration-tools.svg?branch=master-pre-v2.0.0)](https://travis-ci.org/MrShoenel/orchestration-tools)|
+|Version|Coverage|Vulnerabilities|Master|Master-pre-v3.0.0|Master-pre-v2.0.0|
+|:-|:-|:-|:-|:-|:-|
+|[![Current Version](https://img.shields.io/npm/v/sh.orchestration-tools.svg)](https://www.npmjs.com/package/sh.orchestration-tools)|[![Coverage Status](https://coveralls.io/repos/github/MrShoenel/orchestration-tools/badge.svg?branch=master)](https://coveralls.io/github/MrShoenel/orchestration-tools?branch=master)|[![Vulnerabilities](https://snyk.io/test/github/MrShoenel/orchestration-tools/badge.svg)](https://snyk.io/test/github/MrShoenel/orchestration-tools)|[![Build Status](https://api.travis-ci.org/MrShoenel/orchestration-tools.svg?branch=master)](https://travis-ci.org/MrShoenel/orchestration-tools)|[![Build Status](https://api.travis-ci.org/MrShoenel/orchestration-tools.svg?branch=master-pre-v3.0.0)](https://travis-ci.org/MrShoenel/orchestration-tools)|[![Build Status](https://api.travis-ci.org/MrShoenel/orchestration-tools.svg?branch=master-pre-v2.0.0)](https://travis-ci.org/MrShoenel/orchestration-tools)|
 |[![Weekly Downloads](https://img.shields.io/npm/dt/sh.orchestration-tools)](https://www.npmjs.com/package/sh.orchestration-tools)|||[![Build Status](https://github.com/MrShoenel/orchestration-tools/workflows/Node.js%20CI/badge.svg?branch=master)](https://github.com/MrShoenel/orchestration-tools/actions?query=workflow%3A%22Node.js+CI%22)||
 
 
 ## Install from npm
 This package can be installed using the following command: `npm install sh.orchestration-tools`.
-
-Please note that between `v1.8.0` and `v2.0.0` there were breaking changes regarding `Progress` itself and how it is handled in conjunction with `Job`. If you therefore need to stick with `v1.x.x`, please use the latest stable from the `master-pre-v2.0.0`-branch.
 
 ## JSDoc
 
@@ -22,7 +20,6 @@ The tools come fully typed in JSDoc, and the documentation for all released vers
 * __JobQueueCapabilities__ - an extension to the `JobQueue` that can manage and run jobs based on their cost, rather than on plain parallelism.
 * __Progress__ - a class used to report any kind of (generic) progress. Supports callbacks, events and `Observables` through `RxJS`.
 * __ProgressNumeric__ - an extension (and simplification) of `Progress` especially for numeric progress.
-* __CalendarScheduler__ and __Calendar__ provide mechanism to schedule jobs based on `iCal`-calendars from any source (new in `v1.4.0`).
 * __IntervalScheduler__ and __Interval__ provide a scheduling mechanism to schedule using timeouts or intervals (new in `v1.6.0`). Also, the schedulers now have a common base-class (`Scheduler`) and their schedules have one, too (`Schedule`).
 * __ProcessWrapper__ and related classes (such as `ProcessResult` and `ProcessOutput`) to encapsulate child processes and let them run as `Promises` or `Obervable`s (since `v1.8.0`).
 * __Resolve__ - a class containing helpers to determine types of variables and to resolve functions and `Promise`s to values of any type (since `v2.6.0`).
@@ -33,3 +30,10 @@ The tools come fully typed in JSDoc, and the documentation for all released vers
 * __EqualityComparer__ and __DefaultEqualityComparer__ are used within the *collections* to provide default- and custom-capabilities for comparing items (since `v2.9.0`)
 * __Comparer__ and __DefaultComparer__ to equate items in terms of size (e.g. for sorting) (since `v2.10.0`)
 * __formatValue__, __formatError__, __wrapError__ and __throwError__ are the first of new tools for values and Errors (since `v2.19.0`)
+* ~~__CalendarScheduler__ and __Calendar__ provide mechanism to schedule jobs based on `iCal`-calendars from any source (new in `v1.4.0`).~~ These were __removed beginning with `v3.0.0`__ and are now to be found in the package __`sh.misc-tools`__.
+
+
+## Breaking changes 
+
+* Between `v1.8.0` and `v2.0.0` there were breaking changes regarding `Progress` itself and how it is handled in conjunction with `Job`. If you therefore need to stick with `v1.x.x`, please use the latest stable from the `master-pre-v2.0.0`-branch.
+* Calendar-related tools and its Scheduler were removed in version `v3.0.0` and have been moved into the package `sh.misc-tools` (available via npm [![npm install sh.misc-tools](https://img.shields.io/npm/v/sh.misc-tools.svg)](https://www.npmjs.com/package/sh.misc-tools)).
