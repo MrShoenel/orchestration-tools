@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: collections/Queue.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: collections/Queue.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>const { Collection, CollectionEvent } = require('./Collection')
+, { EqualityComparer } = require('./EqualityComparer')
+, { Resolve } = require('../tools/Resolve')
+, { defer } = require('../tools/Defer')
+, { Observable, fromEvent} = require('rxjs')
+, symbolQueueEnqueue = Symbol('queueEnqueue')
+, symbolQueueDequeue = Symbol('queueDequeue')
+, symbolQueueTakeOut = Symbol('queueTakeOut');
+
+
+/**
+ * @template T
+ * @author Sebastian Hönel &lt;development@hoenel.net>
+ */
+class Queue extends Collection {
+	/**
+	 * Creates a new, empty Queue.&lt;T>.
+	 * 
+	 * @param {EqualityComparer.&lt;T>} [eqComparer] Optional. Defaults To EqualityComparer.&lt;T>.default.
+	 */
+	constructor(eqComparer = EqualityComparer.default) {
+		super(eqComparer);
+		
+		/** @type {Observable.&lt;T>} */
+		this.observableEnqueue = Object.freeze(fromEvent(this, symbolQueueEnqueue));
+		/** @type {Observable.&lt;T>} */
+		this.observableDequeue = Object.freeze(fromEvent(this, symbolQueueDequeue));
+	};
+
+	/**
+	 * @param {T} item The item to add at the end of the Queue.
+	 * @returns {this}
+	 */
+	enqueue(item) {
+		this._items.push(item);
+		this.emit(symbolQueueEnqueue, new CollectionEvent(item));
+		return this;
+	};
+
+	/**
+	 * @returns {T} The first item (at the beginning) of the Queue.
+	 */
+	dequeue() {
+		if (this.isEmpty) {
+			throw new Error('The Queue is empty.');
+		}
+		
+		const item = this._items.shift();
+		this.emit(symbolQueueDequeue, new CollectionEvent(item));
+		return item;
+	};
+
+	/**
+	 * @param {Number} index The index of the item to peek.
+	 * @returns {T} The item at the index.
+	 * @throws {Error} If the given index is out of range
+	 */
+	peekIndex(index) {
+		if (index &lt; 0 || index > (this.size - 1)) {
+			throw new Error(`The given index is out of range`);
+		}
+
+		return this._items[index];
+	};
+	
+	/**
+	 * @param {Number} index The index of the element to remove. The index
+	 * must be in the range [0, this.size - 1]. The first element to take out
+	 * has index 0 (the last element inserted has the largest index, size - 1).
+	 * @returns {T} The dequeued item
+	 * @throws {Error} If the given index is out of range
+	 */
+	takeOutIndex(index) {
+		if (index === 0) {
+			return this.dequeue();
+		}
+
+		if (index &lt; 0 || index > (this.size - 1)) {
+			throw new Error(`The given index is out of range`);
+		}
+
+		const item = this._items.splice(index, 1)[0];
+		this.emit(symbolQueueTakeOut, new CollectionEvent(item));
+		return item;
+	};
+
+	/**
+	 * @param {T} item The item to take ot, must be an item currently on this queue
+	 * @param {EqualityComparer.&lt;T>} [eqComparer] Optional. Defaults to this queue's
+	 * equality comparer. Used to find the index of the given item.
+	 * @returns {T} The dequeued item.
+	 * @throws {Error} If the item cannot be found in the queue.
+	 */
+	takeOutItem(item, eqComparer = null) {
+		/** @type {EqualityComparer.&lt;T>} */
+		eqComparer = eqComparer instanceof EqualityComparer ? eqComparer : this.equalityComparer;
+		const idx = this._items.findIndex((val, idx) => {
+			return eqComparer.equals(val, item);
+		});
+		return this.takeOutIndex(idx);
+	};
+
+	/**
+	 * @returns {T} The first item without removing it.
+	 */
+	peek() {
+		if (this.isEmpty) {
+			throw new Error('The Queue is empty.');
+		}
+
+		return this._items[0];
+	};
+
+	/**
+	 * @returns {T} The last item without removing it.
+	 */
+	peekLast() {
+		if (this.isEmpty) {
+			throw new Error('The Queue is empty.');
+		}
+
+		return this._items[this.size - 1];
+	};
+};
+
+
+/**
+ * @template T
+ * @author Sebastian Hönel &lt;development@hoenel.net>
+ */
+class ConstrainedQueue extends Queue {
+	/**
+	 * Creates a new, empty ConstrainedQueue.&lt;T>.
+	 * 
+	 * @param {number} [maxSize] Optional. Defaults to Number.MAX_SAFE_INTEGER. Use this parameter to
+	 * limit the maximum amount of elements this Queue can hold. When the limit is reached and items
+	 * are being further enqueued, the ConstrainedQueue will dequeue and discard items to make space.
+	 * This parameter must be a positive integer larger than zero.
+	 * @param {EqualityComparer.&lt;T>} [eqComparer] Optional. Defaults To EqualityComparer.&lt;T>.default.
+	 */
+	constructor(maxSize = Number.MAX_SAFE_INTEGER, eqComparer = EqualityComparer.default) {
+		super(eqComparer);
+
+		this._maxSize = 1;
+		this.maxSize = maxSize;
+	};
+
+	/**
+	 * @returns {number}
+	 */
+	get maxSize() {
+		return this._maxSize;
+	};
+
+	/**
+	 * Sets the maximum size of this ConstrainedQueue. If currently there are more items, the queue
+	 * will be truncated (i.e. the excess items will be discarded). The excess items will be taken
+	 * from the head of the queue (dequeued).
+	 * 
+	 * @param {number} value The new value for maxSize. Must be an integer equal to or larger than 1.
+	 * @throws {Error} If parameter value is not a number or less than one (1).
+	 */
+	set maxSize(value) {
+		if (!Resolve.isTypeOf(value, Number) || !Number.isInteger(value)) {
+			throw new Error(`The value given for maxSize is not a number.`);
+		}
+		
+		if (value &lt; 1) {
+			throw new Error(`The value given is less than 1: ${value}`);
+		}
+
+		this._maxSize = value;
+		this._truncate();
+	};
+
+	/**
+	 * @protected
+	 * @returns {this}
+	 */
+	_truncate() {
+		let excess = this.size - this.maxSize;
+		while (excess > 0) {
+			// Triggers/emits symbol for dequeueing items.
+			this.dequeue();
+			excess--;
+		}
+		
+		return this;
+	};
+
+	/**
+	 * @override
+	 * @param {T} item
+	 * @returns {this}
+	 */
+	enqueue(item) {
+		super.enqueue(item);
+		return this._truncate();
+	};
+};
+
+
+
+
+/**
+ * @template T, TQueue
+ * @author Sebastian Hönel &lt;development@hoenel.net>
+ */
+class ItemAndDeferred {
+	/**
+	 * @param {T} item 
+	 * @param {Deferred.&lt;TQueue>} deferred
+	 */
+	constructor(item, deferred) {
+		this.item = item;
+		this.deferred = deferred;
+	};
+};
+
+
+/**
+ * @template T
+ * @author Sebastian Hönel &lt;development@hoenel.net>
+ */
+class ProducerConsumerQueue extends ConstrainedQueue {
+	
+	/**
+	 * Creates a new, empty ProducerConsumerQueue.&lt;T>.
+	 * 
+	 * @param {number} [maxSize] Optional. Defaults to Number.MAX_SAFE_INTEGER. Use this parameter to
+	 * limit the maximum amount of elements this Queue can hold. When the limit is reached and items
+	 * are being further enqueued, the ProducerConsumerQueue will defer further calls and only resolve
+	 * them, once space is available and the item has been enqueued. Likewise, an item is dequeued
+	 * immediately if the queue is non-empty. Otherwise, the call is deferred and resolved once an item
+	 * becomes available. Adjusting the capacity of this queue will only affect items in it, but not
+	 * deferred calls to enqueue().
+	 * @param {EqualityComparer.&lt;T>} [eqComparer] Optional. Defaults To EqualityComparer.&lt;T>.default.
+	 */
+	constructor(maxSize = Number.MAX_SAFE_INTEGER, eqComparer = EqualityComparer.default) {
+		super(maxSize, eqComparer);
+
+		/**
+		 * @type {Queue.&lt;ItemAndDeferred.&lt;T, this>>}
+		 * @protected
+		 */
+		this._deferredEnqueues = new Queue(eqComparer);
+		/**
+		 * @type {Queue.&lt;Deferred.&lt;T>>}
+		 * @protected
+		 */
+		this._deferredDequeues = new Queue(eqComparer);
+	};
+
+	/**
+	 * @protected
+	 */
+	_itemAvailable() {
+		while (this.size > 0 &amp;&amp; this._deferredDequeues.size > 0) {
+			const deferred = this._deferredDequeues.dequeue();
+			deferred.resolve(super.dequeue());
+		}
+	};
+
+	/**
+	 * @protected
+	 */
+	_spaceAvailable() {
+		while (this.size &lt; this.maxSize &amp;&amp; this._deferredEnqueues.size > 0) {
+			const itemAndDef = this._deferredEnqueues.dequeue();
+			super.enqueue(itemAndDef.item);
+			itemAndDef.deferred.resolve(this);
+		}
+	};
+	
+	/**
+	 * @param {T} item The item to be enqueued.
+	 * @returns {Promise.&lt;this>} The promise is resolved once the item got enqueued.
+	 */
+	enqueue(item) {
+		if (this.size &lt; this.maxSize) {
+			// There is space in the queue, so we can just enqueue the item.
+			super.enqueue(item);
+			setTimeout(this._itemAvailable.bind(this), 0);
+			return Promise.resolve(this);
+		} else {
+			// We have to defer the request and wait for space in the queue.
+			/** @type {Deferred.&lt;this>} */
+			const deferred = defer();
+			this._deferredEnqueues.enqueue(new ItemAndDeferred(item, deferred));
+			return deferred.promise;
+		}
+	};
+
+	/**
+	 * @returns {Promise.&lt;T>} The promise is resolved once an item is available.
+	 */
+	dequeue() {
+		if (this.isEmpty) {
+			// We have to wait for an item to be produced.
+			/** @type {Deferred.&lt;T>} */
+			const deferred = defer();
+			this._deferredDequeues.enqueue(deferred);
+			return deferred.promise;
+		} else {
+			// Dequeue the first available item.
+			setTimeout(this._spaceAvailable.bind(this), 0);
+			return Promise.resolve(super.dequeue());
+		}
+	};
+};
+
+
+module.exports = Object.freeze({
+	Queue,
+	ConstrainedQueue,
+	ProducerConsumerQueue,
+	symbolQueueEnqueue,
+	symbolQueueDequeue,
+	symbolQueueTakeOut
+});
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Cache.html">Cache</a></li><li><a href="CacheItem.html">CacheItem</a></li><li><a href="CacheItemWithLoad.html">CacheItemWithLoad</a></li><li><a href="CacheMapBased.html">CacheMapBased</a></li><li><a href="CacheWithLoad.html">CacheWithLoad</a></li><li><a href="Collection.html">Collection</a></li><li><a href="CollectionEvent.html">CollectionEvent</a></li><li><a href="Comparer.html">Comparer</a></li><li><a href="ConstrainedQueue.html">ConstrainedQueue</a></li><li><a href="ConstrainedStack.html">ConstrainedStack</a></li><li><a href="DefaultComparer.html">DefaultComparer</a></li><li><a href="DefaultEqualityComparer.html">DefaultEqualityComparer</a></li><li><a href="Dictionary.html">Dictionary</a></li><li><a href="DictionaryMapBased.html">DictionaryMapBased</a></li><li><a href="EqualityComparer.html">EqualityComparer</a></li><li><a href="Interval.html">Interval</a></li><li><a href="IntervalEventSimple.html">IntervalEventSimple</a></li><li><a href="IntervalScheduler.html">IntervalScheduler</a></li><li><a href="ItemAndDeferred.html">ItemAndDeferred</a></li><li><a href="Job.html">Job</a></li><li><a href="JobEvent.html">JobEvent</a></li><li><a href="JobQueue.html">JobQueue</a></li><li><a href="JobQueueCapabilities.html">JobQueueCapabilities</a></li><li><a href="JobQueueEvent.html">JobQueueEvent</a></li><li><a href="LinkedList.html">LinkedList</a></li><li><a href="LinkedListEvent.html">LinkedListEvent</a></li><li><a href="LinkedListNode.html">LinkedListNode</a></li><li><a href="ManualSchedule.html">ManualSchedule</a></li><li><a href="ManualScheduleEventSimple.html">ManualScheduleEventSimple</a></li><li><a href="ManualScheduler.html">ManualScheduler</a></li><li><a href="PreliminaryScheduleEvent.html">PreliminaryScheduleEvent</a></li><li><a href="ProcessErrorResult.html">ProcessErrorResult</a></li><li><a href="ProcessExit.html">ProcessExit</a></li><li><a href="ProcessOutput.html">ProcessOutput</a></li><li><a href="ProcessResult.html">ProcessResult</a></li><li><a href="ProcessWrapper.html">ProcessWrapper</a></li><li><a href="ProducerConsumerQueue.html">ProducerConsumerQueue</a></li><li><a href="Progress.html">Progress</a></li><li><a href="ProgressNumeric.html">ProgressNumeric</a></li><li><a href="Queue.html">Queue</a></li><li><a href="Resolve.html">Resolve</a></li><li><a href="Schedule.html">Schedule</a></li><li><a href="ScheduleEvent.html">ScheduleEvent</a></li><li><a href="Scheduler.html">Scheduler</a></li><li><a href="Stack.html">Stack</a></li></ul><h3>Global</h3><ul><li><a href="global.html#assertThrowsAsync">assertThrowsAsync</a></li><li><a href="global.html#deepCloneObject">deepCloneObject</a></li><li><a href="global.html#defer">defer</a></li><li><a href="global.html#deferMocha">deferMocha</a></li><li><a href="global.html#Discard">Discard</a></li><li><a href="global.html#EvictionPolicy">EvictionPolicy</a></li><li><a href="global.html#FIFO">FIFO</a></li><li><a href="global.html#formatError">formatError</a></li><li><a href="global.html#formatValue">formatValue</a></li><li><a href="global.html#getRandomNumber">getRandomNumber</a></li><li><a href="global.html#Ignore">Ignore</a></li><li><a href="global.html#LFU">LFU</a></li><li><a href="global.html#LIFO">LIFO</a></li><li><a href="global.html#LRU">LRU</a></li><li><a href="global.html#mergeObjects">mergeObjects</a></li><li><a href="global.html#MFU">MFU</a></li><li><a href="global.html#MRU">MRU</a></li><li><a href="global.html#None">None</a></li><li><a href="global.html#Random">Random</a></li><li><a href="global.html#ThrowError">ThrowError</a></li><li><a href="global.html#throwError">throwError</a></li><li><a href="global.html#timeout">timeout</a></li><li><a href="global.html#Undetermined">Undetermined</a></li><li><a href="global.html#wrapError">wrapError</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.5</a> on Sat Sep 19 2020 13:26:32 GMT+0200 (Central European Summer Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
