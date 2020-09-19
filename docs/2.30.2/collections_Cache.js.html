@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: collections/Cache.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: collections/Cache.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>const { Dictionary, DictionaryMapBased, symbolDictionaryGet } = require('./Dictionary')
+, { EqualityComparer } = require('./EqualityComparer')
+, { Resolve } = require('../tools/Resolve')
+, { CollectionEvent } = require('./Collection')
+, { Observable, fromEvent } = require('rxjs')
+, symbolCacheEvict = Symbol('cacheEvict')
+, JSBI = require('jsbi');
+
+
+/**
+ * This enumeration holds supported eviction policies by some of collections.
+ */
+const EvictionPolicy = Object.freeze({
+	/**
+	 * Do not evict. Requires manually freeing space in the underlying collection.
+	 */
+	None: 0,
+	/**
+	 * The underlying collection may evict elements indeterministically.
+	 */
+	Undetermined: 1,
+	/**
+	 * The underlying collection evicts the least recently used elements first.
+	 */
+	LRU: 2,
+	/**
+	 * The underlying collection evicts the most recently used elements first.
+	 */
+	MRU: 3,
+	/**
+	 * The underlying collection evicts the least frequently used elements first.
+	 */
+	LFU: 4,
+	/**
+	 * The underlying collection evicts the most frequently used elements first.
+	 */
+	MFU: 5,
+	/**
+	 * The underlying collection evicts the items inserted first (like a queue).
+	 */
+	FIFO: 6,
+	/**
+	 * The underlying collection evicts the items inserted last (like a stack).
+	 */
+	LIFO: 7,
+	/**
+	 * The underlying collection evicts the items inserted in a random order.
+	 */
+	Random: 8
+});
+
+
+/**
+ * @template T
+ * @author Sebastian Hönel &lt;development@hoenel.net>
+ */
+class CacheItem {
+	/**
+	 * @param {Cache.&lt;any, T>|CacheMapBased.&lt;any, T>|CacheWithLoad.&lt;any, T>} cache The cache this item belongs to.
+	 * @param {TKey} key
+	 * @param {T} item
+	 * @param {Number} order An integer used to order this item, assigned by the cache.
+	 * @param {Number} expireAfterMsecs An integer, in milliseconds, to expire this
+	 * item after. Only used if > 0. This item then sets a timeout and upon elapse,
+	 * evicts itself from the cache.
+	 */
+	constructor(cache, key, item, order, expireAfterMsecs) {
+		/** @protected */
+		this._cache = cache;
+		/** @protected */
+		this._key = key;
+		/** @protected */
+		this._item = item;
+		// initialize with order, so that newer items w/o last access have larger values.
+		/**
+		 * @type {JSBI.BigInt}
+		 * @protected
+		 */
+		this._timeStamp = JSBI.BigInt(order);
+		/** @protected */
+		this._order = order;
+		/** @protected */
+		this._accessCount = 0;
+
+		/**
+		 * @type {NodeJS.Timeout}
+		 * @protected
+		 */
+		this._expireTimeout = null;
+		if (expireAfterMsecs > 0) {
+			this._expireTimeout = setTimeout(() => {
+				this._cache.delete(key);
+			}, expireAfterMsecs);
+		}
+	};
+
+	/**
+	 * Clears the internal eviction timeout.
+	 * 
+	 * @returns {this}
+	 */
+	clearTimeout() {
+		clearTimeout(this._expireTimeout);
+		this._expireTimeout = null;
+		return this;
+	};
+
+	/**
+	 * @returns {String|Symbol}
+	 */
+	get key() {
+		return this._key;
+	};
+	
+	/**
+	 * @returns {T}
+	 */
+	get item() {
+		return this._item;
+	};
+
+	get timeStamp() {
+		return this._timeStamp;
+	};
+
+	updateAccessTime() {
+		const hrTime = process.hrtime()
+		, secsAsNano = JSBI.multiply(JSBI.BigInt(hrTime[0]), JSBI.BigInt(1e9))
+		, withNs = JSBI.add(secsAsNano, JSBI.BigInt(hrTime[1]));
+
+		this._timeStamp = withNs;
+	};
+
+	get order() {
+		return this._order;
+	};
+
+	get accessCount() {
+		return this._accessCount;
+	};
+
+	increaseAccessCount() {
+		this._accessCount++;
+		return this;
+	};
+};
+
+
+
+let __counter = 0;
+
+/**
+ * @deprecated Use @see {CacheMapBased} instead. This class will be
+ * removed from Version v3.0.
+ * A Cache is similar to a @see {DictionaryMapBased}, and also allows to manually and automatically
+ * evict items stored in it. A Cache's capacity is constrained.
+ * 
+ * @template TKey
+ * @template TVal
+ * @author Sebastian Hönel &lt;development@hoenel.net>
+ */
+class Cache extends Dictionary {
+	/**
+	 * Used to assign a running number to new cache items.
+	 * @private
+	 */
+	static get __counter() {
+		return __counter++;
+	};
+
+
+	/**
+	 * Creates a new, empty Cache.&lt;T>, using the specified @see {EvictionPolicy} and
+	 * an initial capacity.
+	 * 
+	 * @param {EvictionPolicy|number} [evictPolicy] Optional. Specify the eviction policy that is
+	 * applied, if the cache has no more space left.
+	 * @param {number} [capacity] Optional. Specify the initial capacity of this cache. The capacity
+	 * can be increased and decreased later.
+	 * @param {EqualityComparer.&lt;TVal>} [eqComparer] Optional. Defaults To EqualityComparer.&lt;TVal>.default.
+	 */
+	constructor(evictPolicy = EvictionPolicy.None, capacity = Number.MAX_SAFE_INTEGER, eqComparer = EqualityComparer.default) {
+		super(eqComparer);
+		
+		/**
+		 * @type {EvictionPolicy|number}
+		 * @protected
+		 */
+		this._evictPolicy = EvictionPolicy.None;
+		this.evictionPolicy = evictPolicy;
+
+		/**
+		 * @type {number}
+		 * @protected
+		 */
+		this._capacity = capacity;
+		this.capacity = capacity;
+
+		/**
+		 * @type {Object.&lt;String|Symbol, CacheItem.&lt;T>>}
+		 * @protected
+		 */
+		this._dict = {};
+	};
+	
+	/**
+	 * @param {EvictionPolicy|number} policy An @see {EvictionPolicy}
+	 * @throws {Error} If the given policy is not one of @see {EvictionPolicy}.
+	 * @protected
+	 */
+	_validateEvictionPolicy(policy) {
+		switch (policy) {
+			case EvictionPolicy.LRU:
+			case EvictionPolicy.MRU:
+			case EvictionPolicy.LFU:
+			case EvictionPolicy.MFU:
+			case EvictionPolicy.None:
+			case EvictionPolicy.FIFO:
+			case EvictionPolicy.LIFO:
+			case EvictionPolicy.Random:
+			case EvictionPolicy.Undetermined:
+				break;
+			default:
+				throw new Error(`The eviction policy '${policy}' is not supported.`);
+		}
+	};
+
+	/**
+	 * @returns {EvictionPolicy|number}
+	 */
+	get evictionPolicy() {
+		return this._evictPolicy;
+	};
+
+	/**
+	 * @param {EvictionPolicy|number} policy The new policy to use for evicting items.
+	 */
+	set evictionPolicy(policy) {
+		this._validateEvictionPolicy(policy);
+		this._evictPolicy = policy;
+	};
+
+	/**
+	 * @param {number} capacity The capacity to check. Must be a positive integer.
+	 * @throws {Error} If the given capacity is not an integer or less than zero.
+	 * @protected
+	 */
+	_validateCapacity(capacity) {
+		if (!Resolve.isTypeOf(capacity, Number) || !Number.isInteger(capacity)) {
+			throw new Error(`The value given for capacity is not a number.`);
+		}
+		if (capacity &lt; 0) {
+			throw new Error(`The capacity given is less than 0: ${capacity}`);
+		}
+	};
+
+	/**
+	 * @returns {number} The current capacity of this cache.
+	 */
+	get capacity() {
+		return this._capacity;
+	};
+
+	/**
+	 * @returns {Boolean} True, if the cache's capacity is all used up.
+	 */
+	get isFull() {
+		return this.size === this.capacity;
+	};
+
+	/**
+	 * @param {number} capacity The new capacity of this cache. Must be a positive
+	 * integer (0 is allowed). Note that setting a capacity that undercuts the amount
+	 * of items currently held in the cache, will lead to the eviction of enough
+	 * items to meet the new capacity constraint.
+	 */
+	set capacity(capacity) {
+		this._validateCapacity(capacity);
+
+		let toEvict = this.size - capacity;
+		if (toEvict > 0 &amp;&amp; this.evictionPolicy === EvictionPolicy.None) {
+			throw new Error('Cannot decrease capacity and automatically evict items with policy set to None.');
+		}
+		while (toEvict > 0) {
+			this.evict();
+			toEvict--;
+		}
+
+		this._capacity = capacity;
+	};
+
+	/**
+	 * @returns {T} the evicted item.
+	 */
+	evict() {
+		if (this.isEmpty) {
+			throw new Error('The cache is empty, cannot evict any more items.');
+		}
+		return this.evictMany(1)[0];
+	};
+
+	/**
+	 * @param {Number} count
+	 * @returns {Array.&lt;T>} The evicted items in an array.
+	 */
+	evictMany(count) {
+		let howMany = Math.min(count, this.size);
+		/** @type {Array.&lt;T>} */
+		const items = [];
+
+		for (const item of this._evictNext()) {
+			items.push(this.remove(item.key));
+			if (--howMany === 0) {
+				break;
+			}
+		}
+
+		return items;
+	};
+
+	/**
+	 * Allows to peek at the next n items that will be evited next, without removing
+	 * them. Returns the items with as key/value pair.
+	 * 
+	 * @param {Number} amount
+	 * @returns {Array.&lt;Object.&lt;String|Symbol, T>>}
+	 */
+	peekEvict(amount) {
+		if (!Resolve.isTypeOf(amount, Number) || !Number.isInteger(amount) || amount &lt; 1) {
+			throw new Error('You must peek an mount larger than 0.');
+		}
+
+		amount = Math.min(amount, this.size);
+		const iter = this._evictNext();
+		return Array.from(Array(amount), iter.next, iter).map(o => {
+			const obj = {};
+			obj[o.value.key] = o.value.item;
+			return obj;
+		});
+	};
+
+	/**
+	 * Returns items in the order they will be evicted, according to the policy.
+	 * 
+	 * @protected
+	 * @returns {IterableIterator.&lt;CacheItem.&lt;T>>}
+	 */
+	*_evictNext() {
+		/** @type {Array.&lt;CacheItem.&lt;T>>} */
+		const wrappers = [];
+
+		switch (this.evictionPolicy) {
+			case EvictionPolicy.LRU:
+			case EvictionPolicy.MRU:
+				// Order items by their access date:
+				const mru = this.evictionPolicy === EvictionPolicy.MRU ? -1 : 1;
+					this.evictionPolicy === EvictionPolicy.MRU ? -1 : 1;
+				wrappers.unshift(
+					...Array.from(super.values()).sort((w1, w2) => {
+						return mru * (JSBI.lessThan(w1.timeStamp, w2.timeStamp) ? -1 : 1);
+					})
+				);
+				break;
+			case EvictionPolicy.LFU:
+			case EvictionPolicy.MFU:
+				// Order items by access count and select least/most recently used items first.
+				const mfu = this.evictionPolicy === EvictionPolicy.MFU ? -1 : 1;
+				wrappers.unshift(
+					...Array.from(super.values()).sort((w1, w2) => {
+						return mfu * (w1.accessCount - w2.accessCount);
+					})
+				);
+				break;
+			case EvictionPolicy.FIFO:
+			case EvictionPolicy.LIFO:
+				// Remove the item inserted first/last.
+				const lifo = this.evictionPolicy === EvictionPolicy.LIFO ? -1 : 1;
+				wrappers.unshift(
+					...Array.from(super.values()).sort((w1, w2) => {
+						return lifo * (w1.order - w2.order);
+					})
+				);
+				break;
+			case EvictionPolicy.Undetermined:
+				// No specific/deterministic order.
+				yield* super.values();
+				break;
+			case EvictionPolicy.Random:
+				// Randomly select items to evict:
+				wrappers.unshift(
+					...Array.from(super.values()).sort(() => {
+						return Math.random() &lt; .5 ? 1 : -1;
+					})
+				);
+				break;
+			case EvictionPolicy.None:
+				// Eviction not allowed, must use ::remove()
+				throw new Error('Eviction not allowed.');
+		}
+
+		for (const wrap of wrappers) {
+			yield wrap;
+		}
+	};
+
+	/**
+	 * @inheritdoc
+	 * @override
+	 * @param {Number} [expireAfterMsecs] Optional. if given a positive integer, then it
+	 * will be used as the amount of milliseconds this entry will expire and remove itself
+	 * from the cache.
+	 * @throws {Error} If this cache is full and no automatic eviction policy was set.
+	 */
+	set(key, val, expireAfterMsecs = void 0) {
+		const isFull = this.size === this.capacity;
+		if (isFull) {
+			if (this.evictionPolicy === EvictionPolicy.None) {
+				throw new Error(`The Cache is full and no automatic eviction policy is set.`);
+			}
+
+			this.evict(); // Remove one item according to an automatic policy.
+		}
+
+		if (!Resolve.isNumber(expireAfterMsecs) || !Number.isSafeInteger(expireAfterMsecs) || expireAfterMsecs &lt; 0) {
+			expireAfterMsecs = -1;
+		}
+
+		const wrap = new CacheItem(this, key, val, Cache.__counter, expireAfterMsecs);
+
+		return super.set(key, wrap);
+	};
+
+	/**
+	 * @override
+	 * @inheritdoc
+	 */
+	get(key) {
+		/** @type {CacheItem.&lt;T>} */
+		const wrap = super.get(key);
+		wrap.updateAccessTime();
+		wrap.increaseAccessCount();
+		return wrap.item;
+	};
+
+	/**
+	 * @override
+	 * @inheritdoc
+	 */
+	remove(key) {
+		/** @type {CacheItem.&lt;T>} */
+		const wrap = super.remove(key);
+		wrap.clearTimeout();
+		return wrap.item;
+	};
+
+	/**
+	 * @override
+	 * @inheritdoc
+	 */
+	*values() {
+		for (const val of super.values()) {
+			yield val.item;
+		}
+	};
+
+	/**
+	 * @override
+	 * @protected
+	 * @inheritdoc
+	 */
+	*_entries(reverse = false) {
+		for (const entry of super._entries(reverse)) {
+			const key = Object.keys(entry).concat(Object.getOwnPropertySymbols(entry))[0];
+			entry[key] = entry[key].item; // unwrap
+			yield entry;
+		}
+	};
+};
+
+
+
+let __counterCb = 0;
+
+/**
+ * @template TKey
+ * @template TVal
+ * @author Sebastian Hönel &lt;development@hoenel.net>
+ */
+class CacheMapBased extends DictionaryMapBased {
+	/**
+	 * Used to assign a running number to new cache items.
+	 * @private
+	 */
+	static get __counter() {
+		return __counterCb++;
+	};
+
+
+	/**
+	 * Creates a new, empty CacheMapBased.&lt;TKey, TVal>, using the specified @see {EvictionPolicy} and
+	 * an initial capacity.
+	 * 
+	 * @param {EvictionPolicy|number} [evictPolicy] Optional. Specify the eviction policy that is
+	 * applied, if the cache has no more space left.
+	 * @param {number} [capacity] Optional. Specify the initial capacity of this cache. The capacity
+	 * can be increased and decreased later.
+	 * @param {EqualityComparer.&lt;TVal>} [eqComparer] Optional. Defaults To EqualityComparer.&lt;TVal>.default.
+	 */
+	constructor(evictPolicy = EvictionPolicy.None, capacity = Number.MAX_SAFE_INTEGER, eqComparer = EqualityComparer.default) {
+		super(eqComparer);
+		
+		/**
+		 * @type {EvictionPolicy|number}
+		 * @protected
+		 */
+		this._evictPolicy = EvictionPolicy.None;
+		this.evictionPolicy = evictPolicy;
+
+		/**
+		 * @type {number}
+		 * @protected
+		 */
+		this._capacity = capacity;
+		this.capacity = capacity;
+
+		/**
+		 * @type {Map.&lt;TKey, CacheItem.&lt;TVal>>}
+		 * @protected
+		 */
+		this._map = new Map();
+
+		/** @type {Observable.&lt;CollectionEvent.&lt;Array.&lt;TVal>>>} */
+		this.observableEvict = Object.freeze(fromEvent(this, symbolCacheEvict));
+	};
+	
+	/**
+	 * @param {EvictionPolicy|number} policy An @see {EvictionPolicy}
+	 * @throws {Error} If the given policy is not one of @see {EvictionPolicy}.
+	 * @protected
+	 */
+	_validateEvictionPolicy(policy) {
+		switch (policy) {
+			case EvictionPolicy.LRU:
+			case EvictionPolicy.MRU:
+			case EvictionPolicy.LFU:
+			case EvictionPolicy.MFU:
+			case EvictionPolicy.None:
+			case EvictionPolicy.FIFO:
+			case EvictionPolicy.LIFO:
+			case EvictionPolicy.Random:
+			case EvictionPolicy.Undetermined:
+				break;
+			default:
+				throw new Error(`The eviction policy '${policy}' is not supported.`);
+		}
+	};
+
+	/**
+	 * @returns {EvictionPolicy|number}
+	 */
+	get evictionPolicy() {
+		return this._evictPolicy;
+	};
+
+	/**
+	 * @param {EvictionPolicy|number} policy The new policy to use for evicting items.
+	 */
+	set evictionPolicy(policy) {
+		this._validateEvictionPolicy(policy);
+		this._evictPolicy = policy;
+	};
+
+	/**
+	 * @param {number} capacity The capacity to check. Must be a positive integer.
+	 * @throws {Error} If the given capacity is not an integer or less than zero.
+	 * @protected
+	 */
+	_validateCapacity(capacity) {
+		if (!Resolve.isTypeOf(capacity, Number) || !Number.isInteger(capacity)) {
+			throw new Error(`The value given for capacity is not a number.`);
+		}
+		if (capacity &lt; 0) {
+			throw new Error(`The capacity given is less than 0: ${capacity}`);
+		}
+	};
+
+	/**
+	 * @returns {number} The current capacity of this cache.
+	 */
+	get capacity() {
+		return this._capacity;
+	};
+
+	/**
+	 * @returns {Boolean} True, if the cache's capacity is all used up.
+	 */
+	get isFull() {
+		return this.size === this.capacity;
+	};
+
+	/**
+	 * @param {number} capacity The new capacity of this cache. Must be a positive
+	 * integer (0 is allowed). Note that setting a capacity that undercuts the amount
+	 * of items currently held in the cache, will lead to the eviction of enough
+	 * items to meet the new capacity constraint.
+	 */
+	set capacity(capacity) {
+		this._validateCapacity(capacity);
+
+		let toEvict = this.size - capacity;
+		if (toEvict > 0 &amp;&amp; this.evictionPolicy === EvictionPolicy.None) {
+			throw new Error('Cannot decrease capacity and automatically evict items with policy set to None.');
+		}
+		while (toEvict > 0) {
+			this.evict();
+			toEvict--;
+		}
+
+		this._capacity = capacity;
+	};
+
+	/**
+	 * @returns {T} the evicted item.
+	 */
+	evict() {
+		if (this.isEmpty) {
+			throw new Error('The cache is empty, cannot evict any more items.');
+		}
+		return this.evictMany(1)[0];
+	};
+
+	/**
+	 * @param {Number} count
+	 * @returns {Array.&lt;T>} The evicted items in an array.
+	 */
+	evictMany(count) {
+		let howMany = Math.min(count, this.size);
+		/** @type {Array.&lt;T>} */
+		const items = [];
+
+		for (const item of this._evictNext()) {
+			items.push(this.delete(item.key));
+			if (--howMany === 0) {
+				break;
+			}
+		}
+
+		this.emit(symbolCacheEvict, new CollectionEvent(items.slice(0)));
+
+		return items;
+	};
+
+	/**
+	 * Allows to peek at the next n items that will be evicted next, without
+	 * removing them. Returns the items as key/value pair.
+	 * 
+	 * @param {Number} amount
+	 * @returns {Array.&lt;[TKey, TVal]>}
+	 */
+	peekEvict(amount) {
+		if (!Resolve.isTypeOf(amount, Number) || !Number.isInteger(amount) || amount &lt; 1) {
+			throw new Error('You must peek an mount larger than 0.');
+		}
+
+		amount = Math.min(amount, this.size);
+		const iter = this._evictNext();
+		return Array.from(Array(amount), iter.next, iter).map(o => {
+			return [o.value.key, o.value.item];
+		});
+	};
+
+	/**
+	 * Returns items in the order they will be evicted, according to the policy.
+	 * 
+	 * @protected
+	 * @returns {IterableIterator.&lt;CacheItem.&lt;T>>}
+	 */
+	*_evictNext() {
+		/** @type {Array.&lt;CacheItem.&lt;T>>} */
+		const wrappers = [];
+
+		switch (this.evictionPolicy) {
+			case EvictionPolicy.LRU:
+			case EvictionPolicy.MRU:
+				// Order items by their access date:
+				const mru = this.evictionPolicy === EvictionPolicy.MRU ? -1 : 1;
+					this.evictionPolicy === EvictionPolicy.MRU ? -1 : 1;
+				wrappers.unshift(
+					...Array.from(super.values()).sort((w1, w2) => {
+						return mru * (JSBI.lessThan(w1.timeStamp, w2.timeStamp) ? -1 : 1);
+					})
+				);
+				break;
+			case EvictionPolicy.LFU:
+			case EvictionPolicy.MFU:
+				// Order items by access count and select least/most recently used items first.
+				const mfu = this.evictionPolicy === EvictionPolicy.MFU ? -1 : 1;
+				wrappers.unshift(
+					...Array.from(super.values()).sort((w1, w2) => {
+						return mfu * (w1.accessCount - w2.accessCount);
+					})
+				);
+				break;
+			case EvictionPolicy.FIFO:
+			case EvictionPolicy.LIFO:
+				// Remove the item inserted first/last.
+				const lifo = this.evictionPolicy === EvictionPolicy.LIFO ? -1 : 1;
+				wrappers.unshift(
+					...Array.from(super.values()).sort((w1, w2) => {
+						return lifo * (w1.order - w2.order);
+					})
+				);
+				break;
+			case EvictionPolicy.Undetermined:
+				// No specific/deterministic order.
+				yield* super.values();
+				break;
+			case EvictionPolicy.Random:
+				// Randomly select items to evict:
+				wrappers.unshift(
+					...Array.from(super.values()).sort(() => {
+						return Math.random() &lt; .5 ? 1 : -1;
+					})
+				);
+				break;
+			case EvictionPolicy.None:
+				// Eviction not allowed, must use ::remove()
+				throw new Error('Eviction not allowed.');
+		}
+
+		for (const wrap of wrappers) {
+			yield wrap;
+		}
+	};
+
+	/**
+	 * @override
+	 * @inheritdoc
+	 * @param {Number} [expireAfterMsecs] Optional. if given a positive integer, then it
+	 * will be used as the amount of milliseconds this entry will expire and remove itself
+	 * from the cache.
+	 * @throws {Error} If this cache is full and no automatic eviction policy was set.
+	 */
+	set(key, val, expireAfterMsecs = void 0) {
+		const isFull = this.size === this.capacity;
+		if (isFull) {
+			if (this.evictionPolicy === EvictionPolicy.None) {
+				throw new Error(`The Cache is full and no automatic eviction policy is set.`);
+			}
+
+			this.evict(); // Remove one item according to an automatic policy.
+		}
+
+		if (!Resolve.isNumber(expireAfterMsecs) || !Number.isSafeInteger(expireAfterMsecs) || expireAfterMsecs &lt; 0) {
+			expireAfterMsecs = -1;
+		}
+
+		const wrap = new CacheItem(this, key, val, CacheMapBased.__counter, expireAfterMsecs);
+
+		return super.set(key, wrap);
+	};
+
+	/**
+	 * @inheritdoc
+	 */
+	get(key) {
+		const wrap = this._map.get(key);
+		wrap.updateAccessTime();
+		wrap.increaseAccessCount();
+
+		const value = this.__unwrapValue(wrap);
+		this.emit(symbolDictionaryGet, new CollectionEvent([key, value]));
+		return value;
+	};
+
+	/**
+	 * @override
+	 * @inheritdoc
+	 */
+	*values() {
+		for (const val of super.values()) {
+			yield this.__unwrapValue(val);
+		}
+	};
+
+	/**
+	 * @override
+	 * @inheritdoc
+	 */
+	*entries() {
+		for (const entry of super.entries()) {
+			yield [entry[0], this.__unwrapValue(entry[1])];
+		}
+	};
+
+	/**
+	 * @private
+	 * @inheritdoc
+	 * @param {CacheItem.&lt;TVal>} value
+	 * @returns {TVal} The wrapped value
+	 */
+	__unwrapValue(value) {
+		return value.item;
+	};
+};
+
+
+
+/**
+ * @template T
+ * @author Sebastian Hönel &lt;development@hoenel.net>
+ */
+class CacheItemWithLoad extends CacheItem {
+	/**
+	 * @inheritdoc
+	 * @param {Number} load 
+	 */
+	constructor(cache, key, item, order, expireAfterMsecs, load) {
+		super(cache, key, item, order, expireAfterMsecs);
+
+		/** @protected */
+		this._load = load;
+	};
+
+	get load() {
+		return this._load;
+	};
+};
+
+
+/**
+ * A CacheWithLoad introduces a second concept to constrain the capacity
+ * of it. This second concept of load is useful for when the size of the
+ * items to cache is not known, and when the sheer amount of items does
+ * not allow to estimate the load. The CacheWithLoad evicts items when
+ * either its capacity is exhausted or the maximum load is exceeded.
+ * 
+ * @template TKey
+ * @template TVal
+ * @author Sebastian Hönel &lt;development@hoenel.net>
+ */
+class CacheWithLoad extends CacheMapBased {
+	/**
+	 * @inheritdoc
+	 * @param {EvictionPolicy|Number} evictPolicy
+	 * @param {Number} capacity
+	 * @param {Number} maxLoad The maximum load, expressed as a positive number.
+	 * @param {EqualityComparer.&lt;TVal>} eqComparer
+	 */
+	constructor(evictPolicy = EvictionPolicy.None, capacity = Number.MAX_SAFE_INTEGER, maxLoad = Number.MAX_VALUE, eqComparer = EqualityComparer.default) {
+		super(evictPolicy, capacity, eqComparer);
+
+		/** @protected */
+		this._maxLoad = maxLoad;
+		this.maxLoad = maxLoad;
+
+		/**
+		 * @type {Object.&lt;String|Symbol, CacheItemWithLoad.&lt;T>>}
+		 * @protected
+		 */
+		this._dict = {};
+	};
+
+	/**
+	 * @protected
+	 * @param {Number} load
+	 */
+	_validateLoad(load) {
+		if (!Resolve.isTypeOf(load, Number) || !Number.isFinite(load)) {
+			throw new Error(`The value given for load is not a number.`);
+		}
+		if (load &lt;= 0) {
+			throw new Error(`The value given for load must be greater than zero.`);
+		}
+	};
+
+	get load() {
+		return Array.from(
+			// To avoid unwrapping:
+			DictionaryMapBased.prototype.values.call(this)
+		).map(ci => ci.load).reduce((a, b) => a + b, 0);
+	};
+
+	get loadFree() {
+		return this.maxLoad - this.load;
+	};
+
+	set maxLoad(maxLoad) {
+		this._validateLoad(maxLoad);
+
+		if (maxLoad &lt; this.load &amp;&amp; this.evictionPolicy === EvictionPolicy.None) {
+			throw new Error('Cannot decrease the maximum load and automatically evict items with policy set to None.');
+		}
+
+		while (this.load > maxLoad) {
+			this.evict();
+		}
+
+		this._maxLoad = maxLoad;
+	};
+
+	get maxLoad() {
+		return this._maxLoad;
+	};
+
+	/**
+	 * @inheritdoc
+	 * @param {TKey} key
+	 * @param {TVal} val
+	 * @param {Number} load
+	 * @param {Number} [expireAfterMsecs] defaults to undefined. Only used if given
+	 * as a positive integer.
+	 */
+	set(key, val, load, expireAfterMsecs = void 0) {
+		this._validateLoad(load);
+
+		if (load > this.maxLoad) {
+			throw new Error(`The specified load exceeds this cache's maximum load.`);
+		}
+
+		const isFull = this.size === this.capacity;
+		if (isFull) {
+			if (this.evictionPolicy === EvictionPolicy.None) {
+				throw new Error(`The Cache is full and no automatic eviction policy is set.`);
+			}
+
+			this.evict(); // Remove one item according to an automatic policy.
+		}
+
+		if (load + this.load > this.maxLoad) {
+			if (this.evictionPolicy === EvictionPolicy.None) {
+				throw new Error(`The Cache's load is too high and no automatic eviction policy is set.`);
+			}
+
+			while (load + this.load > this.maxLoad) {
+				this.evict();
+			}
+		}
+
+		if (!Resolve.isNumber(expireAfterMsecs) || !Number.isSafeInteger(expireAfterMsecs) || expireAfterMsecs &lt; 0) {
+			expireAfterMsecs = -1;
+		}
+
+		const wrap = new CacheItemWithLoad(
+			this, key, val, CacheMapBased.__counter, expireAfterMsecs, load);
+
+		return DictionaryMapBased.prototype.set.call(this, key, wrap);
+	};
+};
+
+
+module.exports = Object.freeze({
+	EvictionPolicy,
+	Cache,
+	CacheMapBased,
+	CacheItem,
+	CacheWithLoad,
+	CacheItemWithLoad
+});
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Cache.html">Cache</a></li><li><a href="CacheItem.html">CacheItem</a></li><li><a href="CacheItemWithLoad.html">CacheItemWithLoad</a></li><li><a href="CacheMapBased.html">CacheMapBased</a></li><li><a href="CacheWithLoad.html">CacheWithLoad</a></li><li><a href="Calendar.html">Calendar</a></li><li><a href="CalendarError.html">CalendarError</a></li><li><a href="CalendarEventSimple.html">CalendarEventSimple</a></li><li><a href="CalendarScheduler.html">CalendarScheduler</a></li><li><a href="Collection.html">Collection</a></li><li><a href="CollectionEvent.html">CollectionEvent</a></li><li><a href="Comparer.html">Comparer</a></li><li><a href="ConstrainedQueue.html">ConstrainedQueue</a></li><li><a href="ConstrainedStack.html">ConstrainedStack</a></li><li><a href="DefaultComparer.html">DefaultComparer</a></li><li><a href="DefaultEqualityComparer.html">DefaultEqualityComparer</a></li><li><a href="Dictionary.html">Dictionary</a></li><li><a href="DictionaryMapBased.html">DictionaryMapBased</a></li><li><a href="EqualityComparer.html">EqualityComparer</a></li><li><a href="Interval.html">Interval</a></li><li><a href="IntervalEventSimple.html">IntervalEventSimple</a></li><li><a href="IntervalScheduler.html">IntervalScheduler</a></li><li><a href="ItemAndDeferred.html">ItemAndDeferred</a></li><li><a href="Job.html">Job</a></li><li><a href="JobEvent.html">JobEvent</a></li><li><a href="JobQueue.html">JobQueue</a></li><li><a href="JobQueueCapabilities.html">JobQueueCapabilities</a></li><li><a href="JobQueueEvent.html">JobQueueEvent</a></li><li><a href="LinkedList.html">LinkedList</a></li><li><a href="LinkedListEvent.html">LinkedListEvent</a></li><li><a href="LinkedListNode.html">LinkedListNode</a></li><li><a href="ManualSchedule.html">ManualSchedule</a></li><li><a href="ManualScheduleEventSimple.html">ManualScheduleEventSimple</a></li><li><a href="ManualScheduler.html">ManualScheduler</a></li><li><a href="MyIcalExpander.html">MyIcalExpander</a></li><li><a href="PreliminaryScheduleEvent.html">PreliminaryScheduleEvent</a></li><li><a href="ProcessErrorResult.html">ProcessErrorResult</a></li><li><a href="ProcessExit.html">ProcessExit</a></li><li><a href="ProcessOutput.html">ProcessOutput</a></li><li><a href="ProcessResult.html">ProcessResult</a></li><li><a href="ProcessWrapper.html">ProcessWrapper</a></li><li><a href="ProducerConsumerQueue.html">ProducerConsumerQueue</a></li><li><a href="Progress.html">Progress</a></li><li><a href="ProgressNumeric.html">ProgressNumeric</a></li><li><a href="Queue.html">Queue</a></li><li><a href="Resolve.html">Resolve</a></li><li><a href="Schedule.html">Schedule</a></li><li><a href="ScheduleEvent.html">ScheduleEvent</a></li><li><a href="Scheduler.html">Scheduler</a></li><li><a href="Stack.html">Stack</a></li></ul><h3>Global</h3><ul><li><a href="global.html#assertThrowsAsync">assertThrowsAsync</a></li><li><a href="global.html#deepCloneObject">deepCloneObject</a></li><li><a href="global.html#defer">defer</a></li><li><a href="global.html#deferMocha">deferMocha</a></li><li><a href="global.html#Discard">Discard</a></li><li><a href="global.html#EvictionPolicy">EvictionPolicy</a></li><li><a href="global.html#FIFO">FIFO</a></li><li><a href="global.html#formatError">formatError</a></li><li><a href="global.html#formatValue">formatValue</a></li><li><a href="global.html#getRandomNumber">getRandomNumber</a></li><li><a href="global.html#Ignore">Ignore</a></li><li><a href="global.html#LFU">LFU</a></li><li><a href="global.html#LIFO">LIFO</a></li><li><a href="global.html#LRU">LRU</a></li><li><a href="global.html#mergeObjects">mergeObjects</a></li><li><a href="global.html#MFU">MFU</a></li><li><a href="global.html#MRU">MRU</a></li><li><a href="global.html#None">None</a></li><li><a href="global.html#Random">Random</a></li><li><a href="global.html#refresh">refresh</a></li><li><a href="global.html#ThrowError">ThrowError</a></li><li><a href="global.html#throwError">throwError</a></li><li><a href="global.html#timeout">timeout</a></li><li><a href="global.html#Undetermined">Undetermined</a></li><li><a href="global.html#wrapError">wrapError</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.5</a> on Sat Sep 19 2020 12:45:54 GMT+0200 (Central European Summer Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
