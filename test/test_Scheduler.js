@@ -1,7 +1,6 @@
 const { assert, expect } = require('chai')
 , { timeout } = require('../lib/tools/Defer')
 , { assertThrowsAsync } = require('../lib/tools/AssertAsync')
-, { Calendar, CalendarScheduler } = require('../lib/CalendarScheduler')
 , { Interval, IntervalScheduler} = require('../lib/IntervalScheduler')
 , { ManualSchedule, ManualScheduler } = require('../lib/ManualScheduler')
 , { Schedule, PreliminaryScheduleEvent } = require('../lib/Schedule')
@@ -66,28 +65,14 @@ describe('Scheduler', function() {
 	});
 
 	it('should work using the sync base-method for adding schedules', done => {
-		const c = new CalendarScheduler()
-		, i = new IntervalScheduler()
+		const i = new IntervalScheduler()
 		, m = new ManualScheduler();
 
-		const cs = new Calendar('asd', () => '')
-		, is = new Interval(60)
+		const is = new Interval(60)
 		, ms = new ManualSchedule();
 
-		assert.throws(() => c.addSchedule(is));
 		assert.throws(() => i.addSchedule(ms));
 		assert.throws(() => m.addSchedule(cs));
-
-		assert.doesNotThrow(() => {
-			c.addSchedule(cs);
-			assert.isTrue(c.hasSchedule(cs));
-			assert.isTrue(c.hasCalendar(cs));
-
-			assert.throws(() => c.removeSchedule(is));
-			c.removeSchedule(cs);
-			assert.isFalse(c.hasSchedule(cs));
-			assert.isFalse(c.hasCalendar(cs));
-		});
 
 		assert.doesNotThrow(() => {
 			i.addSchedule(is);
