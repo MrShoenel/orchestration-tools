@@ -4,8 +4,6 @@ const Rx = require('rxjs')
   symbolIdle, JobQueueCapacityPolicy } = require('./lib/JobQueue')
 , { JobQueueCapabilities } = require('./lib/JobQueueCapabilities')
 , { Progress, ProgressNumeric, symbolProgress } = require('./lib/Progress')
-, { CalendarScheduler, Calendar, CalendarEventSimple, symbolCalendarEvent, CalendarError
-  } = require('./lib/CalendarScheduler')
 , { Scheduler } = require('./lib/Scheduler')
 , { Schedule, ScheduleEvent, symbolScheduleError, symbolScheduleComplete, PreliminaryScheduleEvent
   } = require('./lib/Schedule')
@@ -41,7 +39,6 @@ module.exports = {
   Job, JobEvent, JobQueue, JobQueueEvent, symbolRun, symbolDone, symbolFailed, symbolIdle,
   JobQueueCapabilities, JobQueueCapacityPolicy,
   Progress, ProgressNumeric, symbolProgress,
-  CalendarScheduler, Calendar, CalendarEventSimple, symbolCalendarEvent, CalendarError,
   Scheduler,
   Schedule, ScheduleEvent, symbolScheduleError, symbolScheduleComplete, PreliminaryScheduleEvent,
   Interval, IntervalEventSimple, IntervalScheduler, symbolIntervalEvent,
