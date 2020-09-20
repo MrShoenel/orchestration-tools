@@ -43,22 +43,22 @@ class Interval extends Schedule {
 	/**
 	 * 
 	 * @template T
-	 * @param {number} msecs
-	 * @param {producerHandler.&lt;T|Promise.&lt;T>>} [itemProducer] Optional. Defaults to
+	 * @param {Number} msecs
+	 * @param {producerHandler&lt;T|Promise&lt;T>>} [itemProducer] Optional. Defaults to
 	 * null. A function that produces an item that shall then be signaled
 	 * by the scheduler. If the item is not of importance, then you may
 	 * just supply an empty function or null (will be converted to an empty
 	 * function then).
-	 * @param {boolean} waitforFinishProduction if true, the interval will
+	 * @param {Boolean} waitforFinishProduction if true, the interval will
 	 * be reset only when the itemProducer finished producing its item. If
 	 * this is false, the interval will be reset right away if it elapses.
 	 * This makes sense if producing an item takes considerable amounts of time.
-	 * @param {number} maxNumTriggers the maximum amount of times this interval
+	 * @param {Number} maxNumTriggers the maximum amount of times this interval
 	 * shall trigger. Supply a negative value or Number.MAX_SAFE_INTEGER to not
 	 * limit this interval to any amount of occurrences.
-	 * @param {boolean} triggerInitially if true, will trigger this interval
+	 * @param {Boolean} triggerInitially if true, will trigger this interval
 	 * right away, instead of waiting for the timeout to elapse once.
-	 * @param {boolean} enabled if true, this Interval is enabled. Otherwise,
+	 * @param {Boolean} enabled if true, this Interval is enabled. Otherwise,
 	 * its events are ignored until it get enabled.
 	 */
 	constructor(msecs, itemProducer = null, maxNumTriggers = -1, waitforFinishProduction = true, triggerInitially = false, enabled = true) {
@@ -88,6 +88,9 @@ class Interval extends Schedule {
 		this.numOccurred = 0;
 	};
 
+	/**
+	 * @type {Boolean}
+	 */
 	get isFinished() {
 		return this.numOccurred === this.maxNumTriggers;
 	};
@@ -120,10 +123,11 @@ class Interval extends Schedule {
 	};
 
 	/**
+	 * @override
 	 * @inheritdoc
-	 * @param {Date} after Required.
+	 * @param {Date} after
 	 * @param {Date} before
-	 * @returns {IterableIterator.&lt;PreliminaryScheduleEvent.&lt;Interval, undefined>>}
+	 * @returns {IterableIterator&lt;PreliminaryScheduleEvent&lt;Interval, undefined>>}
 	 */
 	*preliminaryEvents(after, before) {
 		if (!(after instanceof Date &amp;&amp; before instanceof Date)) {
@@ -170,17 +174,17 @@ class IntervalScheduler extends Scheduler {
 	constructor() {
 		super(symbolIntervalEvent);
 
-		/** @type {Array.&lt;Interval>} */
+		/** @type {Array&lt;Interval>} */
 		this.intervals = [];
 		/**
-		 * @type {Object.&lt;string, Interval>}
+		 * @type {Object&lt;string, Interval>}
 		 * @protected
 		 */
 		this._intervalIds = {};
 		/** @protected */
 		this._intervalId = 0;
 		/**
-		 * @type {Object.&lt;string, number>}
+		 * @type {Object&lt;string, number>}
 		 * @protected
 		 */
 		this._timeouts = {};
@@ -190,7 +194,7 @@ class IntervalScheduler extends Scheduler {
 	 * @protected
 	 * @param {Interval} interval
 	 * @throws {Error} if interval is not of type Interval
-	 * @returns {boolean}
+	 * @returns {Boolean}
 	 */
 	_isInterval(interval) {
 		if (!(interval instanceof Interval)) {
@@ -201,12 +205,12 @@ class IntervalScheduler extends Scheduler {
 
 	/**
 	 * @protected
-	 * @param {string} id 
+	 * @param {String} id 
 	 * @param {Interval} interval 
-	 * @param {boolean} [triggerOnce] Optional. Defaults to false.
+	 * @param {Boolean} [triggerOnce] Optional. Defaults to false.
 	 */
 	async _scheduleInterval(id, interval, triggerOnce = false) {
-		/** @param {boolean} wait */
+		/** @param {Boolean} wait */
 		const triggerInterval = async wait => {
 			if (!interval.isEnabled || interval.isFinished) {
 				return;
@@ -255,7 +259,7 @@ class IntervalScheduler extends Scheduler {
 	/**
 	 * @protected
 	 * @param {Interval} interval 
-	 * @returns {string}
+	 * @returns {String}
 	 */
 	_getIntervalId(interval) {
 		this._isInterval(interval);
@@ -276,7 +280,7 @@ class IntervalScheduler extends Scheduler {
 	 * Calls hasInterval() with the given Schedule.
 	 * 
 	 * @param {Interval} schedule
-	 * @returns {boolean}
+	 * @returns {Boolean}
 	 */
 	hasSchedule(schedule) {
 		return this.hasInterval(schedule);
@@ -284,7 +288,7 @@ class IntervalScheduler extends Scheduler {
 
 	/**
 	 * @param {Interval} interval
-	 * @returns {boolean}
+	 * @returns {Boolean}
 	 */
 	hasInterval(interval) {
 		return this._isInterval(interval) &amp;&amp;
@@ -334,8 +338,9 @@ class IntervalScheduler extends Scheduler {
 	 * Removes all Intervals and returns them. This will lead to the
 	 * un-scheduling of all Intervals.
 	 * 
+	 * @override
 	 * @inheritDoc
-	 * @returns {Array.&lt;Interval>}
+	 * @returns {Array&lt;Interval>}
 	 */
 	removeAllSchedules() {
 		const intervals = this.intervals.slice(0);
@@ -365,7 +370,7 @@ class IntervalScheduler extends Scheduler {
 	};
 
 	/**
-	 * @returns {Observable.&lt;IntervalEventSimple>}
+	 * @type {Observable&lt;IntervalEventSimple>}
 	 */
 	get observable() {
 		return super.observable;
@@ -376,8 +381,9 @@ class IntervalScheduler extends Scheduler {
 	 * finished Intervals, an empty Observable is returned.
 	 * 
 	 * @override
+	 * @inheritdoc
 	 * @param {Schedule|Interval} interval Must be an instance of Interval
-	 * @returns {Observable.&lt;IntervalEventSimple>}
+	 * @returns {Observable&lt;IntervalEventSimple>}
 	 */
 	getObservableForSchedule(interval) {
 		if (interval.isFinished) {
@@ -388,12 +394,14 @@ class IntervalScheduler extends Scheduler {
 	};
 	
 	/**
+	 * @override
 	 * @inheritdoc
 	 * @param {Date} after
 	 * @param {Date} before
-	 * @returns {IterableIterator.&lt;PreliminaryScheduleEvent.&lt;Interval, undefined>>}
+	 * @returns {IterableIterator&lt;PreliminaryScheduleEvent&lt;Interval, undefined>>}
 	 */
 	*preliminaryEvents(after, before) {
+		super.preliminaryEvents
 		for (const interval of this.intervals) {
 			for (const pre of interval.preliminaryEvents(...arguments)) {
 				yield pre;
@@ -419,13 +427,13 @@ module.exports = Object.freeze({
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Cache.html">Cache</a></li><li><a href="CacheItem.html">CacheItem</a></li><li><a href="CacheItemWithLoad.html">CacheItemWithLoad</a></li><li><a href="CacheMapBased.html">CacheMapBased</a></li><li><a href="CacheWithLoad.html">CacheWithLoad</a></li><li><a href="Collection.html">Collection</a></li><li><a href="CollectionEvent.html">CollectionEvent</a></li><li><a href="Comparer.html">Comparer</a></li><li><a href="ConstrainedQueue.html">ConstrainedQueue</a></li><li><a href="ConstrainedStack.html">ConstrainedStack</a></li><li><a href="DefaultComparer.html">DefaultComparer</a></li><li><a href="DefaultEqualityComparer.html">DefaultEqualityComparer</a></li><li><a href="Dictionary.html">Dictionary</a></li><li><a href="DictionaryMapBased.html">DictionaryMapBased</a></li><li><a href="EqualityComparer.html">EqualityComparer</a></li><li><a href="Interval.html">Interval</a></li><li><a href="IntervalEventSimple.html">IntervalEventSimple</a></li><li><a href="IntervalScheduler.html">IntervalScheduler</a></li><li><a href="ItemAndDeferred.html">ItemAndDeferred</a></li><li><a href="Job.html">Job</a></li><li><a href="JobEvent.html">JobEvent</a></li><li><a href="JobQueue.html">JobQueue</a></li><li><a href="JobQueueCapabilities.html">JobQueueCapabilities</a></li><li><a href="JobQueueEvent.html">JobQueueEvent</a></li><li><a href="LinkedList.html">LinkedList</a></li><li><a href="LinkedListEvent.html">LinkedListEvent</a></li><li><a href="LinkedListNode.html">LinkedListNode</a></li><li><a href="ManualSchedule.html">ManualSchedule</a></li><li><a href="ManualScheduleEventSimple.html">ManualScheduleEventSimple</a></li><li><a href="ManualScheduler.html">ManualScheduler</a></li><li><a href="PreliminaryScheduleEvent.html">PreliminaryScheduleEvent</a></li><li><a href="ProcessErrorResult.html">ProcessErrorResult</a></li><li><a href="ProcessExit.html">ProcessExit</a></li><li><a href="ProcessOutput.html">ProcessOutput</a></li><li><a href="ProcessResult.html">ProcessResult</a></li><li><a href="ProcessWrapper.html">ProcessWrapper</a></li><li><a href="ProducerConsumerQueue.html">ProducerConsumerQueue</a></li><li><a href="Progress.html">Progress</a></li><li><a href="ProgressNumeric.html">ProgressNumeric</a></li><li><a href="Queue.html">Queue</a></li><li><a href="Resolve.html">Resolve</a></li><li><a href="Schedule.html">Schedule</a></li><li><a href="ScheduleEvent.html">ScheduleEvent</a></li><li><a href="Scheduler.html">Scheduler</a></li><li><a href="Stack.html">Stack</a></li></ul><h3>Global</h3><ul><li><a href="global.html#assertThrowsAsync">assertThrowsAsync</a></li><li><a href="global.html#deepCloneObject">deepCloneObject</a></li><li><a href="global.html#defer">defer</a></li><li><a href="global.html#deferMocha">deferMocha</a></li><li><a href="global.html#Discard">Discard</a></li><li><a href="global.html#EvictionPolicy">EvictionPolicy</a></li><li><a href="global.html#FIFO">FIFO</a></li><li><a href="global.html#formatError">formatError</a></li><li><a href="global.html#formatValue">formatValue</a></li><li><a href="global.html#getRandomNumber">getRandomNumber</a></li><li><a href="global.html#Ignore">Ignore</a></li><li><a href="global.html#LFU">LFU</a></li><li><a href="global.html#LIFO">LIFO</a></li><li><a href="global.html#LRU">LRU</a></li><li><a href="global.html#mergeObjects">mergeObjects</a></li><li><a href="global.html#MFU">MFU</a></li><li><a href="global.html#MRU">MRU</a></li><li><a href="global.html#None">None</a></li><li><a href="global.html#Random">Random</a></li><li><a href="global.html#ThrowError">ThrowError</a></li><li><a href="global.html#throwError">throwError</a></li><li><a href="global.html#timeout">timeout</a></li><li><a href="global.html#Undetermined">Undetermined</a></li><li><a href="global.html#wrapError">wrapError</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Cache.html">Cache</a></li><li><a href="CacheItem.html">CacheItem</a></li><li><a href="CacheItemWithLoad.html">CacheItemWithLoad</a></li><li><a href="CacheMapBased.html">CacheMapBased</a></li><li><a href="CacheWithLoad.html">CacheWithLoad</a></li><li><a href="Collection.html">Collection</a></li><li><a href="CollectionEvent.html">CollectionEvent</a></li><li><a href="Comparer.html">Comparer</a></li><li><a href="ConstrainedQueue.html">ConstrainedQueue</a></li><li><a href="ConstrainedStack.html">ConstrainedStack</a></li><li><a href="DefaultComparer.html">DefaultComparer</a></li><li><a href="DefaultEqualityComparer.html">DefaultEqualityComparer</a></li><li><a href="DeferredClass.html">DeferredClass</a></li><li><a href="Dictionary.html">Dictionary</a></li><li><a href="DictionaryMapBased.html">DictionaryMapBased</a></li><li><a href="EqualityComparer.html">EqualityComparer</a></li><li><a href="Interval.html">Interval</a></li><li><a href="IntervalEventSimple.html">IntervalEventSimple</a></li><li><a href="IntervalScheduler.html">IntervalScheduler</a></li><li><a href="ItemAndDeferred.html">ItemAndDeferred</a></li><li><a href="Job.html">Job</a></li><li><a href="JobEvent.html">JobEvent</a></li><li><a href="JobQueue.html">JobQueue</a></li><li><a href="JobQueueCapabilities.html">JobQueueCapabilities</a></li><li><a href="JobQueueEvent.html">JobQueueEvent</a></li><li><a href="LinkedList.html">LinkedList</a></li><li><a href="LinkedListEvent.html">LinkedListEvent</a></li><li><a href="LinkedListNode.html">LinkedListNode</a></li><li><a href="ManualSchedule.html">ManualSchedule</a></li><li><a href="ManualScheduleEventSimple.html">ManualScheduleEventSimple</a></li><li><a href="ManualScheduler.html">ManualScheduler</a></li><li><a href="PreliminaryScheduleEvent.html">PreliminaryScheduleEvent</a></li><li><a href="ProcessErrorResult.html">ProcessErrorResult</a></li><li><a href="ProcessExit.html">ProcessExit</a></li><li><a href="ProcessOutput.html">ProcessOutput</a></li><li><a href="ProcessResult.html">ProcessResult</a></li><li><a href="ProcessWrapper.html">ProcessWrapper</a></li><li><a href="ProducerConsumerQueue.html">ProducerConsumerQueue</a></li><li><a href="Progress.html">Progress</a></li><li><a href="ProgressNumeric.html">ProgressNumeric</a></li><li><a href="Queue.html">Queue</a></li><li><a href="Resolve.html">Resolve</a></li><li><a href="Schedule.html">Schedule</a></li><li><a href="ScheduleEvent.html">ScheduleEvent</a></li><li><a href="Scheduler.html">Scheduler</a></li><li><a href="Stack.html">Stack</a></li></ul><h3>Global</h3><ul><li><a href="global.html#assertThrowsAsync">assertThrowsAsync</a></li><li><a href="global.html#deepCloneObject">deepCloneObject</a></li><li><a href="global.html#defer">defer</a></li><li><a href="global.html#deferMocha">deferMocha</a></li><li><a href="global.html#EvictionPolicy">EvictionPolicy</a></li><li><a href="global.html#formatError">formatError</a></li><li><a href="global.html#formatValue">formatValue</a></li><li><a href="global.html#getRandomNumber">getRandomNumber</a></li><li><a href="global.html#JobQueueCapacityPolicy">JobQueueCapacityPolicy</a></li><li><a href="global.html#mergeObjects">mergeObjects</a></li><li><a href="global.html#throwError">throwError</a></li><li><a href="global.html#timeout">timeout</a></li><li><a href="global.html#wrapError">wrapError</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.5</a> on Sat Sep 19 2020 13:26:32 GMT+0200 (Central European Summer Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.5</a> on Sun Sep 20 2020 02:30:25 GMT+0200 (Central European Summer Time)
 </footer>
 
 <script> prettyPrint(); </script>
