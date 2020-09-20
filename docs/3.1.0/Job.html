@@ -1,0 +1,2326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Class: Job</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Class: Job</h1>
+
+    
+
+
+
+
+<section>
+
+<header>
+    
+        <h2><span class="attribs"><span class="type-signature"></span></span>Job<span class="signature">(promiseProducer, name<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h2>
+        
+            <div class="class-description">The events emitted are (using the declared/exported symbols and theclass JobEvent):- 'run' (immediately triggered before the job is run)- 'done' (if successfully ran to completion, includes the result)- 'failed' (if failed with an error, includes the error)</div>
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+
+    
+    <h2>Constructor</h2>
+    
+
+    
+    <h4 class="name" id="Job"><span class="type-signature"></span>new Job<span class="signature">(promiseProducer, name<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+    
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>promiseProducer</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">producerHandler.&lt;Promise.&lt;T>></span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">A function returning a Promiseor an async function (essentially the same). If you want to use a syncfunction, call Job::fromSyncFunction(fn) instead.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>name</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">Optional. Defaults to undefined. Give an optionalname to this job.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-author">Author:</dt>
+    <dd class="tag-author">
+        <ul>
+            <li><a href="mailto:development@hoenel.net">Sebastian Hönel</a></li>
+        </ul>
+    </dd>
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="JobQueue.js.html">JobQueue.js</a>, <a href="JobQueue.js.html#line50">line 50</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li>{fromSyncFunction()}</li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Members</h3>
+
+        
+            
+<h4 class="name" id="cost"><span class="type-signature"></span>cost<span class="type-signature"> :void</span></h4>
+
+
+
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">void</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="JobQueue.js.html">JobQueue.js</a>, <a href="JobQueue.js.html#line285">line 285</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="cost"><span class="type-signature"></span>cost<span class="type-signature"> :Number|undefined</span></h4>
+
+
+
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Number</span>
+|
+
+<span class="param-type">undefined</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="JobQueue.js.html">JobQueue.js</a>, <a href="JobQueue.js.html#line298">line 298</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="createTime"><span class="type-signature"></span>createTime<span class="type-signature"> :Date</span></h4>
+
+
+
+
+<div class="description">
+    Returns the timestamp of when this Job was created.
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Date</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="JobQueue.js.html">JobQueue.js</a>, <a href="JobQueue.js.html#line151">line 151</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="donePromise"><span class="type-signature"></span>donePromise<span class="type-signature"> :Promise.&lt;T></span></h4>
+
+
+
+
+<div class="description">
+    A promise that can be used to await this Job's final state.If resolved, will resolve with this Job's result. The promisereturned by run() should only be used by the queue.
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Promise.&lt;T></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="JobQueue.js.html">JobQueue.js</a>, <a href="JobQueue.js.html#line331">line 331</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="hasCost"><span class="type-signature"></span>hasCost<span class="type-signature"> :Boolean</span></h4>
+
+
+
+
+<div class="description">
+    Returns whether this Job has an associated cost.
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Boolean</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="JobQueue.js.html">JobQueue.js</a>, <a href="JobQueue.js.html#line276">line 276</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="hasFailed"><span class="type-signature"></span>hasFailed<span class="type-signature"> :Boolean</span></h4>
+
+
+
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Boolean</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="JobQueue.js.html">JobQueue.js</a>, <a href="JobQueue.js.html#line312">line 312</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="isDone"><span class="type-signature"></span>isDone<span class="type-signature"> :Boolean</span></h4>
+
+
+
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Boolean</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="JobQueue.js.html">JobQueue.js</a>, <a href="JobQueue.js.html#line305">line 305</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="isRunning"><span class="type-signature"></span>isRunning<span class="type-signature"> :Boolean</span></h4>
+
+
+
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Boolean</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="JobQueue.js.html">JobQueue.js</a>, <a href="JobQueue.js.html#line319">line 319</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="isStopped"><span class="type-signature"></span>isStopped<span class="type-signature"> :Boolean</span></h4>
+
+
+
+
+<div class="description">
+    Returns true, iff this Job was previously started and is now eitherdone or has failed.
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Boolean</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="JobQueue.js.html">JobQueue.js</a>, <a href="JobQueue.js.html#line142">line 142</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="name"><span class="type-signature"></span>name<span class="type-signature"> :undefined|String</span></h4>
+
+
+
+
+<div class="description">
+    Returns the name of this Job.
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">undefined</span>
+|
+
+<span class="param-type">String</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="JobQueue.js.html">JobQueue.js</a>, <a href="JobQueue.js.html#line201">line 201</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="name"><span class="type-signature"></span>name<span class="type-signature"> :void</span></h4>
+
+
+
+
+<div class="description">
+    Sets the name of this Job.
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">void</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="JobQueue.js.html">JobQueue.js</a>, <a href="JobQueue.js.html#line212">line 212</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="observableDone"><span class="type-signature"></span>observableDone<span class="type-signature"> :Observable.&lt;<a href="JobEvent.html">JobEvent</a>></span></h4>
+
+
+
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Observable.&lt;<a href="JobEvent.html">JobEvent</a>></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="JobQueue.js.html">JobQueue.js</a>, <a href="JobQueue.js.html#line93">line 93</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="observableFailed"><span class="type-signature"></span>observableFailed<span class="type-signature"> :Observable.&lt;<a href="JobEvent.html">JobEvent</a>></span></h4>
+
+
+
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Observable.&lt;<a href="JobEvent.html">JobEvent</a>></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="JobQueue.js.html">JobQueue.js</a>, <a href="JobQueue.js.html#line95">line 95</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="observableRun"><span class="type-signature"></span>observableRun<span class="type-signature"> :Observable.&lt;<a href="JobEvent.html">JobEvent</a>></span></h4>
+
+
+
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Observable.&lt;<a href="JobEvent.html">JobEvent</a>></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="JobQueue.js.html">JobQueue.js</a>, <a href="JobQueue.js.html#line91">line 91</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="progress"><span class="type-signature"></span>progress<span class="type-signature"> :void</span></h4>
+
+
+
+
+<div class="description">
+    Use this setter to give this Job an instance of Progress that may be usedby the scheduler for this Job. This Job itself does not observe the instanceor subscribe to its observables.
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">void</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="JobQueue.js.html">JobQueue.js</a>, <a href="JobQueue.js.html#line245">line 245</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="progress"><span class="type-signature"></span>progress<span class="type-signature"> :<a href="Progress.html">Progress</a>.&lt;TProgress></span></h4>
+
+
+
+
+<div class="description">
+    Returns the Progress-instance of type TProgress.
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type"><a href="Progress.html">Progress</a>.&lt;TProgress></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="JobQueue.js.html">JobQueue.js</a>, <a href="JobQueue.js.html#line258">line 258</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="properties"><span class="type-signature"></span>properties<span class="type-signature"> :<a href="DictionaryMapBased.html">DictionaryMapBased</a>.&lt;any, any></span></h4>
+
+
+
+
+<div class="description">
+    Returns a map with arbitrary properties or date associated with this Job.
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type"><a href="DictionaryMapBased.html">DictionaryMapBased</a>.&lt;any, any></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="JobQueue.js.html">JobQueue.js</a>, <a href="JobQueue.js.html#line122">line 122</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="result"><span class="type-signature"></span>result<span class="type-signature"> :T</span></h4>
+
+
+
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">T</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="JobQueue.js.html">JobQueue.js</a>, <a href="JobQueue.js.html#line339">line 339</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="runDurationMs"><span class="type-signature"></span>runDurationMs<span class="type-signature"> :Number</span></h4>
+
+
+
+
+<div class="description">
+    Returns the amount of milliseconds between start- and stop-time of thisJob. If the Job was not yet started, returns 0. If it is still running, returnsthe time between start and now, otherwise between start and stop.
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Number</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="JobQueue.js.html">JobQueue.js</a>, <a href="JobQueue.js.html#line189">line 189</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="startTime"><span class="type-signature"></span>startTime<span class="type-signature"> :Date</span></h4>
+
+
+
+
+<div class="description">
+    Returns the timestamp of when this Job was started.
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Date</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="JobQueue.js.html">JobQueue.js</a>, <a href="JobQueue.js.html#line161">line 161</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="stopTime"><span class="type-signature"></span>stopTime<span class="type-signature"> :Date</span></h4>
+
+
+
+
+<div class="description">
+    Returns the timestamp of when this Job was stopped (when it finishedwith success or failed).
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Date</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="JobQueue.js.html">JobQueue.js</a>, <a href="JobQueue.js.html#line175">line 175</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="supportsProgress"><span class="type-signature"></span>supportsProgress<span class="type-signature"> :Boolean</span></h4>
+
+
+
+
+<div class="description">
+    Returns whether or not this Job is/was equipped with an instance of Progress.
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Boolean</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="JobQueue.js.html">JobQueue.js</a>, <a href="JobQueue.js.html#line267">line 267</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="wasStarted"><span class="type-signature"></span>wasStarted<span class="type-signature"> :Boolean</span></h4>
+
+
+
+
+<div class="description">
+    Returns true, iff this Job was started. This is also true for done orfailed Jobs or those that are currently running.
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Boolean</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="JobQueue.js.html">JobQueue.js</a>, <a href="JobQueue.js.html#line132">line 132</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id=".fromProcess"><span class="type-signature">(static) </span>fromProcess<span class="signature">(processWrapper)</span><span class="type-signature"> &rarr; {<a href="Job.html">Job</a>}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Convenience function to create a Job from a ProcessWrapper. Once run, theJob will run the ProcessWrapper as Observable. All observed output is thenreported as Progress, as the Job will be decorated with a Progress-instanceof type ProcessOutput.
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>processWrapper</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="ProcessWrapper.html">ProcessWrapper</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="JobQueue.js.html">JobQueue.js</a>, <a href="JobQueue.js.html#line394">line 394</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="Job.html">Job</a></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id=".fromSyncFunction"><span class="type-signature">(static) </span>fromSyncFunction<span class="signature">(func)</span><span class="type-signature"> &rarr; {<a href="Job.html">Job</a>}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Creates a job from a synchronous function by wrapping it into anasync function.
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>func</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">A function that does synchronous work andreturns a value (i.e. its result is not awaited).</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="JobQueue.js.html">JobQueue.js</a>, <a href="JobQueue.js.html#line227">line 227</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="Job.html">Job</a></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="run"><span class="type-signature">(async) </span>run<span class="signature">()</span><span class="type-signature"> &rarr; {Promise.&lt;T>}</span></h4>
+    
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="JobQueue.js.html">JobQueue.js</a>, <a href="JobQueue.js.html#line350">line 350</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    the Promise that will resolve with thejob's result.
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise.&lt;T></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Cache.html">Cache</a></li><li><a href="CacheItem.html">CacheItem</a></li><li><a href="CacheItemWithLoad.html">CacheItemWithLoad</a></li><li><a href="CacheMapBased.html">CacheMapBased</a></li><li><a href="CacheWithLoad.html">CacheWithLoad</a></li><li><a href="Collection.html">Collection</a></li><li><a href="CollectionEvent.html">CollectionEvent</a></li><li><a href="Comparer.html">Comparer</a></li><li><a href="ConstrainedQueue.html">ConstrainedQueue</a></li><li><a href="ConstrainedStack.html">ConstrainedStack</a></li><li><a href="DefaultComparer.html">DefaultComparer</a></li><li><a href="DefaultEqualityComparer.html">DefaultEqualityComparer</a></li><li><a href="DeferredClass.html">DeferredClass</a></li><li><a href="Dictionary.html">Dictionary</a></li><li><a href="DictionaryMapBased.html">DictionaryMapBased</a></li><li><a href="EqualityComparer.html">EqualityComparer</a></li><li><a href="Interval.html">Interval</a></li><li><a href="IntervalEventSimple.html">IntervalEventSimple</a></li><li><a href="IntervalScheduler.html">IntervalScheduler</a></li><li><a href="ItemAndDeferred.html">ItemAndDeferred</a></li><li><a href="Job.html">Job</a></li><li><a href="JobEvent.html">JobEvent</a></li><li><a href="JobQueue.html">JobQueue</a></li><li><a href="JobQueueCapabilities.html">JobQueueCapabilities</a></li><li><a href="JobQueueEvent.html">JobQueueEvent</a></li><li><a href="LinkedList.html">LinkedList</a></li><li><a href="LinkedListEvent.html">LinkedListEvent</a></li><li><a href="LinkedListNode.html">LinkedListNode</a></li><li><a href="ManualSchedule.html">ManualSchedule</a></li><li><a href="ManualScheduleEventSimple.html">ManualScheduleEventSimple</a></li><li><a href="ManualScheduler.html">ManualScheduler</a></li><li><a href="PreliminaryScheduleEvent.html">PreliminaryScheduleEvent</a></li><li><a href="ProcessErrorResult.html">ProcessErrorResult</a></li><li><a href="ProcessExit.html">ProcessExit</a></li><li><a href="ProcessOutput.html">ProcessOutput</a></li><li><a href="ProcessResult.html">ProcessResult</a></li><li><a href="ProcessWrapper.html">ProcessWrapper</a></li><li><a href="ProducerConsumerQueue.html">ProducerConsumerQueue</a></li><li><a href="Progress.html">Progress</a></li><li><a href="ProgressNumeric.html">ProgressNumeric</a></li><li><a href="Queue.html">Queue</a></li><li><a href="Resolve.html">Resolve</a></li><li><a href="Schedule.html">Schedule</a></li><li><a href="ScheduleEvent.html">ScheduleEvent</a></li><li><a href="Scheduler.html">Scheduler</a></li><li><a href="Stack.html">Stack</a></li></ul><h3>Global</h3><ul><li><a href="global.html#assertThrowsAsync">assertThrowsAsync</a></li><li><a href="global.html#ConstrainedQueueCapacityPolicy">ConstrainedQueueCapacityPolicy</a></li><li><a href="global.html#deepCloneObject">deepCloneObject</a></li><li><a href="global.html#defer">defer</a></li><li><a href="global.html#deferMocha">deferMocha</a></li><li><a href="global.html#EvictionPolicy">EvictionPolicy</a></li><li><a href="global.html#formatError">formatError</a></li><li><a href="global.html#formatValue">formatValue</a></li><li><a href="global.html#getRandomNumber">getRandomNumber</a></li><li><a href="global.html#JobQueueCapacityPolicy">JobQueueCapacityPolicy</a></li><li><a href="global.html#mergeObjects">mergeObjects</a></li><li><a href="global.html#ProducerConsumerQueueCapacityPolicy">ProducerConsumerQueueCapacityPolicy</a></li><li><a href="global.html#throwError">throwError</a></li><li><a href="global.html#timeout">timeout</a></li><li><a href="global.html#wrapError">wrapError</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.5</a> on Sun Sep 20 2020 14:54:06 GMT+0200 (Central European Summer Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
