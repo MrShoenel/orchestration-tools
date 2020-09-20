@@ -1,5 +1,6 @@
 const { assert, expect } = require('chai')
-, { timeout, deferMocha } = require('../lib/tools/Defer')
+, { assertThrowsAsync } = require('../lib/tools/AssertAsync')
+, { timeout, deferMocha, DeferredClass } = require('../lib/tools/Defer')
 , { deepCloneObject, mergeObjects } = require('../lib/tools/Objects')
 , { throwError, wrapError } = require('../lib/tools/Error')
 , { formatError, formatValue } = require('../lib/tools/Format')
@@ -219,6 +220,53 @@ describe('Tools', () => {
 		await timeout(10); // just in case..
 
 		assert.strictEqual(e, 'my Error');
+	});
+
+	it('should be possible to check the state of a DeferredClass<T>', async() => {
+		/** @type {DeferredClass<Number>} */
+		const d = new DeferredClass();
+
+		let wasRejected = false;
+		d.promise.catch(() => wasRejected = true);
+
+		assert.isFalse(d.isRejected);
+		assert.isFalse(d.isResolved);
+
+		d.reject('error');
+		await timeout(5);
+		assert.isTrue(wasRejected);
+		assert.isTrue(d.isRejected);
+		assert.isFalse(d.isResolved);
+
+		await assertThrowsAsync(async() => {
+			d.reject('bla');
+		});
+		await assertThrowsAsync(async() => {
+			d.resolve(1337);
+		});
+
+
+		/** @type {DeferredClass<Number>} */
+		const d1 = new DeferredClass();
+
+		let wasResolved = false;
+		d1.promise.then(() => wasResolved = true);
+
+		assert.isFalse(d1.isRejected);
+		assert.isFalse(d1.isResolved);
+
+		d1.resolve(42);
+		await timeout(5);
+		assert.isTrue(wasResolved);
+		assert.isTrue(d1.isResolved);
+		assert.isFalse(d1.isRejected);
+
+		await assertThrowsAsync(async() => {
+			d1.resolve(43);
+		});
+		await assertThrowsAsync(async() => {
+			d1.reject('err');
+		});
 	});
 
 	it('should format any kind of value properly', done => {

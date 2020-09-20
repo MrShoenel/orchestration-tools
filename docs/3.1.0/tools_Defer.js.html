@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: tools/Defer.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: tools/Defer.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>require('../../docs');
+
+
+/**
+ * A function that creates an awaitable timout.
+ * 
+ * @param {Number} ms Milliseconds to wait before resolving
+ * @returns {Promise&lt;void>} a Promise that is resolved after
+ * the amount of milliseconds given.
+ */
+const timeout = ms => new Promise((resolve, reject) => {
+	setTimeout(resolve, ms);
+});
+
+
+/**
+ * @template T
+ * 
+ * Creates a deferred Promise and returns an object with functions
+ * that can be used to resolve or reject the deferred.
+ * 
+ * @returns {Deferred&lt;T>}
+ */
+const defer = () => {
+	/** @type {DeferredClass&lt;T>} */
+	return new DeferredClass();
+};
+
+
+
+/**
+ * @template T
+ */
+class DeferredClass {
+	constructor() {
+		/** @private */
+		this._resolve = null;
+		/** @private */
+		this._reject = null;
+
+		const that = this;
+		/** @private */
+		this._promise = new Promise((resolve, reject) => {
+			that._resolve = resolve;
+			that._reject = reject;
+		});
+
+		/** @private */
+		this._isResolved = false;
+		/** @private */
+		this._isRejected = false;
+	};
+
+	/**
+	 * @type {Boolean}
+	 */
+	get isResolved() {
+		return this._isResolved;
+	};
+
+	/**
+	 * @type {Boolean}
+	 */
+	get isRejected() {
+		return this._isRejected;
+	};
+
+	/**
+	 * @type {Promise&lt;T>}
+	 */
+	get promise() {
+		return this._promise;
+	};
+
+	/**
+	 * @param {T} useValue
+	 * @returns {this}
+	 */
+	resolve(useValue) {
+		if (this.isResolved) {
+			throw new Error('Already resolved');
+		}
+		if (this.isRejected) {
+			throw new Error('Already rejected');
+		}
+		this._isResolved = true;
+		this._resolve(useValue);
+		return this;
+	};
+
+	/**
+	 * @param {any} [error]
+	 * @returns {this}
+	 */
+	reject(error) {
+		if (this.isRejected) {
+			throw new Error('Already rejected')
+		}
+		if (this.isResolved) {
+			throw new Error('Already resolved');
+		}
+		this._isRejected = true;
+		this._reject(...arguments);
+		return this;
+	};
+};
+
+
+/**
+ * Mocha does not support this use case (async function with done):
+ * https://github.com/mochajs/mocha/issues/2407#issuecomment-237408877
+ * This function creates a deferred that can be resolved/rejected using
+ * a generic done-callback.
+ * 
+ * @returns {[Promise&lt;any>, callbackHandler&lt;any>]} an array where
+ * the first element is the promise that can be returned to mocha's test
+ * runner and the second element is the done-function, which, when called
+ * with no arguments, resolves the promise. Otherwise, it will reject the
+ * promise.
+ */
+const deferMocha = () => {
+	const deferred = defer();
+
+	return [deferred.promise, error => {
+		if (error === void 0) {
+			deferred.resolve();
+		} else {
+			deferred.reject(error);
+		}
+	}];
+};
+
+module.exports = Object.freeze({
+	timeout,
+	defer,
+	deferMocha,
+	DeferredClass
+});
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Cache.html">Cache</a></li><li><a href="CacheItem.html">CacheItem</a></li><li><a href="CacheItemWithLoad.html">CacheItemWithLoad</a></li><li><a href="CacheMapBased.html">CacheMapBased</a></li><li><a href="CacheWithLoad.html">CacheWithLoad</a></li><li><a href="Collection.html">Collection</a></li><li><a href="CollectionEvent.html">CollectionEvent</a></li><li><a href="Comparer.html">Comparer</a></li><li><a href="ConstrainedQueue.html">ConstrainedQueue</a></li><li><a href="ConstrainedStack.html">ConstrainedStack</a></li><li><a href="DefaultComparer.html">DefaultComparer</a></li><li><a href="DefaultEqualityComparer.html">DefaultEqualityComparer</a></li><li><a href="DeferredClass.html">DeferredClass</a></li><li><a href="Dictionary.html">Dictionary</a></li><li><a href="DictionaryMapBased.html">DictionaryMapBased</a></li><li><a href="EqualityComparer.html">EqualityComparer</a></li><li><a href="Interval.html">Interval</a></li><li><a href="IntervalEventSimple.html">IntervalEventSimple</a></li><li><a href="IntervalScheduler.html">IntervalScheduler</a></li><li><a href="ItemAndDeferred.html">ItemAndDeferred</a></li><li><a href="Job.html">Job</a></li><li><a href="JobEvent.html">JobEvent</a></li><li><a href="JobQueue.html">JobQueue</a></li><li><a href="JobQueueCapabilities.html">JobQueueCapabilities</a></li><li><a href="JobQueueEvent.html">JobQueueEvent</a></li><li><a href="LinkedList.html">LinkedList</a></li><li><a href="LinkedListEvent.html">LinkedListEvent</a></li><li><a href="LinkedListNode.html">LinkedListNode</a></li><li><a href="ManualSchedule.html">ManualSchedule</a></li><li><a href="ManualScheduleEventSimple.html">ManualScheduleEventSimple</a></li><li><a href="ManualScheduler.html">ManualScheduler</a></li><li><a href="PreliminaryScheduleEvent.html">PreliminaryScheduleEvent</a></li><li><a href="ProcessErrorResult.html">ProcessErrorResult</a></li><li><a href="ProcessExit.html">ProcessExit</a></li><li><a href="ProcessOutput.html">ProcessOutput</a></li><li><a href="ProcessResult.html">ProcessResult</a></li><li><a href="ProcessWrapper.html">ProcessWrapper</a></li><li><a href="ProducerConsumerQueue.html">ProducerConsumerQueue</a></li><li><a href="Progress.html">Progress</a></li><li><a href="ProgressNumeric.html">ProgressNumeric</a></li><li><a href="Queue.html">Queue</a></li><li><a href="Resolve.html">Resolve</a></li><li><a href="Schedule.html">Schedule</a></li><li><a href="ScheduleEvent.html">ScheduleEvent</a></li><li><a href="Scheduler.html">Scheduler</a></li><li><a href="Stack.html">Stack</a></li></ul><h3>Global</h3><ul><li><a href="global.html#assertThrowsAsync">assertThrowsAsync</a></li><li><a href="global.html#ConstrainedQueueCapacityPolicy">ConstrainedQueueCapacityPolicy</a></li><li><a href="global.html#deepCloneObject">deepCloneObject</a></li><li><a href="global.html#defer">defer</a></li><li><a href="global.html#deferMocha">deferMocha</a></li><li><a href="global.html#EvictionPolicy">EvictionPolicy</a></li><li><a href="global.html#formatError">formatError</a></li><li><a href="global.html#formatValue">formatValue</a></li><li><a href="global.html#getRandomNumber">getRandomNumber</a></li><li><a href="global.html#JobQueueCapacityPolicy">JobQueueCapacityPolicy</a></li><li><a href="global.html#mergeObjects">mergeObjects</a></li><li><a href="global.html#ProducerConsumerQueueCapacityPolicy">ProducerConsumerQueueCapacityPolicy</a></li><li><a href="global.html#throwError">throwError</a></li><li><a href="global.html#timeout">timeout</a></li><li><a href="global.html#wrapError">wrapError</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.5</a> on Sun Sep 20 2020 14:54:06 GMT+0200 (Central European Summer Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
