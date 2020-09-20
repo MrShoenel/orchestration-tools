@@ -1,9 +1,9 @@
 /**
  * @template T
  * @typedef Deferred
- * @property {Promise.<T>} promise the underyling Promise
- * @property {(val?: T) => void} resolve the resolve function
- * @property {(err?: any) => void} reject the reject function
+ * @property {Promise<T>} promise the underyling Promise
+ * @property {(?val: T) => void} resolve the resolve function
+ * @property {(?err: any) => void} reject the reject function
  */
 
 
