@@ -1,14 +1,17 @@
-const { assert, expect } = require('chai')
+const { assert } = require('chai')
 , { EqualityComparer, DefaultEqualityComparer } = require('../lib/collections/EqualityComparer')
 , { Collection } = require('../lib/collections/Collection')
-, { Queue, ConstrainedQueue, ProducerConsumerQueue } = require('../lib/collections/Queue')
+, { Queue, ConstrainedQueue, ProducerConsumerQueue,
+		ConstrainedQueueCapacityPolicy, ProducerConsumerQueueCapacityPolicy
+	} = require('../lib/collections/Queue')
 , { Stack, ConstrainedStack } = require('../lib/collections/Stack')
 , { LinkedList, LinkedListNode, LinkedListEvent } = require('../lib/collections/LinkedList')
 , { Dictionary, DictionaryMapBased } = require('../lib/collections/Dictionary')
 , { Cache, CacheMapBased, CacheWithLoad, EvictionPolicy } = require('../lib/collections/Cache')
 , { Comparer, DefaultComparer } = require('../lib/collections/Comparer')
 , JSBI = require('jsbi')
-, { timeout } = require('../lib/tools/Defer');
+, { timeout } = require('../lib/tools/Defer')
+, { assertThrowsAsync } = require('../lib/tools/AssertAsync');
 
 
 class NoEq extends EqualityComparer {
@@ -230,22 +233,26 @@ describe(Queue.name, function() {
 		const q1 = new ConstrainedQueue();
 		assert.strictEqual(q1.maxSize, Number.MAX_SAFE_INTEGER);
 
-	/** @type {ConstrainedQueue.<Number>} */
+		assert.throws(() => {
+			q1.capacityPolicy = 1337;
+		}, `The policy '1337' is not supported.`);
+
+		/** @type {ConstrainedQueue.<Number>} */
 		const q = new ConstrainedQueue(2);
 
 		q.enqueue(42).enqueue(43);
 
 		assert.strictEqual(q.peek(), 42);
 		assert.strictEqual(q.peekLast(), 43);
-	assert.strictEqual(q.size, 2);
+		assert.strictEqual(q.size, 2);
 	
-	const observed = [];
-	q.observableDequeue.subscribe(next => {
-		observed.push(next.item);
-	});
-	q.enqueue(44);
-	assert.strictEqual(observed.length, 1);
-	assert.strictEqual(observed[0], 42);
+		const observed = [];
+		q.observableDequeue.subscribe(next => {
+			observed.push(next.item);
+		});
+		q.enqueue(44);
+		assert.strictEqual(observed.length, 1);
+		assert.strictEqual(observed[0], 42);
 
 		assert.strictEqual(q.peek(), 43);
 		assert.strictEqual(q.peekLast(), 44);
@@ -267,6 +274,32 @@ describe(Queue.name, function() {
 
 		done();
 	});
+
+	it('should deal with different policies when full', done => {
+		const q = new ConstrainedQueue(2);
+		q.enqueue(42).enqueue(43);
+
+		assert.isTrue(q.isFull);
+
+		q.capacityPolicy = ConstrainedQueueCapacityPolicy.Dequeue;
+		assert.doesNotThrow(() => {
+			q.enqueue(44);
+		});
+		assert.deepStrictEqual(q._items, [43, 44]);
+		assert.strictEqual(q.size, 2);
+
+		q.capacityPolicy = ConstrainedQueueCapacityPolicy.IgnoreEnqueue;
+		q.enqueue(50);
+		assert.deepStrictEqual(q._items, [43, 44]);
+		assert.strictEqual(q.size, 2);
+
+		q.capacityPolicy = ConstrainedQueueCapacityPolicy.RejectEnqueue;
+		assert.throws(() => {
+			q.enqueue(1337);
+		}, 'Cannot enqueue more items, Queue is full.');
+
+		done();
+	});
 });
 
 
@@ -275,6 +308,13 @@ describe(ProducerConsumerQueue.name, function() {
 	it('should defer enqueueing new items if no space available', async() => {
 		/** @type {ProducerConsumerQueue.<Number>} */
 		const q = new ProducerConsumerQueue(2);
+
+		assert.doesNotThrow(() => {
+			q.capacityPolicy = ConstrainedQueueCapacityPolicy.Dequeue;
+			q.capacityPolicy = ConstrainedQueueCapacityPolicy.IgnoreEnqueue;
+			q.capacityPolicy = ConstrainedQueueCapacityPolicy.RejectEnqueue;
+			q.capacityPolicy = ProducerConsumerQueueCapacityPolicy.DeferEnqueue;
+		});
 
 		await q.enqueue(42);
 		await q.enqueue(43);
@@ -300,9 +340,17 @@ describe(ProducerConsumerQueue.name, function() {
 		/** @type {String[]} */
 		const vals = [];
 
+		assert.strictEqual(q.numDeferredEnqueues, 0);
+
 		const req1 = q.dequeue().then(v => vals.push(v))
 		, req2 = q.dequeue().then(v => vals.push(v))
 		, req3 = q.dequeue().then(v => vals.push(v));
+
+		assert.strictEqual(q.numDeferredDequeues, 3);
+
+		assert.throws(() => {
+			q.maxDeferredEnqueuesCapacityPolicy = 1337;
+		}, `The policy '1337' is not supported.`);
 
 		await timeout(10);
 		// Still no request is fulfilled
@@ -322,6 +370,90 @@ describe(ProducerConsumerQueue.name, function() {
 		await req3;
 		
 		assert.deepStrictEqual(vals, ['42', '43', '44']);
+	});
+
+	it('should handle enqueueing after full according to policy', async() => {
+		/** @type {ProducerConsumerQueue.<Number>} */
+		const q = new ProducerConsumerQueue(1, EqualityComparer.default, ProducerConsumerQueueCapacityPolicy.Defer, 1);
+
+		await q.enqueue(42); // Now it's full.
+		const p = q.enqueue(43); // Now it's full and one enqueue (maximum) is waiting.
+		await timeout(5);
+
+		q.maxDeferredEnqueuesCapacityPolicy = ConstrainedQueueCapacityPolicy.RejectEnqueue;
+
+		await assertThrowsAsync(async() => {
+			await q.enqueue(44);
+		});
+
+		q.maxDeferredEnqueuesCapacityPolicy = ConstrainedQueueCapacityPolicy.IgnoreEnqueue;
+
+		await q.enqueue(45); // does not throw and is ignored by the queue
+		assert.strictEqual(q._deferredEnqueues._items[0].item, 43);
+		assert.strictEqual(q._deferredEnqueues.size, 1);
+
+		q.maxDeferredEnqueuesCapacityPolicy = ConstrainedQueueCapacityPolicy.Dequeue;
+
+		let pWasRejected = false;
+		p.catch(() => {
+			pWasRejected = true;
+		});
+		const p1 = q.enqueue(46); // this will reject 'p' (43) and replace it with this call
+		await timeout(5);
+		
+		assert.isTrue(pWasRejected);
+		assert.strictEqual(q._deferredEnqueues._items[0].item, 46);
+		assert.strictEqual(q._deferredEnqueues.size, 1);
+
+
+		const q1 = new ProducerConsumerQueue(1);
+		await q1.enqueue(42); // Now it's full..
+
+		q1.capacityPolicy = ConstrainedQueueCapacityPolicy.IgnoreEnqueue;
+		await q1.enqueue(43); // ignored
+		assert.deepStrictEqual(q1._items, [42]);
+
+		q1.capacityPolicy = ConstrainedQueueCapacityPolicy.RejectEnqueue;
+		await assertThrowsAsync(async() => {
+			q1.enqueue(44);
+		});
+		assert.deepStrictEqual(q1._items, [42]);
+
+		q1.capacityPolicy = ConstrainedQueueCapacityPolicy.Dequeue;
+		await q1.enqueue(45);
+		assert.deepStrictEqual(q1._items, [45]);
+	});
+
+	it('should reject pending enqueues if the maximum backlog size is reduced', async() => {
+		const q = new ProducerConsumerQueue(1, EqualityComparer.default, ProducerConsumerQueueCapacityPolicy.DeferEnqueue, 2, ConstrainedQueueCapacityPolicy.RejectEnqueue);
+
+		await q.enqueue(42);
+		let p1Rej = false, p2Rej = false, p3Rej
+		const p1 = q.enqueue(43).catch(() => p1Rej = true)
+		, p2 = q.enqueue(44).catch(() => p2Rej = true)
+		, p3 = q.enqueue(45).catch(() => p3Rej = true);
+		
+		await timeout(5);
+		// p3 already failed:
+		assert.isTrue(p3Rej);
+		assert.isFalse(p1Rej || p2Rej);
+
+		assert.strictEqual(q._deferredEnqueues.size, 2);
+		assert.deepStrictEqual(q._deferredEnqueues._items.map(it => it.item), [43, 44]);
+
+		// now let's increase the capacity:
+		q.maxDeferredEnqueues = 3;
+		const p4 = q.enqueue(45);
+		await timeout(5);
+		assert.strictEqual(q._deferredEnqueues.size, 3);
+		assert.deepStrictEqual(q._deferredEnqueues._items.map(it => it.item), [43, 44, 45]);
+
+		// now let's cut the capacity:
+		q.maxDeferredEnqueues = 1;
+		await timeout(5);
+		assert.isTrue(p1Rej && p2Rej);
+		assert.strictEqual(q._deferredEnqueues.size, 1);
+		assert.deepStrictEqual(q._deferredEnqueues._items.map(it => it.item), [45]);
 	});
 });
 
