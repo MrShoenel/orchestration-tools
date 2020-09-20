@@ -116,6 +116,6 @@
  * @property {iCalDuration} duration
  * @property {iCalTime} endDate
  * @property {iCalTime} startDate
- * @property {Object.<string, Error>} exceptions
+ * @property {Object<string, Error>} exceptions
  * @property {Array} rangeExceptions
  */

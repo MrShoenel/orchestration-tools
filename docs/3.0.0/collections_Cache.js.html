@@ -37,8 +37,11 @@
 
 /**
  * This enumeration holds supported eviction policies by some of collections.
+ * 
+ * @readonly
+ * @enum {Number}
  */
-const EvictionPolicy = Object.freeze({
+const EvictionPolicy = {
 	/**
 	 * Do not evict. Requires manually freeing space in the underlying collection.
 	 */
@@ -75,7 +78,7 @@ const EvictionPolicy = Object.freeze({
 	 * The underlying collection evicts the items inserted in a random order.
 	 */
 	Random: 8
-});
+};
 
 
 /**
@@ -84,7 +87,7 @@ const EvictionPolicy = Object.freeze({
  */
 class CacheItem {
 	/**
-	 * @param {Cache.&lt;any, T>|CacheMapBased.&lt;any, T>|CacheWithLoad.&lt;any, T>} cache The cache this item belongs to.
+	 * @param {Cache&lt;any, T>|CacheMapBased&lt;any, T>|CacheWithLoad&lt;any, T>} cache The cache this item belongs to.
 	 * @param {TKey} key
 	 * @param {T} item
 	 * @param {Number} order An integer used to order this item, assigned by the cache.
@@ -134,23 +137,29 @@ class CacheItem {
 	};
 
 	/**
-	 * @returns {String|Symbol}
+	 * @type {String|Symbol}
 	 */
 	get key() {
 		return this._key;
 	};
 	
 	/**
-	 * @returns {T}
+	 * @type {T}
 	 */
 	get item() {
 		return this._item;
 	};
 
+	/**
+	 * @type {JSBI.BigInt}
+	 */
 	get timeStamp() {
 		return this._timeStamp;
 	};
 
+	/**
+	 * @returns {void}
+	 */
 	updateAccessTime() {
 		const hrTime = process.hrtime()
 		, secsAsNano = JSBI.multiply(JSBI.BigInt(hrTime[0]), JSBI.BigInt(1e9))
@@ -159,14 +168,23 @@ class CacheItem {
 		this._timeStamp = withNs;
 	};
 
+	/**
+	 * @type {Number}
+	 */
 	get order() {
 		return this._order;
 	};
 
+	/**
+	 * @type {Number}
+	 */
 	get accessCount() {
 		return this._accessCount;
 	};
 
+	/**
+	 * @returns {this}
+	 */
 	increaseAccessCount() {
 		this._accessCount++;
 		return this;
@@ -191,6 +209,7 @@ class Cache extends Dictionary {
 	/**
 	 * Used to assign a running number to new cache items.
 	 * @private
+	 * @type {Number}
 	 */
 	static get __counter() {
 		return __counter++;
@@ -198,41 +217,41 @@ class Cache extends Dictionary {
 
 
 	/**
-	 * Creates a new, empty Cache.&lt;T>, using the specified @see {EvictionPolicy} and
+	 * Creates a new, empty Cache&lt;T>, using the specified @see {EvictionPolicy} and
 	 * an initial capacity.
 	 * 
-	 * @param {EvictionPolicy|number} [evictPolicy] Optional. Specify the eviction policy that is
+	 * @param {EvictionPolicy|Number} [evictPolicy] Optional. Specify the eviction policy that is
 	 * applied, if the cache has no more space left.
-	 * @param {number} [capacity] Optional. Specify the initial capacity of this cache. The capacity
+	 * @param {Number} [capacity] Optional. Specify the initial capacity of this cache. The capacity
 	 * can be increased and decreased later.
-	 * @param {EqualityComparer.&lt;TVal>} [eqComparer] Optional. Defaults To EqualityComparer.&lt;TVal>.default.
+	 * @param {EqualityComparer&lt;TVal>} [eqComparer] Optional. Defaults To EqualityComparer&lt;TVal>.default.
 	 */
 	constructor(evictPolicy = EvictionPolicy.None, capacity = Number.MAX_SAFE_INTEGER, eqComparer = EqualityComparer.default) {
 		super(eqComparer);
 		
 		/**
-		 * @type {EvictionPolicy|number}
+		 * @type {EvictionPolicy|Number}
 		 * @protected
 		 */
 		this._evictPolicy = EvictionPolicy.None;
 		this.evictionPolicy = evictPolicy;
 
 		/**
-		 * @type {number}
+		 * @type {Number}
 		 * @protected
 		 */
 		this._capacity = capacity;
 		this.capacity = capacity;
 
 		/**
-		 * @type {Object.&lt;String|Symbol, CacheItem.&lt;T>>}
+		 * @type {Object&lt;String|Symbol, CacheItem&lt;T>>}
 		 * @protected
 		 */
 		this._dict = {};
 	};
 	
 	/**
-	 * @param {EvictionPolicy|number} policy An @see {EvictionPolicy}
+	 * @param {EvictionPolicy|Number} policy An @see {EvictionPolicy}
 	 * @throws {Error} If the given policy is not one of @see {EvictionPolicy}.
 	 * @protected
 	 */
@@ -254,14 +273,19 @@ class Cache extends Dictionary {
 	};
 
 	/**
-	 * @returns {EvictionPolicy|number}
+	 * Get the current @see {EvictionPolicy}.
+	 * 
+	 * @type {EvictionPolicy|Number}
 	 */
 	get evictionPolicy() {
 		return this._evictPolicy;
 	};
 
 	/**
-	 * @param {EvictionPolicy|number} policy The new policy to use for evicting items.
+	 * Set the current @see {EvictionPolicy}.
+	 * 
+	 * @param {EvictionPolicy|Number} policy The new policy to use for evicting items.
+	 * @type {void}
 	 */
 	set evictionPolicy(policy) {
 		this._validateEvictionPolicy(policy);
@@ -269,7 +293,7 @@ class Cache extends Dictionary {
 	};
 
 	/**
-	 * @param {number} capacity The capacity to check. Must be a positive integer.
+	 * @param {Number} capacity The capacity to check. Must be a positive integer.
 	 * @throws {Error} If the given capacity is not an integer or less than zero.
 	 * @protected
 	 */
@@ -283,24 +307,29 @@ class Cache extends Dictionary {
 	};
 
 	/**
-	 * @returns {number} The current capacity of this cache.
+	 * Returns the current capacity of this cache.
+	 * 
+	 * @type {Number}
 	 */
 	get capacity() {
 		return this._capacity;
 	};
 
 	/**
-	 * @returns {Boolean} True, if the cache's capacity is all used up.
+	 * Returns true, if the cache's capacity is all used up.
+	 * 
+	 * @type {Boolean}
 	 */
 	get isFull() {
 		return this.size === this.capacity;
 	};
 
 	/**
-	 * @param {number} capacity The new capacity of this cache. Must be a positive
+	 * @param {Number} capacity The new capacity of this cache. Must be a positive
 	 * integer (0 is allowed). Note that setting a capacity that undercuts the amount
 	 * of items currently held in the cache, will lead to the eviction of enough
 	 * items to meet the new capacity constraint.
+	 * @type {void}
 	 */
 	set capacity(capacity) {
 		this._validateCapacity(capacity);
@@ -329,11 +358,11 @@ class Cache extends Dictionary {
 
 	/**
 	 * @param {Number} count
-	 * @returns {Array.&lt;T>} The evicted items in an array.
+	 * @returns {Array&lt;T>} The evicted items in an array.
 	 */
 	evictMany(count) {
 		let howMany = Math.min(count, this.size);
-		/** @type {Array.&lt;T>} */
+		/** @type {Array&lt;T>} */
 		const items = [];
 
 		for (const item of this._evictNext()) {
@@ -351,7 +380,7 @@ class Cache extends Dictionary {
 	 * them. Returns the items with as key/value pair.
 	 * 
 	 * @param {Number} amount
-	 * @returns {Array.&lt;Object.&lt;String|Symbol, T>>}
+	 * @returns {Array&lt;Object&lt;String|Symbol, T>>}
 	 */
 	peekEvict(amount) {
 		if (!Resolve.isTypeOf(amount, Number) || !Number.isInteger(amount) || amount &lt; 1) {
@@ -371,10 +400,10 @@ class Cache extends Dictionary {
 	 * Returns items in the order they will be evicted, according to the policy.
 	 * 
 	 * @protected
-	 * @returns {IterableIterator.&lt;CacheItem.&lt;T>>}
+	 * @returns {IterableIterator&lt;CacheItem&lt;T>>}
 	 */
 	*_evictNext() {
-		/** @type {Array.&lt;CacheItem.&lt;T>>} */
+		/** @type {Array&lt;CacheItem&lt;T>>} */
 		const wrappers = [];
 
 		switch (this.evictionPolicy) {
@@ -432,12 +461,13 @@ class Cache extends Dictionary {
 	};
 
 	/**
-	 * @inheritdoc
 	 * @override
+	 * @inheritdoc
 	 * @param {Number} [expireAfterMsecs] Optional. if given a positive integer, then it
 	 * will be used as the amount of milliseconds this entry will expire and remove itself
 	 * from the cache.
 	 * @throws {Error} If this cache is full and no automatic eviction policy was set.
+	 * @type {void}
 	 */
 	set(key, val, expireAfterMsecs = void 0) {
 		const isFull = this.size === this.capacity;
@@ -463,7 +493,7 @@ class Cache extends Dictionary {
 	 * @inheritdoc
 	 */
 	get(key) {
-		/** @type {CacheItem.&lt;T>} */
+		/** @type {CacheItem&lt;T>} */
 		const wrap = super.get(key);
 		wrap.updateAccessTime();
 		wrap.increaseAccessCount();
@@ -475,7 +505,7 @@ class Cache extends Dictionary {
 	 * @inheritdoc
 	 */
 	remove(key) {
-		/** @type {CacheItem.&lt;T>} */
+		/** @type {CacheItem&lt;T>} */
 		const wrap = super.remove(key);
 		wrap.clearTimeout();
 		return wrap.item;
@@ -493,8 +523,8 @@ class Cache extends Dictionary {
 
 	/**
 	 * @override
-	 * @protected
 	 * @inheritdoc
+	 * @protected
 	 */
 	*_entries(reverse = false) {
 		for (const entry of super._entries(reverse)) {
@@ -518,6 +548,7 @@ class CacheMapBased extends DictionaryMapBased {
 	/**
 	 * Used to assign a running number to new cache items.
 	 * @private
+	 * @type {Number}
 	 */
 	static get __counter() {
 		return __counterCb++;
@@ -525,44 +556,44 @@ class CacheMapBased extends DictionaryMapBased {
 
 
 	/**
-	 * Creates a new, empty CacheMapBased.&lt;TKey, TVal>, using the specified @see {EvictionPolicy} and
+	 * Creates a new, empty CacheMapBased&lt;TKey, TVal>, using the specified @see {EvictionPolicy} and
 	 * an initial capacity.
 	 * 
-	 * @param {EvictionPolicy|number} [evictPolicy] Optional. Specify the eviction policy that is
+	 * @param {EvictionPolicy|Number} [evictPolicy] Optional. Specify the eviction policy that is
 	 * applied, if the cache has no more space left.
-	 * @param {number} [capacity] Optional. Specify the initial capacity of this cache. The capacity
+	 * @param {Number} [capacity] Optional. Specify the initial capacity of this cache. The capacity
 	 * can be increased and decreased later.
-	 * @param {EqualityComparer.&lt;TVal>} [eqComparer] Optional. Defaults To EqualityComparer.&lt;TVal>.default.
+	 * @param {EqualityComparer&lt;TVal>} [eqComparer] Optional. Defaults To EqualityComparer&lt;TVal>.default.
 	 */
 	constructor(evictPolicy = EvictionPolicy.None, capacity = Number.MAX_SAFE_INTEGER, eqComparer = EqualityComparer.default) {
 		super(eqComparer);
 		
 		/**
-		 * @type {EvictionPolicy|number}
+		 * @type {EvictionPolicy|Number}
 		 * @protected
 		 */
 		this._evictPolicy = EvictionPolicy.None;
 		this.evictionPolicy = evictPolicy;
 
 		/**
-		 * @type {number}
+		 * @type {Number}
 		 * @protected
 		 */
 		this._capacity = capacity;
 		this.capacity = capacity;
 
 		/**
-		 * @type {Map.&lt;TKey, CacheItem.&lt;TVal>>}
+		 * @type {Map&lt;TKey, CacheItem&lt;TVal>>}
 		 * @protected
 		 */
 		this._map = new Map();
 
-		/** @type {Observable.&lt;CollectionEvent.&lt;Array.&lt;TVal>>>} */
+		/** @type {Observable&lt;CollectionEvent&lt;Array&lt;TVal>>>} */
 		this.observableEvict = Object.freeze(fromEvent(this, symbolCacheEvict));
 	};
 	
 	/**
-	 * @param {EvictionPolicy|number} policy An @see {EvictionPolicy}
+	 * @param {EvictionPolicy|Number} policy An @see {EvictionPolicy}
 	 * @throws {Error} If the given policy is not one of @see {EvictionPolicy}.
 	 * @protected
 	 */
@@ -584,14 +615,14 @@ class CacheMapBased extends DictionaryMapBased {
 	};
 
 	/**
-	 * @returns {EvictionPolicy|number}
+	 * @type {EvictionPolicy|Number}
 	 */
 	get evictionPolicy() {
 		return this._evictPolicy;
 	};
 
 	/**
-	 * @param {EvictionPolicy|number} policy The new policy to use for evicting items.
+	 * @param {EvictionPolicy|Number} policy The new policy to use for evicting items.
 	 */
 	set evictionPolicy(policy) {
 		this._validateEvictionPolicy(policy);
@@ -599,7 +630,7 @@ class CacheMapBased extends DictionaryMapBased {
 	};
 
 	/**
-	 * @param {number} capacity The capacity to check. Must be a positive integer.
+	 * @param {Number} capacity The capacity to check. Must be a positive integer.
 	 * @throws {Error} If the given capacity is not an integer or less than zero.
 	 * @protected
 	 */
@@ -613,24 +644,29 @@ class CacheMapBased extends DictionaryMapBased {
 	};
 
 	/**
-	 * @returns {number} The current capacity of this cache.
+	 * Returns the current capacity of this cache.
+	 * 
+	 * @type {Number}
 	 */
 	get capacity() {
 		return this._capacity;
 	};
 
 	/**
-	 * @returns {Boolean} True, if the cache's capacity is all used up.
+	 * Returns true, if the cache's capacity is all used up.
+	 * 
+	 * @type {Boolean}
 	 */
 	get isFull() {
 		return this.size === this.capacity;
 	};
 
 	/**
-	 * @param {number} capacity The new capacity of this cache. Must be a positive
+	 * @param {Number} capacity The new capacity of this cache. Must be a positive
 	 * integer (0 is allowed). Note that setting a capacity that undercuts the amount
 	 * of items currently held in the cache, will lead to the eviction of enough
 	 * items to meet the new capacity constraint.
+	 * @type {void}
 	 */
 	set capacity(capacity) {
 		this._validateCapacity(capacity);
@@ -659,11 +695,11 @@ class CacheMapBased extends DictionaryMapBased {
 
 	/**
 	 * @param {Number} count
-	 * @returns {Array.&lt;T>} The evicted items in an array.
+	 * @returns {Array&lt;T>} The evicted items in an array.
 	 */
 	evictMany(count) {
 		let howMany = Math.min(count, this.size);
-		/** @type {Array.&lt;T>} */
+		/** @type {Array&lt;T>} */
 		const items = [];
 
 		for (const item of this._evictNext()) {
@@ -683,7 +719,7 @@ class CacheMapBased extends DictionaryMapBased {
 	 * removing them. Returns the items as key/value pair.
 	 * 
 	 * @param {Number} amount
-	 * @returns {Array.&lt;[TKey, TVal]>}
+	 * @returns {Array&lt;[TKey, TVal]>}
 	 */
 	peekEvict(amount) {
 		if (!Resolve.isTypeOf(amount, Number) || !Number.isInteger(amount) || amount &lt; 1) {
@@ -701,10 +737,10 @@ class CacheMapBased extends DictionaryMapBased {
 	 * Returns items in the order they will be evicted, according to the policy.
 	 * 
 	 * @protected
-	 * @returns {IterableIterator.&lt;CacheItem.&lt;T>>}
+	 * @returns {IterableIterator&lt;CacheItem&lt;T>>}
 	 */
 	*_evictNext() {
-		/** @type {Array.&lt;CacheItem.&lt;T>>} */
+		/** @type {Array&lt;CacheItem&lt;T>>} */
 		const wrappers = [];
 
 		switch (this.evictionPolicy) {
@@ -789,6 +825,7 @@ class CacheMapBased extends DictionaryMapBased {
 	};
 
 	/**
+	 * @override
 	 * @inheritdoc
 	 */
 	get(key) {
@@ -823,8 +860,9 @@ class CacheMapBased extends DictionaryMapBased {
 
 	/**
 	 * @private
+	 * @override
 	 * @inheritdoc
-	 * @param {CacheItem.&lt;TVal>} value
+	 * @param {CacheItem&lt;TVal>} value
 	 * @returns {TVal} The wrapped value
 	 */
 	__unwrapValue(value) {
@@ -850,6 +888,9 @@ class CacheItemWithLoad extends CacheItem {
 		this._load = load;
 	};
 
+	/**
+	 * @type {Number}
+	 */
 	get load() {
 		return this._load;
 	};
@@ -873,7 +914,7 @@ class CacheWithLoad extends CacheMapBased {
 	 * @param {EvictionPolicy|Number} evictPolicy
 	 * @param {Number} capacity
 	 * @param {Number} maxLoad The maximum load, expressed as a positive number.
-	 * @param {EqualityComparer.&lt;TVal>} eqComparer
+	 * @param {EqualityComparer&lt;TVal>} eqComparer
 	 */
 	constructor(evictPolicy = EvictionPolicy.None, capacity = Number.MAX_SAFE_INTEGER, maxLoad = Number.MAX_VALUE, eqComparer = EqualityComparer.default) {
 		super(evictPolicy, capacity, eqComparer);
@@ -883,7 +924,7 @@ class CacheWithLoad extends CacheMapBased {
 		this.maxLoad = maxLoad;
 
 		/**
-		 * @type {Object.&lt;String|Symbol, CacheItemWithLoad.&lt;T>>}
+		 * @type {Object&lt;String|Symbol, CacheItemWithLoad&lt;T>>}
 		 * @protected
 		 */
 		this._dict = {};
@@ -902,6 +943,11 @@ class CacheWithLoad extends CacheMapBased {
 		}
 	};
 
+	/**
+	 * Returns the current load.
+	 * 
+	 * @type {Number}
+	 */
 	get load() {
 		return Array.from(
 			// To avoid unwrapping:
@@ -909,10 +955,21 @@ class CacheWithLoad extends CacheMapBased {
 		).map(ci => ci.load).reduce((a, b) => a + b, 0);
 	};
 
+	/**
+	 * Returns the current free load (maximum load - current load).
+	 * 
+	 * @type {Number}
+	 */
 	get loadFree() {
 		return this.maxLoad - this.load;
 	};
 
+	/**
+	 * Set the maximum load.
+	 * 
+	 * @param {Number} maxLoad
+	 * @type {void}
+	 */
 	set maxLoad(maxLoad) {
 		this._validateLoad(maxLoad);
 
@@ -927,11 +984,17 @@ class CacheWithLoad extends CacheMapBased {
 		this._maxLoad = maxLoad;
 	};
 
+	/**
+	 * Returns the maximum load.
+	 * 
+	 * @type {Number}
+	 */
 	get maxLoad() {
 		return this._maxLoad;
 	};
 
 	/**
+	 * @override
 	 * @inheritdoc
 	 * @param {TKey} key
 	 * @param {TVal} val
@@ -995,13 +1058,13 @@ module.exports = Object.freeze({
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Cache.html">Cache</a></li><li><a href="CacheItem.html">CacheItem</a></li><li><a href="CacheItemWithLoad.html">CacheItemWithLoad</a></li><li><a href="CacheMapBased.html">CacheMapBased</a></li><li><a href="CacheWithLoad.html">CacheWithLoad</a></li><li><a href="Collection.html">Collection</a></li><li><a href="CollectionEvent.html">CollectionEvent</a></li><li><a href="Comparer.html">Comparer</a></li><li><a href="ConstrainedQueue.html">ConstrainedQueue</a></li><li><a href="ConstrainedStack.html">ConstrainedStack</a></li><li><a href="DefaultComparer.html">DefaultComparer</a></li><li><a href="DefaultEqualityComparer.html">DefaultEqualityComparer</a></li><li><a href="Dictionary.html">Dictionary</a></li><li><a href="DictionaryMapBased.html">DictionaryMapBased</a></li><li><a href="EqualityComparer.html">EqualityComparer</a></li><li><a href="Interval.html">Interval</a></li><li><a href="IntervalEventSimple.html">IntervalEventSimple</a></li><li><a href="IntervalScheduler.html">IntervalScheduler</a></li><li><a href="ItemAndDeferred.html">ItemAndDeferred</a></li><li><a href="Job.html">Job</a></li><li><a href="JobEvent.html">JobEvent</a></li><li><a href="JobQueue.html">JobQueue</a></li><li><a href="JobQueueCapabilities.html">JobQueueCapabilities</a></li><li><a href="JobQueueEvent.html">JobQueueEvent</a></li><li><a href="LinkedList.html">LinkedList</a></li><li><a href="LinkedListEvent.html">LinkedListEvent</a></li><li><a href="LinkedListNode.html">LinkedListNode</a></li><li><a href="ManualSchedule.html">ManualSchedule</a></li><li><a href="ManualScheduleEventSimple.html">ManualScheduleEventSimple</a></li><li><a href="ManualScheduler.html">ManualScheduler</a></li><li><a href="PreliminaryScheduleEvent.html">PreliminaryScheduleEvent</a></li><li><a href="ProcessErrorResult.html">ProcessErrorResult</a></li><li><a href="ProcessExit.html">ProcessExit</a></li><li><a href="ProcessOutput.html">ProcessOutput</a></li><li><a href="ProcessResult.html">ProcessResult</a></li><li><a href="ProcessWrapper.html">ProcessWrapper</a></li><li><a href="ProducerConsumerQueue.html">ProducerConsumerQueue</a></li><li><a href="Progress.html">Progress</a></li><li><a href="ProgressNumeric.html">ProgressNumeric</a></li><li><a href="Queue.html">Queue</a></li><li><a href="Resolve.html">Resolve</a></li><li><a href="Schedule.html">Schedule</a></li><li><a href="ScheduleEvent.html">ScheduleEvent</a></li><li><a href="Scheduler.html">Scheduler</a></li><li><a href="Stack.html">Stack</a></li></ul><h3>Global</h3><ul><li><a href="global.html#assertThrowsAsync">assertThrowsAsync</a></li><li><a href="global.html#deepCloneObject">deepCloneObject</a></li><li><a href="global.html#defer">defer</a></li><li><a href="global.html#deferMocha">deferMocha</a></li><li><a href="global.html#Discard">Discard</a></li><li><a href="global.html#EvictionPolicy">EvictionPolicy</a></li><li><a href="global.html#FIFO">FIFO</a></li><li><a href="global.html#formatError">formatError</a></li><li><a href="global.html#formatValue">formatValue</a></li><li><a href="global.html#getRandomNumber">getRandomNumber</a></li><li><a href="global.html#Ignore">Ignore</a></li><li><a href="global.html#LFU">LFU</a></li><li><a href="global.html#LIFO">LIFO</a></li><li><a href="global.html#LRU">LRU</a></li><li><a href="global.html#mergeObjects">mergeObjects</a></li><li><a href="global.html#MFU">MFU</a></li><li><a href="global.html#MRU">MRU</a></li><li><a href="global.html#None">None</a></li><li><a href="global.html#Random">Random</a></li><li><a href="global.html#ThrowError">ThrowError</a></li><li><a href="global.html#throwError">throwError</a></li><li><a href="global.html#timeout">timeout</a></li><li><a href="global.html#Undetermined">Undetermined</a></li><li><a href="global.html#wrapError">wrapError</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Cache.html">Cache</a></li><li><a href="CacheItem.html">CacheItem</a></li><li><a href="CacheItemWithLoad.html">CacheItemWithLoad</a></li><li><a href="CacheMapBased.html">CacheMapBased</a></li><li><a href="CacheWithLoad.html">CacheWithLoad</a></li><li><a href="Collection.html">Collection</a></li><li><a href="CollectionEvent.html">CollectionEvent</a></li><li><a href="Comparer.html">Comparer</a></li><li><a href="ConstrainedQueue.html">ConstrainedQueue</a></li><li><a href="ConstrainedStack.html">ConstrainedStack</a></li><li><a href="DefaultComparer.html">DefaultComparer</a></li><li><a href="DefaultEqualityComparer.html">DefaultEqualityComparer</a></li><li><a href="DeferredClass.html">DeferredClass</a></li><li><a href="Dictionary.html">Dictionary</a></li><li><a href="DictionaryMapBased.html">DictionaryMapBased</a></li><li><a href="EqualityComparer.html">EqualityComparer</a></li><li><a href="Interval.html">Interval</a></li><li><a href="IntervalEventSimple.html">IntervalEventSimple</a></li><li><a href="IntervalScheduler.html">IntervalScheduler</a></li><li><a href="ItemAndDeferred.html">ItemAndDeferred</a></li><li><a href="Job.html">Job</a></li><li><a href="JobEvent.html">JobEvent</a></li><li><a href="JobQueue.html">JobQueue</a></li><li><a href="JobQueueCapabilities.html">JobQueueCapabilities</a></li><li><a href="JobQueueEvent.html">JobQueueEvent</a></li><li><a href="LinkedList.html">LinkedList</a></li><li><a href="LinkedListEvent.html">LinkedListEvent</a></li><li><a href="LinkedListNode.html">LinkedListNode</a></li><li><a href="ManualSchedule.html">ManualSchedule</a></li><li><a href="ManualScheduleEventSimple.html">ManualScheduleEventSimple</a></li><li><a href="ManualScheduler.html">ManualScheduler</a></li><li><a href="PreliminaryScheduleEvent.html">PreliminaryScheduleEvent</a></li><li><a href="ProcessErrorResult.html">ProcessErrorResult</a></li><li><a href="ProcessExit.html">ProcessExit</a></li><li><a href="ProcessOutput.html">ProcessOutput</a></li><li><a href="ProcessResult.html">ProcessResult</a></li><li><a href="ProcessWrapper.html">ProcessWrapper</a></li><li><a href="ProducerConsumerQueue.html">ProducerConsumerQueue</a></li><li><a href="Progress.html">Progress</a></li><li><a href="ProgressNumeric.html">ProgressNumeric</a></li><li><a href="Queue.html">Queue</a></li><li><a href="Resolve.html">Resolve</a></li><li><a href="Schedule.html">Schedule</a></li><li><a href="ScheduleEvent.html">ScheduleEvent</a></li><li><a href="Scheduler.html">Scheduler</a></li><li><a href="Stack.html">Stack</a></li></ul><h3>Global</h3><ul><li><a href="global.html#assertThrowsAsync">assertThrowsAsync</a></li><li><a href="global.html#deepCloneObject">deepCloneObject</a></li><li><a href="global.html#defer">defer</a></li><li><a href="global.html#deferMocha">deferMocha</a></li><li><a href="global.html#EvictionPolicy">EvictionPolicy</a></li><li><a href="global.html#formatError">formatError</a></li><li><a href="global.html#formatValue">formatValue</a></li><li><a href="global.html#getRandomNumber">getRandomNumber</a></li><li><a href="global.html#JobQueueCapacityPolicy">JobQueueCapacityPolicy</a></li><li><a href="global.html#mergeObjects">mergeObjects</a></li><li><a href="global.html#throwError">throwError</a></li><li><a href="global.html#timeout">timeout</a></li><li><a href="global.html#wrapError">wrapError</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.5</a> on Sat Sep 19 2020 13:26:32 GMT+0200 (Central European Summer Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.5</a> on Sun Sep 20 2020 02:30:25 GMT+0200 (Central European Summer Time)
 </footer>
 
 <script> prettyPrint(); </script>

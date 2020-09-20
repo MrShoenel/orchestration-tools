@@ -91,7 +91,7 @@
             <td class="type">
             
                 
-<span class="param-type">number</span>
+<span class="param-type">Number</span>
 
 
             
@@ -126,7 +126,7 @@
             <td class="type">
             
                 
-<span class="param-type">boolean</span>
+<span class="param-type">Boolean</span>
 
 
             
@@ -202,7 +202,7 @@
             <td class="type">
             
                 
-<span class="param-type">JobQueueCapacityPolicy</span>
+<span class="param-type"><a href="global.html#JobQueueCapacityPolicy">JobQueueCapacityPolicy</a></span>
 |
 
 <span class="param-type">Number</span>
@@ -318,132 +318,26 @@
 
         
             
-<h4 class="name" id="backlogCost"><span class="type-signature"></span>backlogCost<span class="type-signature"></span></h4>
-
-
-
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="JobQueueCapabilities.js.html">JobQueueCapabilities.js</a>, <a href="JobQueueCapabilities.js.html#line32">line 32</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="capabilitiesFree"><span class="type-signature"></span>capabilitiesFree<span class="type-signature"></span></h4>
+<h4 class="name" id="backlogCost"><span class="type-signature"></span>backlogCost<span class="type-signature"> :Number</span></h4>
 
 
 
 
 <div class="description">
-    Returns the remaining capabilities. Exclusive jobs may use more capabilitiesthan this queue provides. However, this property can at minimum only return0 (zero) (i.e. not negative values).
+    Returns the total cost of all jobs that need to be run.
 </div>
 
 
 
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="JobQueueCapabilities.js.html">JobQueueCapabilities.js</a>, <a href="JobQueueCapabilities.js.html#line79">line 79</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-        
+    <h5>Type:</h5>
+    <ul>
+        <li>
             
-<h4 class="name" id="capabilitiesUsed"><span class="type-signature"></span>capabilitiesUsed<span class="type-signature"></span></h4>
+<span class="param-type">Number</span>
 
 
-
-
-
+        </li>
+    </ul>
 
 
 
@@ -478,7 +372,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="JobQueueCapabilities.js.html">JobQueueCapabilities.js</a>, <a href="JobQueueCapabilities.js.html#line70">line 70</a>
+        <a href="JobQueueCapabilities.js.html">JobQueueCapabilities.js</a>, <a href="JobQueueCapabilities.js.html#line34">line 34</a>
     </li></ul></dd>
     
 
@@ -496,7 +390,151 @@
 
         
             
-<h4 class="name" id="isBusy"><span class="type-signature"></span>isBusy<span class="type-signature"></span></h4>
+<h4 class="name" id="capabilitiesFree"><span class="type-signature"></span>capabilitiesFree<span class="type-signature"> :Number</span></h4>
+
+
+
+
+<div class="description">
+    Returns the remaining capabilities. Exclusive jobs may use more capabilities thanthis queue provides. However, this property can at minimum only return 0 (zero)(i.e. not negative values).
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Number</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="JobQueueCapabilities.js.html">JobQueueCapabilities.js</a>, <a href="JobQueueCapabilities.js.html#line91">line 91</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="capabilitiesUsed"><span class="type-signature"></span>capabilitiesUsed<span class="type-signature"> :Number</span></h4>
+
+
+
+
+<div class="description">
+    Return the accumulated cost of all currently running jobs.
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Number</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="JobQueueCapabilities.js.html">JobQueueCapabilities.js</a>, <a href="JobQueueCapabilities.js.html#line80">line 80</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="isBusy"><span class="type-signature"></span>isBusy<span class="type-signature"> :Boolean</span></h4>
 
 
 
@@ -507,6 +545,16 @@
 
 
 
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Boolean</span>
+
+
+        </li>
+    </ul>
+
 
 
 
@@ -540,7 +588,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="JobQueueCapabilities.js.html">JobQueueCapabilities.js</a>, <a href="JobQueueCapabilities.js.html#line63">line 63</a>
+        <a href="JobQueueCapabilities.js.html">JobQueueCapabilities.js</a>, <a href="JobQueueCapabilities.js.html#line71">line 71</a>
     </li></ul></dd>
     
 
@@ -558,12 +606,26 @@
 
         
             
-<h4 class="name" id="load"><span class="type-signature"></span>load<span class="type-signature"></span></h4>
+<h4 class="name" id="load"><span class="type-signature"></span>load<span class="type-signature"> :Number</span></h4>
 
 
 
 
+<div class="description">
+    Returns a number that indicates the ratio between currentlyrunning and enqueued jobs and this queue's capabilities. 0 means thatthe queue is idle; a value close or equal to one means that the queueruns at or near its full capacity and a value greater than one meansthat there are exclusive jobs or a non-empty backlog of waiting jobs.Albeit overwritten, this property can be perfectly used to compare theload of parallel job queues.
+</div>
 
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Number</span>
+
+
+        </li>
+    </ul>
 
 
 
@@ -598,7 +660,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="JobQueueCapabilities.js.html">JobQueueCapabilities.js</a>, <a href="JobQueueCapabilities.js.html#line45">line 45</a>
+        <a href="JobQueueCapabilities.js.html">JobQueueCapabilities.js</a>, <a href="JobQueueCapabilities.js.html#line49">line 49</a>
     </li></ul></dd>
     
 
@@ -616,12 +678,26 @@
 
         
             
-<h4 class="name" id="utilization"><span class="type-signature"></span>utilization<span class="type-signature"></span></h4>
+<h4 class="name" id="utilization"><span class="type-signature"></span>utilization<span class="type-signature"> :Number</span></h4>
 
 
 
 
+<div class="description">
+    Returns number indicating the utilization of this queue in terms of aratio between used capabilities and available capabilities. Note that,if this queue allows exclusive jobs, the utilization may be greaterthan 100%. The range therefore is [0, infinity].
+</div>
 
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Number</span>
+
+
+        </li>
+    </ul>
 
 
 
@@ -656,7 +732,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="JobQueueCapabilities.js.html">JobQueueCapabilities.js</a>, <a href="JobQueueCapabilities.js.html#line56">line 56</a>
+        <a href="JobQueueCapabilities.js.html">JobQueueCapabilities.js</a>, <a href="JobQueueCapabilities.js.html#line62">line 62</a>
     </li></ul></dd>
     
 
@@ -766,7 +842,7 @@
             <td class="type">
             
                 
-<span class="param-type">number</span>
+<span class="param-type">Number</span>
 
 
             
@@ -827,7 +903,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="JobQueueCapabilities.js.html">JobQueueCapabilities.js</a>, <a href="JobQueueCapabilities.js.html#line89">line 89</a>
+        <a href="JobQueueCapabilities.js.html">JobQueueCapabilities.js</a>, <a href="JobQueueCapabilities.js.html#line102">line 102</a>
     </li></ul></dd>
     
 
@@ -873,13 +949,13 @@
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Cache.html">Cache</a></li><li><a href="CacheItem.html">CacheItem</a></li><li><a href="CacheItemWithLoad.html">CacheItemWithLoad</a></li><li><a href="CacheMapBased.html">CacheMapBased</a></li><li><a href="CacheWithLoad.html">CacheWithLoad</a></li><li><a href="Collection.html">Collection</a></li><li><a href="CollectionEvent.html">CollectionEvent</a></li><li><a href="Comparer.html">Comparer</a></li><li><a href="ConstrainedQueue.html">ConstrainedQueue</a></li><li><a href="ConstrainedStack.html">ConstrainedStack</a></li><li><a href="DefaultComparer.html">DefaultComparer</a></li><li><a href="DefaultEqualityComparer.html">DefaultEqualityComparer</a></li><li><a href="Dictionary.html">Dictionary</a></li><li><a href="DictionaryMapBased.html">DictionaryMapBased</a></li><li><a href="EqualityComparer.html">EqualityComparer</a></li><li><a href="Interval.html">Interval</a></li><li><a href="IntervalEventSimple.html">IntervalEventSimple</a></li><li><a href="IntervalScheduler.html">IntervalScheduler</a></li><li><a href="ItemAndDeferred.html">ItemAndDeferred</a></li><li><a href="Job.html">Job</a></li><li><a href="JobEvent.html">JobEvent</a></li><li><a href="JobQueue.html">JobQueue</a></li><li><a href="JobQueueCapabilities.html">JobQueueCapabilities</a></li><li><a href="JobQueueEvent.html">JobQueueEvent</a></li><li><a href="LinkedList.html">LinkedList</a></li><li><a href="LinkedListEvent.html">LinkedListEvent</a></li><li><a href="LinkedListNode.html">LinkedListNode</a></li><li><a href="ManualSchedule.html">ManualSchedule</a></li><li><a href="ManualScheduleEventSimple.html">ManualScheduleEventSimple</a></li><li><a href="ManualScheduler.html">ManualScheduler</a></li><li><a href="PreliminaryScheduleEvent.html">PreliminaryScheduleEvent</a></li><li><a href="ProcessErrorResult.html">ProcessErrorResult</a></li><li><a href="ProcessExit.html">ProcessExit</a></li><li><a href="ProcessOutput.html">ProcessOutput</a></li><li><a href="ProcessResult.html">ProcessResult</a></li><li><a href="ProcessWrapper.html">ProcessWrapper</a></li><li><a href="ProducerConsumerQueue.html">ProducerConsumerQueue</a></li><li><a href="Progress.html">Progress</a></li><li><a href="ProgressNumeric.html">ProgressNumeric</a></li><li><a href="Queue.html">Queue</a></li><li><a href="Resolve.html">Resolve</a></li><li><a href="Schedule.html">Schedule</a></li><li><a href="ScheduleEvent.html">ScheduleEvent</a></li><li><a href="Scheduler.html">Scheduler</a></li><li><a href="Stack.html">Stack</a></li></ul><h3>Global</h3><ul><li><a href="global.html#assertThrowsAsync">assertThrowsAsync</a></li><li><a href="global.html#deepCloneObject">deepCloneObject</a></li><li><a href="global.html#defer">defer</a></li><li><a href="global.html#deferMocha">deferMocha</a></li><li><a href="global.html#Discard">Discard</a></li><li><a href="global.html#EvictionPolicy">EvictionPolicy</a></li><li><a href="global.html#FIFO">FIFO</a></li><li><a href="global.html#formatError">formatError</a></li><li><a href="global.html#formatValue">formatValue</a></li><li><a href="global.html#getRandomNumber">getRandomNumber</a></li><li><a href="global.html#Ignore">Ignore</a></li><li><a href="global.html#LFU">LFU</a></li><li><a href="global.html#LIFO">LIFO</a></li><li><a href="global.html#LRU">LRU</a></li><li><a href="global.html#mergeObjects">mergeObjects</a></li><li><a href="global.html#MFU">MFU</a></li><li><a href="global.html#MRU">MRU</a></li><li><a href="global.html#None">None</a></li><li><a href="global.html#Random">Random</a></li><li><a href="global.html#ThrowError">ThrowError</a></li><li><a href="global.html#throwError">throwError</a></li><li><a href="global.html#timeout">timeout</a></li><li><a href="global.html#Undetermined">Undetermined</a></li><li><a href="global.html#wrapError">wrapError</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Cache.html">Cache</a></li><li><a href="CacheItem.html">CacheItem</a></li><li><a href="CacheItemWithLoad.html">CacheItemWithLoad</a></li><li><a href="CacheMapBased.html">CacheMapBased</a></li><li><a href="CacheWithLoad.html">CacheWithLoad</a></li><li><a href="Collection.html">Collection</a></li><li><a href="CollectionEvent.html">CollectionEvent</a></li><li><a href="Comparer.html">Comparer</a></li><li><a href="ConstrainedQueue.html">ConstrainedQueue</a></li><li><a href="ConstrainedStack.html">ConstrainedStack</a></li><li><a href="DefaultComparer.html">DefaultComparer</a></li><li><a href="DefaultEqualityComparer.html">DefaultEqualityComparer</a></li><li><a href="DeferredClass.html">DeferredClass</a></li><li><a href="Dictionary.html">Dictionary</a></li><li><a href="DictionaryMapBased.html">DictionaryMapBased</a></li><li><a href="EqualityComparer.html">EqualityComparer</a></li><li><a href="Interval.html">Interval</a></li><li><a href="IntervalEventSimple.html">IntervalEventSimple</a></li><li><a href="IntervalScheduler.html">IntervalScheduler</a></li><li><a href="ItemAndDeferred.html">ItemAndDeferred</a></li><li><a href="Job.html">Job</a></li><li><a href="JobEvent.html">JobEvent</a></li><li><a href="JobQueue.html">JobQueue</a></li><li><a href="JobQueueCapabilities.html">JobQueueCapabilities</a></li><li><a href="JobQueueEvent.html">JobQueueEvent</a></li><li><a href="LinkedList.html">LinkedList</a></li><li><a href="LinkedListEvent.html">LinkedListEvent</a></li><li><a href="LinkedListNode.html">LinkedListNode</a></li><li><a href="ManualSchedule.html">ManualSchedule</a></li><li><a href="ManualScheduleEventSimple.html">ManualScheduleEventSimple</a></li><li><a href="ManualScheduler.html">ManualScheduler</a></li><li><a href="PreliminaryScheduleEvent.html">PreliminaryScheduleEvent</a></li><li><a href="ProcessErrorResult.html">ProcessErrorResult</a></li><li><a href="ProcessExit.html">ProcessExit</a></li><li><a href="ProcessOutput.html">ProcessOutput</a></li><li><a href="ProcessResult.html">ProcessResult</a></li><li><a href="ProcessWrapper.html">ProcessWrapper</a></li><li><a href="ProducerConsumerQueue.html">ProducerConsumerQueue</a></li><li><a href="Progress.html">Progress</a></li><li><a href="ProgressNumeric.html">ProgressNumeric</a></li><li><a href="Queue.html">Queue</a></li><li><a href="Resolve.html">Resolve</a></li><li><a href="Schedule.html">Schedule</a></li><li><a href="ScheduleEvent.html">ScheduleEvent</a></li><li><a href="Scheduler.html">Scheduler</a></li><li><a href="Stack.html">Stack</a></li></ul><h3>Global</h3><ul><li><a href="global.html#assertThrowsAsync">assertThrowsAsync</a></li><li><a href="global.html#deepCloneObject">deepCloneObject</a></li><li><a href="global.html#defer">defer</a></li><li><a href="global.html#deferMocha">deferMocha</a></li><li><a href="global.html#EvictionPolicy">EvictionPolicy</a></li><li><a href="global.html#formatError">formatError</a></li><li><a href="global.html#formatValue">formatValue</a></li><li><a href="global.html#getRandomNumber">getRandomNumber</a></li><li><a href="global.html#JobQueueCapacityPolicy">JobQueueCapacityPolicy</a></li><li><a href="global.html#mergeObjects">mergeObjects</a></li><li><a href="global.html#throwError">throwError</a></li><li><a href="global.html#timeout">timeout</a></li><li><a href="global.html#wrapError">wrapError</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.5</a> on Sat Sep 19 2020 13:26:32 GMT+0200 (Central European Summer Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.5</a> on Sun Sep 20 2020 02:30:25 GMT+0200 (Central European Summer Time)
 </footer>
 
 <script> prettyPrint(); </script>

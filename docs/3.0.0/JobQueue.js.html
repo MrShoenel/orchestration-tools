@@ -68,7 +68,7 @@ class JobEvent {
  */
 class Job extends EventEmitter {
 	/**
-	 * @param {producerHandler.&lt;Promise.&lt;T>>} promiseProducer A function returning a Promise
+	 * @param {producerHandler&lt;Promise&lt;T>>} promiseProducer A function returning a Promise
 	 * or an async function (essentially the same). If you want to use a sync
 	 * function, call Job::fromSyncFunction(fn) instead.
 	 * @param {String} [name] Optional. Defaults to undefined. Give an optional
@@ -97,7 +97,10 @@ class Job extends EventEmitter {
 		 * @protected
 		 */
 		this._result = void 0;
-		/** @protected */
+		/**
+		 * @type {Deferred&lt;T>}
+		 * @protected
+		 */
 		this._deferred = defer();
 
 		/**
@@ -107,16 +110,16 @@ class Job extends EventEmitter {
 		this._progressInstance = void 0;
 
 		/**
-		 * @type {number}
+		 * @type {Number}
 		 * @protected
 		 */
 		this._cost = void 0;
 
-		/** @type {Observable.&lt;JobEvent>} */
+		/** @type {Observable&lt;JobEvent>} */
 		this.observableRun = Object.freeze(fromEvent(this, symbolRun));
-		/** @type {Observable.&lt;JobEvent>} */
+		/** @type {Observable&lt;JobEvent>} */
 		this.observableDone = Object.freeze(fromEvent(this, symbolDone));
-		/** @type {Observable.&lt;JobEvent>} */
+		/** @type {Observable&lt;JobEvent>} */
 		this.observableFailed = Object.freeze(fromEvent(this, symbolFailed));
 
 		/** @protected */
@@ -133,45 +136,54 @@ class Job extends EventEmitter {
 		this._stopTime = null;
 
 		/**
-		 * @type {DictionaryMapBased.&lt;any, any>}
+		 * @type {DictionaryMapBased&lt;any, any>}
 		 * @protected
 		 */
 		this._properties = new DictionaryMapBased();
 	};
 
 	/**
-	 * @returns {DictionaryMapBased.&lt;any, any>} A map with arbitrary properties or date
-	 * associated with this Job.
+	 * Returns a map with arbitrary properties or date associated with this Job.
+	 * 
+	 * @type {DictionaryMapBased&lt;any, any>}
 	 */
 	get properties() {
 		return this._properties;
 	};
 
 	/**
-	 * @returns {Boolean} True, iff this Job was started. This is also true for done or
+	 * Returns true, iff this Job was started. This is also true for done or
 	 * failed Jobs or those that are currently running.
+	 * 
+	 * @type {Boolean}
 	 */
 	get wasStarted() {
 		return this._wasStarted;
 	};
 
 	/**
-	 * @returns {Boolean} True, iff this Job was previously started and is now either
+	 * Returns true, iff this Job was previously started and is now either
 	 * done or has failed.
+	 * 
+	 * @type {Boolean}
 	 */
 	get isStopped() {
 		return this._isDone || this._hasFailed;
 	};
 	
 	/**
-	 * @returns {Date} The timestamp of when this Job was created.
+	 * Returns the timestamp of when this Job was created.
+	 * 
+	 * @type {Date}
 	 */
 	get createTime() {
 		return new Date(+this._createTime);
 	};
 
 	/**
-	 * @returns {Date} The timestamp of when this Job was started.
+	 * Returns the timestamp of when this Job was started.
+	 * 
+	 * @type {Date}
 	 * @throws {Error} If the Job was not yet started.
 	 */
 	get startTime() {
@@ -182,8 +194,10 @@ class Job extends EventEmitter {
 	};
 
 	/**
-	 * @returns {Date} The timestamp of when this Job was stopped (when it finished
+	 * Returns the timestamp of when this Job was stopped (when it finished
 	 * with success or failed).
+	 * 
+	 * @type {Date}
 	 * @throws {Error} If the Job was not yet stopped.
 	 */
 	get stopTime() {
@@ -194,9 +208,11 @@ class Job extends EventEmitter {
 	};
 
 	/**
-	 * @returns {Number} Amount of milliseconds between start- and stop-time of this
+	 * Returns the amount of milliseconds between start- and stop-time of this
 	 * Job. If the Job was not yet started, returns 0. If it is still running, returns
 	 * the time between start and now, otherwise between start and stop.
+	 * 
+	 * @type {Number}
 	 */
 	get runDurationMs() {
 		if (!this.wasStarted) {
@@ -207,15 +223,19 @@ class Job extends EventEmitter {
 	};
 	
 	/**
-	 * @returns {undefined|String} The name of this Job.
+	 * Returns the name of this Job.
+	 * @type {undefined|String}
 	 */
 	get name() {
 		return this._name;
 	};
 
 	/**
+	 * Sets the name of this Job.
+	 * 
 	 * @param {undefined|String} value The name of this Job.
 	 * @throws {Error} If the value is neither undefined nor a string.
+	 * @type {void}
 	 */
 	set name(value) {
 		if (value !== void 0 &amp;&amp; typeof value !== 'string') {
@@ -248,6 +268,7 @@ class Job extends EventEmitter {
 	 * or subscribe to its observables.
 	 * 
 	 * @param {Progress} progress
+	 * @type {void}
 	 */
 	set progress(progress) {
 		if (!(progress instanceof Progress)) {
@@ -257,27 +278,37 @@ class Job extends EventEmitter {
 	};
 
 	/**
+	 * Returns the Progress-instance of type TProgress.
+	 * 
 	 * @template TProgress
-	 * @returns {Progress.&lt;TProgress>} The Progress-instance of type TProgress.
+	 * @type {Progress&lt;TProgress>}
 	 */
 	get progress() {
 		return this._progressInstance;
 	};
 
 	/**
-	 * @returns {boolean} Whether or not this Job is/was equipped with an instance of Progress.
+	 * Returns whether or not this Job is/was equipped with an instance of Progress.
+	 * 
+	 * @type {Boolean}
 	 */
 	get supportsProgress() {
 		return this._progressInstance instanceof Progress;
 	};
 
+	/**
+	 * Returns whether this Job has an associated cost.
+	 * 
+	 * @type {Boolean}
+	 */
 	get hasCost() {
 		return !isNaN(this._cost) &amp;&amp; this._cost > 0;
 	};
 
 	/**
-	 * @param {number|undefined} [value] the new value to use as cost. Set to undefined to
+	 * @param {Number|undefined} [value] the new value to use as cost. Set to undefined to
 	 * disable the usage of cost.
+	 * @type {void}
 	 */
 	set cost(value = void 0) {
 		if (Object.prototype.toString.call(value) === '[object Number]' &amp;&amp; !isNaN(value) &amp;&amp; value > 0) {
@@ -290,28 +321,28 @@ class Job extends EventEmitter {
 	};
 
 	/**
-	 * @returns {number|undefined}
+	 * @type {Number|undefined}
 	 */
 	get cost() {
 		return this._cost;
 	};
 
 	/**
-	 * @returns {Boolean}
+	 * @type {Boolean}
 	 */
 	get isDone() {
 		return this._isDone;
 	};
 
 	/**
-	 * @returns {Boolean}
+	 * @type {Boolean}
 	 */
 	get hasFailed() {
 		return this._hasFailed;
 	};
 
 	/**
-	 * @returns {Boolean}
+	 * @type {Boolean}
 	 */
 	get isRunning() {
 		return this._isRunning;
@@ -323,15 +354,15 @@ class Job extends EventEmitter {
 	 * returned by run() should only be used by the queue.
 	 * 
 	 * @template T
-	 * @returns {Promise.&lt;T>}
+	 * @type {Promise&lt;T>}
 	 */
 	get donePromise() {
 		return this._deferred.promise;
 	};
 
 	/**
-	 * @template T
-	 * @returns {T}
+	 * @type {T}
+	 * @throws {Error} If this Job is not yet done, @see {isDone}.
 	 */
 	get result() {
 		if (!this.isDone) {
@@ -341,8 +372,7 @@ class Job extends EventEmitter {
 	};
 
 	/**
-	 * @template T
-	 * @returns {Promise.&lt;T>} the Promise that will resolve with the
+	 * @returns {Promise&lt;T>} the Promise that will resolve with the
 	 * job's result.
 	 */
 	async run() {
@@ -430,7 +460,11 @@ class JobQueueEvent {
 
 
 
-const JobQueueCapacityPolicy = Object.freeze({
+/**
+ * @readonly
+ * @enum {Number}
+ */
+const JobQueueCapacityPolicy = {
 	/**
 	 * Ignore the policy, and keep on enqueueing items, regardless of
 	 * whether the maximum capacity is reached or not.
@@ -446,7 +480,7 @@ const JobQueueCapacityPolicy = Object.freeze({
 	 * reached, an Error is thrown.
 	 */
 	ThrowError: 2,
-});
+};
 
 
 
@@ -474,22 +508,22 @@ class JobQueue extends EventEmitter {
 		if (isNaN(numParallel) || !isFinite(numParallel) || numParallel &lt; 1) {
 			throw new Error(`The value "${numParallel}" for the parameter numParallel is invalid. Only positive integers may be supplied.`);
 		}
-		/** @type {Queue.&lt;Job>} */
+		/** @type {Queue&lt;Job>} */
 		this.queue = new Queue();
-		/** @type {ConstrainedQueue.&lt;Job>} */
+		/** @type {ConstrainedQueue&lt;Job>} */
 		this.currentJobs = new ConstrainedQueue(numParallel);
 
 		this.numParallel = numParallel;
 		this.capacity = capacity;
 		this.capacityPolicy = capacityPolicy;
 
-		/** @type {Observable.&lt;JobQueueEvent>} */
+		/** @type {Observable&lt;JobQueueEvent>} */
 		this.observableRun = Object.freeze(fromEvent(this, symbolRun));
-		/** @type {Observable.&lt;JobQueueEvent>} */
+		/** @type {Observable&lt;JobQueueEvent>} */
 		this.observableDone = Object.freeze(fromEvent(this, symbolDone));
-		/** @type {Observable.&lt;JobQueueEvent>} */
+		/** @type {Observable&lt;JobQueueEvent>} */
 		this.observableFailed = Object.freeze(fromEvent(this, symbolFailed));
-		/** @type {Observable.&lt;JobQueueEvent>} */
+		/** @type {Observable&lt;JobQueueEvent>} */
 		this.observableIdle = Object.freeze(fromEvent(this, symbolIdle));
 
 		/** @protected */
@@ -506,37 +540,44 @@ class JobQueue extends EventEmitter {
 	};
 
 	/**
-	 * @returns {number} A value indicating how much work has been done in terms
+	 * Returns a value indicating how much work has been done in terms
 	 * of number of Jobs or their cost, depending on the queue's type.
+	 * 
+	 * @type {Number}
 	 */
 	get workDone() {
 		return this._workDone;
 	};
 
 	/**
-	 * @returns {number} A value indicating how much work has been failed in terms
+	 * Returns a value indicating how much work has been failed in terms
 	 * of number of Jobs or their cost, depending on the queue's type.
+	 * 
+	 * @type {Number}
 	 */
 	get workFailed() {
 		return this._workFailed;
 	};
 
 	/**
-	 * @returns {number} A value indicating how many Jobs have been done.
+	 * Returns a value indicating how many Jobs have been done.
+	 * 
+	 * @type {Number}
 	 */
 	get numJobsDone() {
 		return this._numJobsDone;
 	};
 
 	/**
-	 * @returns {number} A value indicating how many Jobs have failed.
+	 * Returns a value indicating how many Jobs have failed.
+	 * @type {Number}
 	 */
 	get numJobsFailed() {
 		return this._numJobsFailed;
 	};
 
 	/**
-	 * @returns {Boolean}
+	 * @type {Boolean}
 	 */
 	get isPaused() {
 		return this._isPaused;
@@ -578,7 +619,7 @@ class JobQueue extends EventEmitter {
 	 * the queue was paused, it will be resumed. Adding more jobs while this call
 	 * is not resolved will defer it.
 	 * 
-	 * @returns {Promise.&lt;void>} That will resolve if the queue's current load
+	 * @returns {Promise&lt;void>} That will resolve if the queue's current load
 	 * is 0 (no jobs running and none in the backlog) or once it reaches 0 (if
 	 * all currently enqueued jobs are done). The Promise is rejected if any of
 	 * the jobs fails.
@@ -598,7 +639,7 @@ class JobQueue extends EventEmitter {
 				return;
 			}
 
-			/** @type {Array.&lt;Subscription>} */
+			/** @type {Array&lt;Subscription>} */
 			const subscriptions = [];
 
 			const unsubscribeAll = () => {
@@ -621,10 +662,12 @@ class JobQueue extends EventEmitter {
 	};
 
 	/**
-	 * @returns {number} A number that represents the ratio between all current
+	 * Returns a number that represents the ratio between all current
 	 * and enqueued jobs and this queue's parallelism. Numbers greater 1 indicate
 	 * that there are jobs in the backlog. 0 Means the queue is idle and 1 means
 	 * that it is using its full degree of parallelism and no jobs are waiting.
+	 * 
+	 * @type {Number}
 	 */
 	get load() {
 		const numJobs = this.backlog + this.numJobsRunning;
@@ -632,48 +675,60 @@ class JobQueue extends EventEmitter {
 	};
 
 	/**
-	 * @returns {number} A number indicating the queue's utilization in terms
+	 * Returns a number indicating the queue's utilization in terms
 	 * of a ratio of how many jobs are currently running and how many could be
 	 * run. This number is therefore in the range [0, 1]. Unlike load, this
 	 * property does not consider jobs in the backlog.
+	 * 
+	 * @type {Number}
 	 */
 	get utilization() {
 		return this.numJobsRunning / this.numParallel;
 	};
 
 	/**
-	 * @returns {number} The amount of jobs currently running.
+	 * Returns the amount of jobs currently running.
+	 * 
+	 * @type {Number}
 	 */
 	get numJobsRunning() {
 		return this.currentJobs.size;
 	};
 
 	/**
-	 * @returns {number} The amount of jobs on this queue that are waiting
+	 * Returns the amount of jobs on this queue that are waiting
 	 * to be processed.
+	 * 
+	 * @type {Number}
 	 */
 	get backlog() {
 		return this.queue.size;
 	};
 
 	/**
-	 * @returns {boolean} True if there are no jobs currently processing.
+	 * Returns true if there are no jobs currently processing.
+	 * 
+	 * @type {Boolean}
 	 */
 	get isIdle() {
 		return this.numJobsRunning === 0;
 	};
 
 	/**
-	 * @returns {boolean} True if there are any current jobs running.
+	 * Returns true if there are any current jobs running.
+	 * 
+	 * @type {Boolean}
 	 */
 	get isWorking() {
 		return this.numJobsRunning > 0;
 	};
 
 	/**
-	 * @returns {boolean} True iff the queue is busy and all of its slots
-	 * are currently used actively by jobs (the number of active jobs is
+	 * Returns true iff the queue is busy and all of its slots are
+	 * currently used actively by jobs (the number of active jobs is
 	 * equal to maximum degree of parallelism).
+	 * 
+	 * @type {Boolean}
 	 */
 	get isBusy() {
 		return this.numJobsRunning === this.numParallel;
@@ -683,7 +738,7 @@ class JobQueue extends EventEmitter {
 	 * Removes all jobs from the backlog and returns them.
 	 * 
 	 * @template T
-	 * @returns {Array.&lt;Job.&lt;T>>} An array with all not yet run jobs.
+	 * @returns {Array&lt;Job&lt;T>>} An array with all not yet run jobs.
 	 */
 	clearBacklog() {
 		const backlogJobs = Array.from(this.queue.entries());
@@ -694,8 +749,8 @@ class JobQueue extends EventEmitter {
 	/**
 	 * Determines if a specific Job is on the backlog of this JobQueue.
 	 * 
-	 * @param {Job.&lt;T>} job The job to check for
-	 * @param {EqualityComparer.&lt;Job.&lt;T>>} [eqComparer] Optional. A comparer
+	 * @param {Job&lt;T>} job The job to check for
+	 * @param {EqualityComparer&lt;Job&lt;T>>} [eqComparer] Optional. A comparer
 	 * to use for checking for equality. Defaults to the DefaultEqualityComparer
 	 * which uses the identity operator.
 	 * @returns {Boolean} True, iff the Job is in the backlog.
@@ -707,8 +762,8 @@ class JobQueue extends EventEmitter {
 	/**
 	 * Determines if a specific Job is currently runnung on this JobQueue.
 	 * 
-	 * @param {Job.&lt;T>} job The Job to check for
-	 * @param {EqualityComparer.&lt;Job.&lt;T>>} [eqComparer] Optional. A comparer
+	 * @param {Job&lt;T>} job The Job to check for
+	 * @param {EqualityComparer&lt;Job&lt;T>>} [eqComparer] Optional. A comparer
 	 * to use for checking for equality. Defaults to the DefaultEqualityComparer
 	 * which uses the identity operator.
 	 * @returns {Boolean} True, iff this JobQueue is currently processing
@@ -720,8 +775,8 @@ class JobQueue extends EventEmitter {
 
 	/**
 	 * 
-	 * @param {Job.&lt;T>} job The Job to remove from the backlog.
-	 * @param {EqualityComparer.&lt;Job.&lt;T>>} [eqComparer] Optional. A comparer
+	 * @param {Job&lt;T>} job The Job to remove from the backlog.
+	 * @param {EqualityComparer&lt;Job&lt;T>>} [eqComparer] Optional. A comparer
 	 * to use for checking for equality. Defaults to the DefaultEqualityComparer
 	 * which uses the identity operator.
 	 * @returns {this}
@@ -733,7 +788,7 @@ class JobQueue extends EventEmitter {
 
 	/**
 	 * @template T
-	 * @param {producerHandler.&lt;T>} job A synchronous function to be used as a Job.
+	 * @param {producerHandler&lt;T>} job A synchronous function to be used as a Job.
 	 * @returns {this}
 	 */
 	addSyncJob(job) {
@@ -742,7 +797,7 @@ class JobQueue extends EventEmitter {
 
 	/**
 	 * @template T
-	 * @param {...(producerHandler.&lt;T>)} jobs Many synchronous functions to add as Jobs.
+	 * @param {...(producerHandler&lt;T>)} jobs Many synchronous functions to add as Jobs.
 	 * @returns {this}
 	 */
 	addSyncJobs(...jobs) {
@@ -755,7 +810,7 @@ class JobQueue extends EventEmitter {
 	 * async function.
 	 * 
 	 * @template T
-	 * @param {Job.&lt;T>|producerHandler.&lt;Promise.&lt;T>>} job
+	 * @param {Job&lt;T>|producerHandler&lt;Promise&lt;T>>} job
 	 * @returns {this}
 	 */
 	addJob(job) {
@@ -785,7 +840,7 @@ class JobQueue extends EventEmitter {
 
 	/**
 	 * @template T
-	 * @param {...(Job.&lt;T>|producerHandler.&lt;Promise.&lt;T>>)} jobs
+	 * @param {...(Job&lt;T>|producerHandler&lt;Promise&lt;T>>)} jobs
 	 * @returns {this}
 	 */
 	addJobs(...jobs) {
@@ -858,13 +913,13 @@ module.exports = Object.freeze({
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Cache.html">Cache</a></li><li><a href="CacheItem.html">CacheItem</a></li><li><a href="CacheItemWithLoad.html">CacheItemWithLoad</a></li><li><a href="CacheMapBased.html">CacheMapBased</a></li><li><a href="CacheWithLoad.html">CacheWithLoad</a></li><li><a href="Collection.html">Collection</a></li><li><a href="CollectionEvent.html">CollectionEvent</a></li><li><a href="Comparer.html">Comparer</a></li><li><a href="ConstrainedQueue.html">ConstrainedQueue</a></li><li><a href="ConstrainedStack.html">ConstrainedStack</a></li><li><a href="DefaultComparer.html">DefaultComparer</a></li><li><a href="DefaultEqualityComparer.html">DefaultEqualityComparer</a></li><li><a href="Dictionary.html">Dictionary</a></li><li><a href="DictionaryMapBased.html">DictionaryMapBased</a></li><li><a href="EqualityComparer.html">EqualityComparer</a></li><li><a href="Interval.html">Interval</a></li><li><a href="IntervalEventSimple.html">IntervalEventSimple</a></li><li><a href="IntervalScheduler.html">IntervalScheduler</a></li><li><a href="ItemAndDeferred.html">ItemAndDeferred</a></li><li><a href="Job.html">Job</a></li><li><a href="JobEvent.html">JobEvent</a></li><li><a href="JobQueue.html">JobQueue</a></li><li><a href="JobQueueCapabilities.html">JobQueueCapabilities</a></li><li><a href="JobQueueEvent.html">JobQueueEvent</a></li><li><a href="LinkedList.html">LinkedList</a></li><li><a href="LinkedListEvent.html">LinkedListEvent</a></li><li><a href="LinkedListNode.html">LinkedListNode</a></li><li><a href="ManualSchedule.html">ManualSchedule</a></li><li><a href="ManualScheduleEventSimple.html">ManualScheduleEventSimple</a></li><li><a href="ManualScheduler.html">ManualScheduler</a></li><li><a href="PreliminaryScheduleEvent.html">PreliminaryScheduleEvent</a></li><li><a href="ProcessErrorResult.html">ProcessErrorResult</a></li><li><a href="ProcessExit.html">ProcessExit</a></li><li><a href="ProcessOutput.html">ProcessOutput</a></li><li><a href="ProcessResult.html">ProcessResult</a></li><li><a href="ProcessWrapper.html">ProcessWrapper</a></li><li><a href="ProducerConsumerQueue.html">ProducerConsumerQueue</a></li><li><a href="Progress.html">Progress</a></li><li><a href="ProgressNumeric.html">ProgressNumeric</a></li><li><a href="Queue.html">Queue</a></li><li><a href="Resolve.html">Resolve</a></li><li><a href="Schedule.html">Schedule</a></li><li><a href="ScheduleEvent.html">ScheduleEvent</a></li><li><a href="Scheduler.html">Scheduler</a></li><li><a href="Stack.html">Stack</a></li></ul><h3>Global</h3><ul><li><a href="global.html#assertThrowsAsync">assertThrowsAsync</a></li><li><a href="global.html#deepCloneObject">deepCloneObject</a></li><li><a href="global.html#defer">defer</a></li><li><a href="global.html#deferMocha">deferMocha</a></li><li><a href="global.html#Discard">Discard</a></li><li><a href="global.html#EvictionPolicy">EvictionPolicy</a></li><li><a href="global.html#FIFO">FIFO</a></li><li><a href="global.html#formatError">formatError</a></li><li><a href="global.html#formatValue">formatValue</a></li><li><a href="global.html#getRandomNumber">getRandomNumber</a></li><li><a href="global.html#Ignore">Ignore</a></li><li><a href="global.html#LFU">LFU</a></li><li><a href="global.html#LIFO">LIFO</a></li><li><a href="global.html#LRU">LRU</a></li><li><a href="global.html#mergeObjects">mergeObjects</a></li><li><a href="global.html#MFU">MFU</a></li><li><a href="global.html#MRU">MRU</a></li><li><a href="global.html#None">None</a></li><li><a href="global.html#Random">Random</a></li><li><a href="global.html#ThrowError">ThrowError</a></li><li><a href="global.html#throwError">throwError</a></li><li><a href="global.html#timeout">timeout</a></li><li><a href="global.html#Undetermined">Undetermined</a></li><li><a href="global.html#wrapError">wrapError</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Cache.html">Cache</a></li><li><a href="CacheItem.html">CacheItem</a></li><li><a href="CacheItemWithLoad.html">CacheItemWithLoad</a></li><li><a href="CacheMapBased.html">CacheMapBased</a></li><li><a href="CacheWithLoad.html">CacheWithLoad</a></li><li><a href="Collection.html">Collection</a></li><li><a href="CollectionEvent.html">CollectionEvent</a></li><li><a href="Comparer.html">Comparer</a></li><li><a href="ConstrainedQueue.html">ConstrainedQueue</a></li><li><a href="ConstrainedStack.html">ConstrainedStack</a></li><li><a href="DefaultComparer.html">DefaultComparer</a></li><li><a href="DefaultEqualityComparer.html">DefaultEqualityComparer</a></li><li><a href="DeferredClass.html">DeferredClass</a></li><li><a href="Dictionary.html">Dictionary</a></li><li><a href="DictionaryMapBased.html">DictionaryMapBased</a></li><li><a href="EqualityComparer.html">EqualityComparer</a></li><li><a href="Interval.html">Interval</a></li><li><a href="IntervalEventSimple.html">IntervalEventSimple</a></li><li><a href="IntervalScheduler.html">IntervalScheduler</a></li><li><a href="ItemAndDeferred.html">ItemAndDeferred</a></li><li><a href="Job.html">Job</a></li><li><a href="JobEvent.html">JobEvent</a></li><li><a href="JobQueue.html">JobQueue</a></li><li><a href="JobQueueCapabilities.html">JobQueueCapabilities</a></li><li><a href="JobQueueEvent.html">JobQueueEvent</a></li><li><a href="LinkedList.html">LinkedList</a></li><li><a href="LinkedListEvent.html">LinkedListEvent</a></li><li><a href="LinkedListNode.html">LinkedListNode</a></li><li><a href="ManualSchedule.html">ManualSchedule</a></li><li><a href="ManualScheduleEventSimple.html">ManualScheduleEventSimple</a></li><li><a href="ManualScheduler.html">ManualScheduler</a></li><li><a href="PreliminaryScheduleEvent.html">PreliminaryScheduleEvent</a></li><li><a href="ProcessErrorResult.html">ProcessErrorResult</a></li><li><a href="ProcessExit.html">ProcessExit</a></li><li><a href="ProcessOutput.html">ProcessOutput</a></li><li><a href="ProcessResult.html">ProcessResult</a></li><li><a href="ProcessWrapper.html">ProcessWrapper</a></li><li><a href="ProducerConsumerQueue.html">ProducerConsumerQueue</a></li><li><a href="Progress.html">Progress</a></li><li><a href="ProgressNumeric.html">ProgressNumeric</a></li><li><a href="Queue.html">Queue</a></li><li><a href="Resolve.html">Resolve</a></li><li><a href="Schedule.html">Schedule</a></li><li><a href="ScheduleEvent.html">ScheduleEvent</a></li><li><a href="Scheduler.html">Scheduler</a></li><li><a href="Stack.html">Stack</a></li></ul><h3>Global</h3><ul><li><a href="global.html#assertThrowsAsync">assertThrowsAsync</a></li><li><a href="global.html#deepCloneObject">deepCloneObject</a></li><li><a href="global.html#defer">defer</a></li><li><a href="global.html#deferMocha">deferMocha</a></li><li><a href="global.html#EvictionPolicy">EvictionPolicy</a></li><li><a href="global.html#formatError">formatError</a></li><li><a href="global.html#formatValue">formatValue</a></li><li><a href="global.html#getRandomNumber">getRandomNumber</a></li><li><a href="global.html#JobQueueCapacityPolicy">JobQueueCapacityPolicy</a></li><li><a href="global.html#mergeObjects">mergeObjects</a></li><li><a href="global.html#throwError">throwError</a></li><li><a href="global.html#timeout">timeout</a></li><li><a href="global.html#wrapError">wrapError</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.5</a> on Sat Sep 19 2020 13:26:32 GMT+0200 (Central European Summer Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.5</a> on Sun Sep 20 2020 02:30:25 GMT+0200 (Central European Summer Time)
 </footer>
 
 <script> prettyPrint(); </script>
