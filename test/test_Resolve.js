@@ -132,4 +132,41 @@ describe('Resolve', () => {
 			await Resolve.toValue(async() => '5', 5);
 		});
 	});
+
+	it('should parse numbers in strings correctly', done => {
+		assert.doesNotThrow(() => {
+			assert.isTrue(isNaN(Resolve.asNumber(' NaN ')));
+
+			assert.strictEqual(Resolve.asNumber('0'), 0);
+			assert.strictEqual(Resolve.asNumber('123454'), 123454);
+			assert.strictEqual(Resolve.asNumber('-123'), -123);
+			assert.strictEqual(Resolve.asNumber('-999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999'), -Infinity);
+
+			assert.strictEqual(Resolve.asNumber('-.1'), -.1);
+			assert.strictEqual(Resolve.asNumber('123.234'), 123.234);
+			assert.strictEqual(Resolve.asNumber('-123.234'), -123.234);
+
+			assert.strictEqual(Resolve.asNumber('-.7e2'), -.7e2);
+			assert.strictEqual(Resolve.asNumber('23e3'), 23e3);
+			assert.strictEqual(Resolve.asNumber('23E3'), 23e3);
+			assert.strictEqual(Resolve.asNumber('1e2000'), Infinity);
+		});
+
+		['0123', '-123.23.4', '1.e2', '2e2.2', 'bla', '-'].forEach(v => assert.throws(() => Resolve.asNumber(v)));
+
+
+		assert.strictEqual(Resolve.tryAsNumber('bla'), 'bla');
+		assert.strictEqual(Resolve.tryAsNumber(true), true);
+		assert.strictEqual(Resolve.tryAsNumber(false), false);
+		assert.strictEqual(Resolve.tryAsNumber(null), null);
+		assert.deepStrictEqual(Resolve.tryAsNumber([1,2,3]), [1,2,3]);
+		assert.deepStrictEqual(Resolve.tryAsNumber({a:true, b:42}), {a:true, b:42});
+		
+		assert.strictEqual(Resolve.tryAsNumber(42), 42);
+		assert.strictEqual(Resolve.tryAsNumber('42'), 42);
+		assert.strictEqual(Resolve.tryAsNumber(.2e-2), .2e-2);
+		assert.strictEqual(Resolve.tryAsNumber('2.2e7'), 2.2e7);
+
+		done();
+	});
 });
