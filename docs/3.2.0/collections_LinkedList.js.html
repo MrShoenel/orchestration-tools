@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: collections/LinkedList.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: collections/LinkedList.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>const { Collection, CollectionEvent } = require('./Collection')
+, { EqualityComparer } = require('./EqualityComparer')
+, { Observable, fromEvent } = require('rxjs')
+, symbolLinkedListAdd = Symbol('linkedListAdd')
+, symbolLinkedListRemove = Symbol('linkedListRemove');
+
+
+/**
+ * @template T
+ */
+class LinkedListEvent extends CollectionEvent {
+	/**
+	 * @param {LinkedListNode&lt;T>} node
+	 * @param {Boolean} add True, if the node was added. If false, the node was removed.
+	 * @param {Boolean} first True, iff the node is the first node now
+	 * @param {Boolean} last True, iff the node is the last node now
+	 */
+	constructor(node, add, first, last) {
+		super(node);
+
+		/** @type {LinkedListNode&lt;T>} */
+		this.item = node;
+
+		/** @protected */
+		this._add = add;
+		/** @protected */
+		this._first = first;
+		/** @protected */
+		this._last = last;
+	};
+
+	/**
+	 * Returns whether this represents an add-event.
+	 * 
+	 * @type {Boolean}
+	 */
+	get added() {
+		return this._add;
+	};
+
+	/**
+	 * Returns whether this represents a remove-event.
+	 * 
+	 * @type {Boolean}
+	 */
+	get removed() {
+		return !this._add;
+	};
+
+	/**
+	 * Returns whether the node is the first now.
+	 * 
+	 * @type {Boolean}
+	 */
+	get firstNode() {
+		return this._first;
+	};
+
+	/**
+	 * Returns whether the node is the last now.
+	 * 
+	 * @type {Boolean}
+	 */
+	get lastNode() {
+		return this._last;
+	};
+};
+
+
+/**
+ * @template T
+ * @author Sebastian Hönel &lt;development@hoenel.net>
+ */
+class LinkedListNode {
+	/**
+	 * @param {T} item
+	 * @param {LinkedList&lt;T>} list
+	 * @param {LinkedListNode&lt;T>} prev
+	 * @param {LinkedListNode&lt;T>} next
+	 */
+	constructor(item, list, prev = null, next = null) {
+		this.item = item;
+		this.list = list;
+		this.prev = prev;
+		this.next = next;
+	};
+};
+
+
+
+/**
+ * @template T
+ * @author Sebastian Hönel &lt;development@hoenel.net>
+ */
+class LinkedList extends Collection {
+	/**
+	 * Creates a new, empty doubly-linked LinkedList.
+	 * 
+	 * @param {EqualityComparer&lt;T>} [eqComparer] Optional. Defaults To EqualityComparer&lt;T>.default.
+	 */
+	constructor(eqComparer = EqualityComparer.default) {
+		super(eqComparer);
+		
+		/**
+		 * @type {LinkedListNode&lt;T>}
+		 * @protected
+		 */
+		this._firstNode = null;
+		/**
+		 * @type {LinkedListNode&lt;T>}
+		 * @protected
+		 */
+		this._lastNode = null;
+		
+		/**
+		 * @type {Set&lt;LinkedListNode&lt;T>>}
+		 * @protected
+		 */
+		this._lookupSet = new Set();
+
+		/** @protected */
+		this._size = 0;
+		
+		/** @type {Observable&lt;LinkedListEvent&lt;T>>} */
+		this.observableNodeAdd = Object.freeze(fromEvent(this, symbolLinkedListAdd));
+		/** @type {Observable&lt;LinkedListEvent&lt;T>>} */
+		this.observableNodeRemove = Object.freeze(fromEvent(this, symbolLinkedListRemove));
+	};
+
+	/**
+	 * @protected
+	 * @throws {Error} If this LinkedList is empty.
+	 * @returns {Boolean} true
+	 */
+	_requireNotEmpty() {
+		if (this._firstNode === null) {
+			throw new Error('The LinkedList is empty.');
+		}
+		return true;
+	};
+
+	/**
+	 * @protected
+	 * @throws {Error} If the given node is not a LinkedListNode.
+	 * @param {LinkedListNode&lt;T>} node
+	 */
+	_requireIsNode(node) {
+		if (!(node instanceof LinkedListNode)) {
+			throw new Error('The node is not a LinkedListNode.');
+		}
+		return true;
+	};
+
+	/**
+	 * @protected
+	 * @param {LinkedListNode&lt;T>} node 
+	 * @param {T} item 
+	 * @param {Boolean} after
+	 * @returns {LinkedListNode&lt;T>} The newly added node.
+	 */
+	_add(node, item, after = true) {
+		if (!this.hasNode(node)) {
+			throw new Error('The node given is not a member of this LinkedList.');
+		}
+
+		const newNode = new LinkedListNode(
+			item, this, after ? node : node.prev, after ? node.next : node);
+		
+		if (newNode.prev instanceof LinkedListNode) {
+			newNode.prev.next = newNode;
+			if (newNode.prev.prev === null) {
+				this._firstNode = newNode.prev;
+			}
+		} else {
+			this._firstNode = newNode;
+		}
+
+		if (newNode.next instanceof LinkedListNode) {
+			newNode.next.prev = newNode;
+			if (newNode.next.next === null) {
+				this._lastNode = newNode.next;
+			}
+		} else {
+			this._lastNode = newNode;
+		}
+		
+		this._lookupSet.add(newNode);
+		this._size++;
+		
+		this.emit(symbolLinkedListAdd, new LinkedListEvent(
+			newNode, true, this.first === newNode, this.last === newNode));
+
+		return newNode;
+	};
+
+	/**
+	 * @override
+	 * @inheritDoc
+	 * @type {Number}
+	 */
+	get size() {
+		return this._size;
+	};
+
+	/**
+	 * @override
+	 * @inheritDoc
+	 * @type {Boolean}
+	 */
+	get isEmpty() {
+		return this._size === 0;
+	};
+
+	/**
+	 * @type {LinkedListNode&lt;T>}
+	 */
+	get first() {
+		this._requireNotEmpty();
+		return this._firstNode;
+	};
+
+	/**
+	 * @type {LinkedListNode&lt;T>}
+	 */
+	get last() {
+		this._requireNotEmpty();
+		return this._lastNode;
+	};
+
+	/**
+	 * @returns {IterableIterator&lt;LinkedListNode&lt;T>>}
+	 */
+	*nodes() {
+		let node = this._firstNode;
+
+		while (node instanceof LinkedListNode) {
+			yield node;
+			node = node.next;
+		}
+	};
+
+	/**
+	 * @returns {IterableIterator&lt;LinkedListNode&lt;T>>}
+	 */
+	*nodesReversed() {
+		let node = this._lastNode;
+
+		while (node instanceof LinkedListNode) {
+			yield node;
+			node = node.prev;
+		}
+	};
+
+	/**
+	 * @returns {IterableIterator&lt;T>}
+	 */
+	*entries() {
+		for (const node of this.nodes()) {
+			yield node.item;
+		}
+	};
+
+	/**
+	 * @returns {IterableIterator&lt;T>}
+	 */
+	*entriesReversed() {
+		for (const node of this.nodesReversed()) {
+			yield node.item;
+		}
+	};
+
+	/**
+	 * @override
+	 * @inheritDoc
+	 * @param {T} item
+	 * @param {EqualityComparer&lt;T>} [eqComparer] an optional EqualityComparer to use. If not provided, will use the Collection's EqualityComparer.
+	 * @returns {Boolean}
+	 */
+	has(item, eqComparer = null) {
+		eqComparer = eqComparer instanceof EqualityComparer ? eqComparer : this._eqComparer;
+		for (const value of this.entries()) {
+			if (eqComparer.equals(item, value)) {
+				return true;
+			}
+		}
+		return false;
+	};
+
+	/**
+	 * Returns a value indicating whether or not this LinkedList has
+	 * the node provided.
+	 * 
+	 * @param {LinkedListNode&lt;T>} node
+	 * @returns {Boolean}
+	 */
+	hasNode(node) {
+		this._requireIsNode(node);
+		return this._lookupSet.has(node);
+	};
+	
+	/**
+	 * @override
+	 * @inheritDoc
+	 * @returns {this}
+	 */
+	clear() {
+		super.clear();
+		this._firstNode = null;
+		this._lastNode = null;
+		this._size = 0;
+		this._lookupSet.clear();
+		return this;
+	};
+
+	/**
+	 * @param {T} item
+	 * @returns {LinkedListNode&lt;T>} The node that has been created.
+	 */
+	addFirst(item) {
+		if (this.isEmpty) {
+			this._size++;
+			this._firstNode = this._lastNode = new LinkedListNode(item, this);
+			this._lookupSet.add(this._firstNode);
+			this.emit(symbolLinkedListAdd, new LinkedListEvent(
+				this._firstNode, true, true, true));
+			return this._firstNode;
+		} else {
+			return this._add(this.first, item, false);
+		}
+	};
+
+	/**
+	 * @param {T} item
+	 * @returns {LinkedListNode&lt;T>} The node that has been created.
+	 */
+	addLast(item) {
+		if (this.isEmpty) {
+			this._size++;
+			this._lastNode = this._firstNode = new LinkedListNode(item, this);
+			this._lookupSet.add(this._lastNode);
+			this.emit(symbolLinkedListAdd, new LinkedListEvent(
+				this._lastNode, true, true, true));
+			return this._lastNode;
+		} else {
+			return this._add(this.last, item, true);
+		}
+	};
+
+	/**
+	 * @param {LinkedListNode&lt;T>} node
+	 * @param {T} item
+	 * @returns {LinkedListNode&lt;T>} The newly created and inserted node.
+	 */
+	addAfter(node, item) {
+		return this._add(node, item, true);
+	};
+
+	/**
+	 * @param {LinkedListNode&lt;T>} node
+	 * @param {T} item
+	 */
+	addBefore(node, item) {
+		return this._add(node, item, false);
+	};
+
+	/**
+	 * @param {LinkedListNode&lt;T>} node
+	 * @returns {LinkedListNode} The removed node
+	 */
+	remove(node) {
+		if (!this.hasNode(node)) {
+			throw new Error('This LinkedList does not have the given node.');
+		}
+
+		/**
+		 * @param {LinkedListNode&lt;T>} theNode 
+		 */
+		const checkHeadTail = theNode => {
+			if (theNode.prev === null) {
+				this._firstNode = theNode;
+			}
+			if (theNode.next === null) {
+				this._lastNode = theNode;
+			};
+		}
+
+		let wasFirst = true, wasLast = true;
+		if (node.prev instanceof LinkedListNode) {
+			node.prev.next = node.next instanceof LinkedListNode ? node.next : null;
+			checkHeadTail(node.prev);
+			wasFirst = false;
+		}
+		if (node.next instanceof LinkedListNode) {
+			node.next.prev = node.prev instanceof LinkedListNode ? node.prev : null;
+			checkHeadTail(node.next);
+			wasLast = false;
+		}
+
+		node.next = node.prev = null;
+
+		this._size--;
+		this._lookupSet.delete(node);
+		this.emit(symbolLinkedListRemove, new LinkedListEvent(
+			node, false, wasFirst, wasLast));
+		return node;
+	};
+
+	/**
+	 * @returns {LinkedListNode&lt;T>} The first node after it has been removed
+	 */
+	removeFirst() {
+		return this.remove(this.first);
+	};
+
+	/**
+	 * @returns {LinkedListNode&lt;T>} The last node after it has been removed.
+	 */
+	removeLast() {
+		return this.remove(this.last);
+	};
+};
+
+
+
+module.exports = Object.freeze({
+	LinkedList,
+	LinkedListNode,
+	LinkedListEvent,
+	symbolLinkedListAdd,
+	symbolLinkedListRemove
+});
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Cache.html">Cache</a></li><li><a href="CacheItem.html">CacheItem</a></li><li><a href="CacheItemWithLoad.html">CacheItemWithLoad</a></li><li><a href="CacheMapBased.html">CacheMapBased</a></li><li><a href="CacheWithLoad.html">CacheWithLoad</a></li><li><a href="Collection.html">Collection</a></li><li><a href="CollectionEvent.html">CollectionEvent</a></li><li><a href="Comparer.html">Comparer</a></li><li><a href="ConstrainedQueue.html">ConstrainedQueue</a></li><li><a href="ConstrainedStack.html">ConstrainedStack</a></li><li><a href="DefaultComparer.html">DefaultComparer</a></li><li><a href="DefaultEqualityComparer.html">DefaultEqualityComparer</a></li><li><a href="DeferredClass.html">DeferredClass</a></li><li><a href="Dictionary.html">Dictionary</a></li><li><a href="DictionaryMapBased.html">DictionaryMapBased</a></li><li><a href="EqualityComparer.html">EqualityComparer</a></li><li><a href="Interval.html">Interval</a></li><li><a href="IntervalEventSimple.html">IntervalEventSimple</a></li><li><a href="IntervalScheduler.html">IntervalScheduler</a></li><li><a href="ItemAndDeferred.html">ItemAndDeferred</a></li><li><a href="Job.html">Job</a></li><li><a href="JobEvent.html">JobEvent</a></li><li><a href="JobQueue.html">JobQueue</a></li><li><a href="JobQueueCapabilities.html">JobQueueCapabilities</a></li><li><a href="JobQueueEvent.html">JobQueueEvent</a></li><li><a href="LinkedList.html">LinkedList</a></li><li><a href="LinkedListEvent.html">LinkedListEvent</a></li><li><a href="LinkedListNode.html">LinkedListNode</a></li><li><a href="ManualSchedule.html">ManualSchedule</a></li><li><a href="ManualScheduleEventSimple.html">ManualScheduleEventSimple</a></li><li><a href="ManualScheduler.html">ManualScheduler</a></li><li><a href="PreliminaryScheduleEvent.html">PreliminaryScheduleEvent</a></li><li><a href="ProcessErrorResult.html">ProcessErrorResult</a></li><li><a href="ProcessExit.html">ProcessExit</a></li><li><a href="ProcessOutput.html">ProcessOutput</a></li><li><a href="ProcessResult.html">ProcessResult</a></li><li><a href="ProcessWrapper.html">ProcessWrapper</a></li><li><a href="ProducerConsumerQueue.html">ProducerConsumerQueue</a></li><li><a href="Progress.html">Progress</a></li><li><a href="ProgressNumeric.html">ProgressNumeric</a></li><li><a href="Queue.html">Queue</a></li><li><a href="Resolve.html">Resolve</a></li><li><a href="Schedule.html">Schedule</a></li><li><a href="ScheduleEvent.html">ScheduleEvent</a></li><li><a href="Scheduler.html">Scheduler</a></li><li><a href="Stack.html">Stack</a></li></ul><h3>Global</h3><ul><li><a href="global.html#assertThrowsAsync">assertThrowsAsync</a></li><li><a href="global.html#ConstrainedQueueCapacityPolicy">ConstrainedQueueCapacityPolicy</a></li><li><a href="global.html#deepCloneObject">deepCloneObject</a></li><li><a href="global.html#defer">defer</a></li><li><a href="global.html#deferMocha">deferMocha</a></li><li><a href="global.html#EvictionPolicy">EvictionPolicy</a></li><li><a href="global.html#formatError">formatError</a></li><li><a href="global.html#formatValue">formatValue</a></li><li><a href="global.html#getRandomNumber">getRandomNumber</a></li><li><a href="global.html#JobQueueCapacityPolicy">JobQueueCapacityPolicy</a></li><li><a href="global.html#mergeObjects">mergeObjects</a></li><li><a href="global.html#ProducerConsumerQueueCapacityPolicy">ProducerConsumerQueueCapacityPolicy</a></li><li><a href="global.html#throwError">throwError</a></li><li><a href="global.html#timeout">timeout</a></li><li><a href="global.html#wrapError">wrapError</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.5</a> on Sat Oct 17 2020 11:58:44 GMT+0200 (Central European Summer Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
