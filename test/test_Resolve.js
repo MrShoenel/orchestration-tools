@@ -140,7 +140,13 @@ describe('Resolve', () => {
 			assert.strictEqual(Resolve.asNumber('0'), 0);
 			assert.strictEqual(Resolve.asNumber('123454'), 123454);
 			assert.strictEqual(Resolve.asNumber('-123'), -123);
-			assert.strictEqual(Resolve.asNumber('-999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999'), -Infinity);
+			assert.strictEqual(Resolve.asNumber('-9e9999999'), -Infinity);
+
+			assert.strictEqual(Resolve.asNumber('9007199254740991'), Number.MAX_SAFE_INTEGER);
+			assert.strictEqual(Resolve.asNumber('-9007199254740991'), Number.MIN_SAFE_INTEGER);
+
+			assert.strictEqual(Resolve.asNumber('9007199254740992'), 9007199254740992n);
+			assert.strictEqual(Resolve.asNumber('-9007199254740992'), -9007199254740992n);
 
 			assert.strictEqual(Resolve.asNumber('-.1'), -.1);
 			assert.strictEqual(Resolve.asNumber('123.234'), 123.234);
@@ -164,6 +170,7 @@ describe('Resolve', () => {
 		
 		assert.strictEqual(Resolve.tryAsNumber(42), 42);
 		assert.strictEqual(Resolve.tryAsNumber('42'), 42);
+		assert.strictEqual(Resolve.tryAsNumber('999999999999999999999999'), 999999999999999999999999n);
 		assert.strictEqual(Resolve.tryAsNumber(.2e-2), .2e-2);
 		assert.strictEqual(Resolve.tryAsNumber('2.2e7'), 2.2e7);
 
