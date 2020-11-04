@@ -1,12 +1,40 @@
-const { inspect } = require('util')
-, jsNumberRegex = /^(?<sign>\-)?((?<int>(0|([1-9]\d*?))(?<big>n)?)|(?<float>(0|([1-9]\d*?))?\.\d+?))(?<sci>(e|E)(\-|\d)?\d+)?$/
-, jsNumberBinaryRegex = /^(?<sign>\-)?(?<prefix>0(b|B))(?<val>[01]+)(?<big>n)?$/
-, jsNumberOctalRegex = /^(?<sign>\-)?(?<prefix>0(o|O)?)(?<val>[0-7]+?)(?<big>n)?$/
-, jsNumberHexRegex = /^(?<sign>\-)?(?<prefix>0(x|X))(?<val>[0-9a-fA-F]+)(?<big>n)?$/;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: tools/Resolve.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: tools/Resolve.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>const { inspect } = require('util')
+, jsNumberRegex = /^(?&lt;sign>\-)?((?&lt;int>(0|([1-9]\d*?))(?&lt;big>n)?)|(?&lt;float>(0|([1-9]\d*?))?\.\d+?))(?&lt;sci>(e|E)(\-|\d)?\d+)?$/
+, jsNumberBinaryRegex = /^(?&lt;sign>\-)?(?&lt;prefix>0(b|B))(?&lt;val>[01]+)(?&lt;big>n)?$/
+, jsNumberOctalRegex = /^(?&lt;sign>\-)?(?&lt;prefix>0(o|O)?)(?&lt;val>[0-7]+?)(?&lt;big>n)?$/
+, jsNumberHexRegex = /^(?&lt;sign>\-)?(?&lt;prefix>0(x|X))(?&lt;val>[0-9a-fA-F]+)(?&lt;big>n)?$/;
 
 
 /**
- * @author Sebastian Hönel <development@hoenel.net>
+ * @author Sebastian Hönel &lt;development@hoenel.net>
  */
 class Resolve {
 	/**
@@ -19,7 +47,7 @@ class Resolve {
 	 * @returns {Boolean}
 	 */
 	static isTypeOf(value, exampleOrTypeOrClassName) {
-		if (typeof exampleOrTypeOrClassName === 'string' && typeof value === 'string') {
+		if (typeof exampleOrTypeOrClassName === 'string' &amp;&amp; typeof value === 'string') {
 			// Check if the given example was a string and the value as well:
 			return true;
 		} else { // The example is not a string
@@ -33,7 +61,7 @@ class Resolve {
 
 		try {
 			const proto = Object.getPrototypeOf(value)
-			, ctor = !!proto && proto.hasOwnProperty('constructor') ? proto.constructor : null;
+			, ctor = !!proto &amp;&amp; proto.hasOwnProperty('constructor') ? proto.constructor : null;
 
 			if (typeof exampleOrTypeOrClassName === 'string') {
 				if (ctor.name === exampleOrTypeOrClassName) {
@@ -45,7 +73,7 @@ class Resolve {
 				}
 			} else {
 				const exProto = Object.getPrototypeOf(exampleOrTypeOrClassName)
-				, exCtor = !!exProto && exProto.hasOwnProperty('constructor') ? exProto.constructor : null;
+				, exCtor = !!exProto &amp;&amp; exProto.hasOwnProperty('constructor') ? exProto.constructor : null;
 
 				if (proto === exProto || ctor === exCtor) {
 					return true;
@@ -54,8 +82,8 @@ class Resolve {
 		} catch (e) { }
 
 
-		if (Resolve.isPrimitive(value) && Resolve.isPrimitive(exampleOrTypeOrClassName)
-			&& value === exampleOrTypeOrClassName) {
+		if (Resolve.isPrimitive(value) &amp;&amp; Resolve.isPrimitive(exampleOrTypeOrClassName)
+			&amp;&amp; value === exampleOrTypeOrClassName) {
 			return true;
 		}
 
@@ -71,7 +99,7 @@ class Resolve {
 	 */
 	static isNumber(value, tryConvert = false) {
 		const isValNumber = Object.prototype.toString.call(value) === '[object Number]';
-		if (!isValNumber && tryConvert) {
+		if (!isValNumber &amp;&amp; tryConvert) {
 			return Resolve.isNumber(Resolve.tryAsNumber(value));
 		}
 		return isValNumber;
@@ -175,7 +203,7 @@ class Resolve {
 		, isFloatOrSci = typeof groups.float === 'string' || typeof groups.sci === 'string'
 		, parsed = isFloatOrSci ? parseFloat(all) : parseInt(all, 10);
 
-		if (!isFloatOrSci && (parsed > Number.MAX_SAFE_INTEGER || isBig)) {
+		if (!isFloatOrSci &amp;&amp; (parsed > Number.MAX_SAFE_INTEGER || isBig)) {
 			// This is a BigInt!
 			return BigInt(`${groups.sign || ''}${groups.int}`);
 		}
@@ -269,7 +297,7 @@ class Resolve {
 	 * 
 	 * @see {Resolve.isTypeOf}
 	 * @template T
-	 * @param {any|T|producerHandler<T>|Promise<T>} value a literal value or an (async) function
+	 * @param {any|T|producerHandler&lt;T>|Promise&lt;T>} value a literal value or an (async) function
 	 * or Promise that may produce a value of the expected type or exemplary value.
 	 * @param {any|string|T} [exampleOrTypeOrClassName] Optional. If not given, will only
 	 * resolve functions and promises to a value that is not a function and not a Promise.
@@ -291,7 +319,7 @@ class Resolve {
 		const hasExample = arguments.length > 1
 		, checkType = val => {
 			return Resolve.isTypeOf(val, exampleOrTypeOrClassName) ||
-				(!hasExample && !Resolve.isFunction(val) && !Resolve.isPromise(val));
+				(!hasExample &amp;&amp; !Resolve.isFunction(val) &amp;&amp; !Resolve.isPromise(val));
 		} , orgVal = value;
 
 		if (checkType(value)) {
@@ -301,8 +329,8 @@ class Resolve {
 		do {
 			let isFunc = false, isProm = false;
 
-			if ((resolveFuncs && (isFunc = Resolve.isFunction(value)))
-				|| (resolvePromises && (isProm = Resolve.isPromise(value)))) {
+			if ((resolveFuncs &amp;&amp; (isFunc = Resolve.isFunction(value)))
+				|| (resolvePromises &amp;&amp; (isProm = Resolve.isPromise(value)))) {
 				value = isFunc ? value() : await value;
 				if (checkType(value)) {
 					return value;
@@ -325,12 +353,12 @@ class Resolve {
 	 * Convenience method for resolving functions and/or Promises to values. Calls
 	 * toValue() without an example which leads to resolving the given function or
 	 * Promise until it yields a value that is not a function and not a Promise.
-	 * @param {producerHandler<T|Promise<T>>|Promise<T>} asyncFuncOrPromise An (async)
+	 * @param {producerHandler&lt;T|Promise&lt;T>>|Promise&lt;T>} asyncFuncOrPromise An (async)
 	 * function or a Promise.
 	 * @returns {T} The result of deeply resolving the given function or Promise.
 	 */
 	static async asyncFuncOrPromise(asyncFuncOrPromise) {
-		if (!Resolve.isFunction(asyncFuncOrPromise) && !Resolve.isPromise(asyncFuncOrPromise)) {
+		if (!Resolve.isFunction(asyncFuncOrPromise) &amp;&amp; !Resolve.isPromise(asyncFuncOrPromise)) {
 			throw new Error(`The value given for func is neither an (async) function nor a Promise. The value given was: ${inspect(asyncFuncOrPromise)}`);
 		}
 		return await Resolve.toValue(asyncFuncOrPromise);
@@ -340,4 +368,26 @@ class Resolve {
 
 module.exports = Object.freeze({
 	Resolve
-});
+});</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Cache.html">Cache</a></li><li><a href="CacheItem.html">CacheItem</a></li><li><a href="CacheItemWithLoad.html">CacheItemWithLoad</a></li><li><a href="CacheMapBased.html">CacheMapBased</a></li><li><a href="CacheWithLoad.html">CacheWithLoad</a></li><li><a href="Collection.html">Collection</a></li><li><a href="CollectionEvent.html">CollectionEvent</a></li><li><a href="Comparer.html">Comparer</a></li><li><a href="ConstrainedQueue.html">ConstrainedQueue</a></li><li><a href="ConstrainedStack.html">ConstrainedStack</a></li><li><a href="DefaultComparer.html">DefaultComparer</a></li><li><a href="DefaultEqualityComparer.html">DefaultEqualityComparer</a></li><li><a href="DeferredClass.html">DeferredClass</a></li><li><a href="Dictionary.html">Dictionary</a></li><li><a href="DictionaryMapBased.html">DictionaryMapBased</a></li><li><a href="EqualityComparer.html">EqualityComparer</a></li><li><a href="Interval.html">Interval</a></li><li><a href="IntervalEventSimple.html">IntervalEventSimple</a></li><li><a href="IntervalScheduler.html">IntervalScheduler</a></li><li><a href="ItemAndDeferred.html">ItemAndDeferred</a></li><li><a href="Job.html">Job</a></li><li><a href="JobEvent.html">JobEvent</a></li><li><a href="JobQueue.html">JobQueue</a></li><li><a href="JobQueueCapabilities.html">JobQueueCapabilities</a></li><li><a href="JobQueueEvent.html">JobQueueEvent</a></li><li><a href="LinkedList.html">LinkedList</a></li><li><a href="LinkedListEvent.html">LinkedListEvent</a></li><li><a href="LinkedListNode.html">LinkedListNode</a></li><li><a href="ManualSchedule.html">ManualSchedule</a></li><li><a href="ManualScheduleEventSimple.html">ManualScheduleEventSimple</a></li><li><a href="ManualScheduler.html">ManualScheduler</a></li><li><a href="PreliminaryScheduleEvent.html">PreliminaryScheduleEvent</a></li><li><a href="ProcessErrorResult.html">ProcessErrorResult</a></li><li><a href="ProcessExit.html">ProcessExit</a></li><li><a href="ProcessOutput.html">ProcessOutput</a></li><li><a href="ProcessResult.html">ProcessResult</a></li><li><a href="ProcessWrapper.html">ProcessWrapper</a></li><li><a href="ProducerConsumerQueue.html">ProducerConsumerQueue</a></li><li><a href="Progress.html">Progress</a></li><li><a href="ProgressNumeric.html">ProgressNumeric</a></li><li><a href="Queue.html">Queue</a></li><li><a href="Resolve.html">Resolve</a></li><li><a href="Schedule.html">Schedule</a></li><li><a href="ScheduleEvent.html">ScheduleEvent</a></li><li><a href="Scheduler.html">Scheduler</a></li><li><a href="Stack.html">Stack</a></li></ul><h3>Global</h3><ul><li><a href="global.html#assertThrowsAsync">assertThrowsAsync</a></li><li><a href="global.html#ConstrainedQueueCapacityPolicy">ConstrainedQueueCapacityPolicy</a></li><li><a href="global.html#deepCloneObject">deepCloneObject</a></li><li><a href="global.html#defer">defer</a></li><li><a href="global.html#deferMocha">deferMocha</a></li><li><a href="global.html#EvictionPolicy">EvictionPolicy</a></li><li><a href="global.html#formatError">formatError</a></li><li><a href="global.html#formatValue">formatValue</a></li><li><a href="global.html#getRandomNumber">getRandomNumber</a></li><li><a href="global.html#JobQueueCapacityPolicy">JobQueueCapacityPolicy</a></li><li><a href="global.html#mergeObjects">mergeObjects</a></li><li><a href="global.html#ProducerConsumerQueueCapacityPolicy">ProducerConsumerQueueCapacityPolicy</a></li><li><a href="global.html#throwError">throwError</a></li><li><a href="global.html#timeout">timeout</a></li><li><a href="global.html#wrapError">wrapError</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.5</a> on Wed Nov 04 2020 11:04:45 GMT+0100 (Central European Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
