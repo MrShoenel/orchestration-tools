@@ -47,6 +47,31 @@ describe('Tools', () => {
 		done();
 	});
 
+	it('should merge objects and prevent prototype pollution', done => {
+		assert.isFalse('polluted' in global);
+		assert.isFalse('polluted' in global.__proto__);
+
+		// Even the explicit '__proto__'-property is ignored by Object.keys()!
+		assert.deepStrictEqual(Object.keys({ __proto__: 41, foo: 40 }), ['foo']);
+		const result = mergeObjects({ '__proto__': { polluted: 42 } }, { xx: 43 });
+
+		expect(result).to.deep.equal({ xx: 43 });
+
+		assert.isFalse('polluted' in global);
+		assert.isFalse('polluted' in global.__proto__);
+
+		done();
+	});
+
+	it('should handle the case of Objects without prototype', done => {
+		const bla = Object.create(null);
+		const result = mergeObjects({}, { bla });
+
+		assert.strictEqual(result.bla, bla);
+		
+		done();
+	});
+
 	it('should also merge custom classes', done => {
 		class Xx123 {
 			get [Symbol.toStringTag]() {
