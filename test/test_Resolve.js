@@ -156,9 +156,19 @@ describe('Resolve', () => {
 			assert.strictEqual(Resolve.asNumber('23e3'), 23e3);
 			assert.strictEqual(Resolve.asNumber('23E3'), 23e3);
 			assert.strictEqual(Resolve.asNumber('1e2000'), Infinity);
+
+			// Let's test base 2,8,16
+			[
+				['0b1010', 10], [0B1010, 10], ['0B1010n', 10n], ['-0b1010', -10],
+				// octals only support 0-7, anything larger ignores the leading zero => no octal!
+				['015', 13], ['0o15', 13], ['0O15', 13], ['-0o15', -13], ['0123', 83],
+				['0xc0de', 49374], ['-0xF1A7n', -61863n]
+			].forEach(pair => {
+				assert.strictEqual(Resolve.asNumber(pair[0]), pair[1]);
+			});
 		});
 
-		['0123', '-123.23.4', '1.e2', '2e2.2', 'bla', '-'].forEach(v => assert.throws(() => Resolve.asNumber(v)));
+		['23N', '-123.23.4', '1.e2', '2e2.2', '0b012', '0158' /*  would be 158 but Resolve.asNumber will not allow that! */, '0O158', '0x123g', 'bla', '-'].forEach(v => assert.throws(() => Resolve.asNumber(v)));
 
 
 		assert.strictEqual(Resolve.tryAsNumber('bla'), 'bla');
@@ -173,6 +183,10 @@ describe('Resolve', () => {
 		assert.strictEqual(Resolve.tryAsNumber('999999999999999999999999'), 999999999999999999999999n);
 		assert.strictEqual(Resolve.tryAsNumber(.2e-2), .2e-2);
 		assert.strictEqual(Resolve.tryAsNumber('2.2e7'), 2.2e7);
+
+		assert.isFalse(Resolve.isNumber('42'));
+		assert.isTrue(Resolve.isNumber('42', true));
+		assert.isTrue(Resolve.isNumber(42));
 
 		done();
 	});
