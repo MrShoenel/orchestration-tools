@@ -33,6 +33,7 @@ const Rx = require('rxjs')
 	} = require('./lib/collections/Dictionary')
 , { Cache, CacheMapBased, CacheWithLoad, EvictionPolicy } = require('./lib/collections/Cache')
 , { Comparer, DefaultComparer } = require('./lib/collections/Comparer')
+, { Resource, ResourceSelectionStrategy, ResourceSelector } = require('./lib/ResourceSelector')
 , docs = require('./docs');
 
 
@@ -63,5 +64,6 @@ module.exports = {
 	Dictionary, DictionaryMapBased, symbolDictionaryDelete, symbolDictionaryGet, symbolDictionarySet,
 	Cache, CacheMapBased, CacheWithLoad, EvictionPolicy,
 	Comparer, DefaultComparer,
+	Resource, ResourceSelectionStrategy, ResourceSelector,
 	docs
 };
