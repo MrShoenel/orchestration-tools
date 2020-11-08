@@ -22,7 +22,7 @@ const testObj = {
 };
 
 
-describe('Resolve', () => {
+describe(Resolve.name, () => {
 	it('should identify types correctly', done => {
 		assert.isTrue(Resolve.isTypeOf(true, Boolean));
 		assert.isTrue(Resolve.isTypeOf(0, Number));
