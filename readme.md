@@ -30,6 +30,7 @@ The tools come fully typed in JSDoc, and the documentation for all released vers
 * __EqualityComparer__ and __DefaultEqualityComparer__ are used within the *collections* to provide default- and custom-capabilities for comparing items (since `v2.9.0`)
 * __Comparer__ and __DefaultComparer__ to equate items in terms of size (e.g. for sorting) (since `v2.10.0`)
 * __formatValue__, __formatError__, __wrapError__ and __throwError__ are the first of new tools for values and Errors (since `v2.19.0`)
+* __Resource__ and __ResourceSelector__ are used to build pools of resources and to select from them using a strategy, such as least recently used, or Round Robin etc. (since `v3.3.0`)
 * ~~__CalendarScheduler__ and __Calendar__ provide mechanism to schedule jobs based on `iCal`-calendars from any source (new in `v1.4.0`).~~ These were __removed beginning with `v3.0.0`__ and are now to be found in the package __`sh.misc-tools`__.
 
 
