@@ -84,21 +84,21 @@ describe(ResourceSelector.name, () => {
 		rs.addResource(42).addResource(43);
 		// Note that sorting starts backwards
 		assert.strictEqual(rs.select().use(), 43);
-		await timeout(1);
+		await timeout(15);
 		assert.strictEqual(rs.select().use(), 42);
-		await timeout(1);
+		await timeout(15);
 		assert.strictEqual(rs.select().use(), 43);
-		await timeout(1);
+		await timeout(15);
 		rs.strategy = ResourceSelectionStrategy.MRU;
 		assert.strictEqual(rs.select().use(), 43);
 
 		rs.clear();
 		rs.strategy = ResourceSelectionStrategy.LRA;
 		rs.addResource(42);
-		await timeout(1);
+		await timeout(15);
 		rs.addResource(43);
 		assert.strictEqual(rs.select().use(), 42);
-		await timeout(1);
+		await timeout(15);
 		rs.addResource(44);
 		assert.strictEqual(rs.select().use(), 42);
 		rs.strategy = ResourceSelectionStrategy.MRA;
