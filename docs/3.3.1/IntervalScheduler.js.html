@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: IntervalScheduler.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: IntervalScheduler.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>const { Scheduler } = require('./Scheduler')
+, Rx = require('rxjs')
+, Observable = Rx.Observable
+, empty = Rx.empty
+, { take } = require('rxjs/operators')
+, { Schedule, ScheduleEvent, PreliminaryScheduleEvent } = require('./Schedule')
+, symbolIntervalEvent = Symbol('intervalEvent');
+
+
+
+/**
+ * @extends {Schedule}
+ * @author Sebastian Hönel &lt;development@hoenel.net>
+ */
+class Interval extends Schedule {
+	/**
+	 * 
+	 * @template T
+	 * @param {Number} msecs
+	 * @param {producerHandler&lt;T|Promise&lt;T>>} [itemProducer] Optional. Defaults to
+	 * null. A function that produces an item that shall then be signaled
+	 * by the scheduler. If the item is not of importance, then you may
+	 * just supply an empty function or null (will be converted to an empty
+	 * function then).
+	 * @param {Boolean} waitforFinishProduction if true, the interval will
+	 * be reset only when the itemProducer finished producing its item. If
+	 * this is false, the interval will be reset right away if it elapses.
+	 * This makes sense if producing an item takes considerable amounts of time.
+	 * @param {Number} maxNumTriggers the maximum amount of times this interval
+	 * shall trigger. Supply a negative value or Number.MAX_SAFE_INTEGER to not
+	 * limit this interval to any amount of occurrences.
+	 * @param {Boolean} triggerInitially if true, will trigger this interval
+	 * right away, instead of waiting for the timeout to elapse once.
+	 * @param {Boolean} enabled if true, this Interval is enabled. Otherwise,
+	 * its events are ignored until it get enabled.
+	 */
+	constructor(msecs, itemProducer = null, maxNumTriggers = -1, waitforFinishProduction = true, triggerInitially = false, enabled = true) {
+		super(!!enabled);
+
+		if (itemProducer === null) {
+			itemProducer = () => {};
+		}
+
+		if (isNaN(msecs) || msecs &lt; 1) {
+			throw new Error(`Interval smaller than 1 ms are forbidden.`);
+		}
+		if (typeof itemProducer !== 'function') {
+			throw new Error('The itemProducer must be a function.');
+		}
+		if (Object.prototype.toString.call(maxNumTriggers) !== '[object Number]'
+			|| isNaN(maxNumTriggers)) {
+			throw new Error(`The value "${maxNumTriggers}" is invalid for the parameter maxNumTriggers.`);
+		}
+
+		this.msecs = msecs;
+		this.itemProducer = itemProducer;
+		this.maxNumTriggers = maxNumTriggers &lt; 0 || maxNumTriggers >= Number.MAX_SAFE_INTEGER ?
+			Number.MAX_SAFE_INTEGER : Math.ceil(maxNumTriggers);
+		this.waitforFinishProduction = !!waitforFinishProduction;
+		this.triggerInitially = !!triggerInitially;
+		this.numOccurred = 0;
+	};
+
+	/**
+	 * @type {Boolean}
+	 */
+	get isFinished() {
+		return this.numOccurred === this.maxNumTriggers;
+	};
+
+	/**
+	 * This method will ultimately set the number of occurences equal to the
+	 * number of how many times this Interval should have been triggered.
+	 * This leads to this Interval reporting that it is finished.
+	 * Attempting to finish an unbounded Interval will throw an Error.
+	 * 
+	 * @throws {Error} if this is an unbounded Interval
+	 * @returns {this} this
+	 */
+	finish() {
+		if (this.maxNumTriggers === Number.MAX_SAFE_INTEGER) {
+			throw new Error('Finishing an Interval is only supported for limited Intervals.');
+		}
+		this.numOccurred = this.maxNumTriggers;
+		return this;
+	};
+
+	/**
+	 * Additionally to finish(), this method also disables this Interval.
+	 * 
+	 * @returns {this} this
+	 */
+	finalize() {
+		this.isEnabled = false;
+		return this.finish();
+	};
+
+	/**
+	 * @override
+	 * @inheritdoc
+	 * @param {Date} after
+	 * @param {Date} before
+	 * @returns {IterableIterator&lt;PreliminaryScheduleEvent&lt;Interval, undefined>>}
+	 */
+	*preliminaryEvents(after, before) {
+		if (!(after instanceof Date &amp;&amp; before instanceof Date)) {
+			throw new Error('after and/or before must be Date objects. Interval does not support unbounded intervals.');
+		}
+		
+		let triggers = 0, start = +after, end = +before;
+
+		if (start > end) {
+			throw new Error('The Date for after happens after the Date for before.');
+		}
+
+		if (this.triggerInitially) {
+			yield new PreliminaryScheduleEvent(after, this);
+			triggers++;
+		}
+		start += this.msecs;
+
+		while (triggers &lt; this.maxNumTriggers &amp;&amp; start &lt;= end) {
+			yield new PreliminaryScheduleEvent(new Date(start), this);
+			start += this.msecs;
+			triggers++;
+		}
+	};
+};
+
+
+/**
+ * @extends {ScheduleEvent}
+ * @author Sebastian Hönel &lt;development@hoenel.net>
+ */
+class IntervalEventSimple extends ScheduleEvent {
+	/**
+	 * @template T
+	 * @param {Interval} interval
+	 * @param {T} item
+	 */
+	constructor(interval, item) {
+		super(interval, item);
+	};
+};
+
+
+/**
+ * @extends {Scheduler}
+ * @author Sebastian Hönel &lt;development@hoenel.net>
+ */
+class IntervalScheduler extends Scheduler {
+	constructor() {
+		super(symbolIntervalEvent);
+
+		/** @type {Array&lt;Interval>} */
+		this.intervals = [];
+		/**
+		 * @type {Object&lt;string, Interval>}
+		 * @protected
+		 */
+		this._intervalIds = {};
+		/** @protected */
+		this._intervalId = 0;
+		/**
+		 * @type {Object&lt;string, number>}
+		 * @protected
+		 */
+		this._timeouts = {};
+	};
+
+	/**
+	 * @protected
+	 * @param {Interval} interval
+	 * @throws {Error} if interval is not of type Interval
+	 * @returns {Boolean}
+	 */
+	_isInterval(interval) {
+		if (!(interval instanceof Interval)) {
+			throw new Error('The given interval is not an instance of Interval');
+		}
+		return true;
+	};
+
+	/**
+	 * @protected
+	 * @param {String} id 
+	 * @param {Interval} interval 
+	 * @param {Boolean} [triggerOnce] Optional. Defaults to false.
+	 */
+	async _scheduleInterval(id, interval, triggerOnce = false) {
+		/** @param {Boolean} wait */
+		const triggerInterval = async wait => {
+			if (!interval.isEnabled || interval.isFinished) {
+				return;
+			}
+
+			let item = interval.itemProducer();
+			if (wait &amp;&amp; item instanceof Promise) {
+				item = await item;
+			}
+
+			this.emit(symbolIntervalEvent, new IntervalEventSimple(interval, item));
+			interval.numOccurred++;
+		};
+
+		const triggerOncePromise = triggerOnce ?
+			triggerInterval(interval.waitforFinishProduction) : Promise.resolve();
+		if (interval.waitforFinishProduction) {
+			await triggerOncePromise;
+		}
+
+		this._timeouts[id] = setTimeout(async () => {
+			clearTimeout(this._timeouts[id]);
+			this._timeouts[id] = null;
+			delete this._timeouts[id];
+
+			// It may have been removed in the meantime:
+			if (!this.hasInterval(interval)) {
+				return;
+			}
+
+			if (!interval.isFinished &amp;&amp; interval.isEnabled) {
+				// .. then actually execute its trigger:
+				let triggerPromise = triggerInterval(interval.waitforFinishProduction);
+				if (interval.waitforFinishProduction) {
+					await triggerPromise;
+				}
+			}
+			
+			// The Interval should be scheduled consecutively, but its execution
+			// is conditional, because the scheduler is not notified when an
+			// Interval gets dis- or enabled.
+			this._scheduleInterval(id, interval, false);
+		}, interval.msecs);
+	};
+
+	/**
+	 * @protected
+	 * @param {Interval} interval 
+	 * @returns {String}
+	 */
+	_getIntervalId(interval) {
+		this._isInterval(interval);
+		if (!this.hasInterval(interval)) {
+			throw new Error('This interval was not previously added.');
+		}
+
+		for (let key of Object.keys(this._intervalIds)) {
+			if (this._intervalIds[key] === interval) {
+				return key;
+			}
+		}
+
+		throw new Error(`There is no ID for the interval.`);
+	};
+
+	/**
+	 * Calls hasInterval() with the given Schedule.
+	 * 
+	 * @param {Interval} schedule
+	 * @returns {Boolean}
+	 */
+	hasSchedule(schedule) {
+		return this.hasInterval(schedule);
+	};
+
+	/**
+	 * @param {Interval} interval
+	 * @returns {Boolean}
+	 */
+	hasInterval(interval) {
+		return this._isInterval(interval) &amp;&amp;
+			this.intervals.findIndex(i => i === interval) >= 0;
+	};
+
+	/**
+	 * Calls addInterval() with the given Schedule.
+	 * 
+	 * @param {Interval} schedule
+	 * @returns {this}
+	 */
+	addSchedule(schedule) {
+		return this.addInterval(schedule);
+	};
+
+	/**
+	 * @param {Interval} interval
+	 * @returns {this}
+	 */
+	addInterval(interval) {
+		if (this.hasInterval(interval)) {
+			throw new Error('This interval has been added already.');
+		}
+
+		this.intervals.push(interval);
+
+		const id = `i_${this._intervalId++}`;
+		this._timeouts[id] = null;
+		this._intervalIds[id] = interval;
+		this._scheduleInterval(id, interval, interval.triggerInitially);
+
+		return this;
+	};
+
+	/**
+	 * Calls removeInterval() with the given schedule.
+	 * 
+	 * @param {Interval} schedule
+	 * @returns {this}
+	 */
+	removeSchedule(schedule) {
+		return this.removeInterval(schedule);
+	};
+
+	/**
+	 * Removes all Intervals and returns them. This will lead to the
+	 * un-scheduling of all Intervals.
+	 * 
+	 * @override
+	 * @inheritDoc
+	 * @returns {Array&lt;Interval>}
+	 */
+	removeAllSchedules() {
+		const intervals = this.intervals.slice(0);
+		intervals.forEach(i => this.removeSchedule(i));
+		return intervals;
+	};
+
+	/**
+	 * @param {Interval} interval
+	 * @returns {this}
+	 */
+	removeInterval(interval) {
+		if (!this.hasInterval(interval)) {
+			throw new Error('This interval was not previously added.');
+		}
+
+		const id = this._getIntervalId(interval);
+		if (this._timeouts[id] !== null) {
+			clearTimeout(this._timeouts[id]);
+			this._timeouts[id] = null;
+			delete this._timeouts[id];
+		}
+		delete this._intervalIds[id];
+
+		this.intervals.splice(this.intervals.findIndex(i => i === interval), 1);
+		return this;
+	};
+
+	/**
+	 * @type {Observable&lt;IntervalEventSimple>}
+	 */
+	get observable() {
+		return super.observable;
+	};
+
+	/**
+	 * Returns an Observable for the given Interval. Note that, for
+	 * finished Intervals, an empty Observable is returned.
+	 * 
+	 * @override
+	 * @inheritdoc
+	 * @param {Schedule|Interval} interval Must be an instance of Interval
+	 * @returns {Observable&lt;IntervalEventSimple>}
+	 */
+	getObservableForSchedule(interval) {
+		if (interval.isFinished) {
+			return empty();
+		}
+		return super.getObservableForSchedule(interval)
+			.pipe(take(interval.maxNumTriggers - interval. numOccurred));
+	};
+	
+	/**
+	 * @override
+	 * @inheritdoc
+	 * @param {Date} after
+	 * @param {Date} before
+	 * @returns {IterableIterator&lt;PreliminaryScheduleEvent&lt;Interval, undefined>>}
+	 */
+	*preliminaryEvents(after, before) {
+		super.preliminaryEvents
+		for (const interval of this.intervals) {
+			for (const pre of interval.preliminaryEvents(...arguments)) {
+				yield pre;
+			}
+		}
+	};
+};
+
+
+module.exports = Object.freeze({
+	Interval,
+	IntervalScheduler,
+	IntervalEventSimple,
+	symbolIntervalEvent
+});
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Cache.html">Cache</a></li><li><a href="CacheItem.html">CacheItem</a></li><li><a href="CacheItemWithLoad.html">CacheItemWithLoad</a></li><li><a href="CacheMapBased.html">CacheMapBased</a></li><li><a href="CacheWithLoad.html">CacheWithLoad</a></li><li><a href="Collection.html">Collection</a></li><li><a href="CollectionEvent.html">CollectionEvent</a></li><li><a href="Comparer.html">Comparer</a></li><li><a href="ConstrainedQueue.html">ConstrainedQueue</a></li><li><a href="ConstrainedStack.html">ConstrainedStack</a></li><li><a href="DefaultComparer.html">DefaultComparer</a></li><li><a href="DefaultEqualityComparer.html">DefaultEqualityComparer</a></li><li><a href="DeferredClass.html">DeferredClass</a></li><li><a href="Dictionary.html">Dictionary</a></li><li><a href="DictionaryMapBased.html">DictionaryMapBased</a></li><li><a href="EqualityComparer.html">EqualityComparer</a></li><li><a href="Interval.html">Interval</a></li><li><a href="IntervalEventSimple.html">IntervalEventSimple</a></li><li><a href="IntervalScheduler.html">IntervalScheduler</a></li><li><a href="ItemAndDeferred.html">ItemAndDeferred</a></li><li><a href="Job.html">Job</a></li><li><a href="JobEvent.html">JobEvent</a></li><li><a href="JobQueue.html">JobQueue</a></li><li><a href="JobQueueCapabilities.html">JobQueueCapabilities</a></li><li><a href="JobQueueEvent.html">JobQueueEvent</a></li><li><a href="LinkedList.html">LinkedList</a></li><li><a href="LinkedListEvent.html">LinkedListEvent</a></li><li><a href="LinkedListNode.html">LinkedListNode</a></li><li><a href="ManualSchedule.html">ManualSchedule</a></li><li><a href="ManualScheduleEventSimple.html">ManualScheduleEventSimple</a></li><li><a href="ManualScheduler.html">ManualScheduler</a></li><li><a href="PreliminaryScheduleEvent.html">PreliminaryScheduleEvent</a></li><li><a href="ProcessErrorResult.html">ProcessErrorResult</a></li><li><a href="ProcessExit.html">ProcessExit</a></li><li><a href="ProcessOutput.html">ProcessOutput</a></li><li><a href="ProcessResult.html">ProcessResult</a></li><li><a href="ProcessWrapper.html">ProcessWrapper</a></li><li><a href="ProducerConsumerQueue.html">ProducerConsumerQueue</a></li><li><a href="Progress.html">Progress</a></li><li><a href="ProgressNumeric.html">ProgressNumeric</a></li><li><a href="Queue.html">Queue</a></li><li><a href="Resolve.html">Resolve</a></li><li><a href="Resource.html">Resource</a></li><li><a href="ResourceSelector.html">ResourceSelector</a></li><li><a href="Schedule.html">Schedule</a></li><li><a href="ScheduleEvent.html">ScheduleEvent</a></li><li><a href="Scheduler.html">Scheduler</a></li><li><a href="Stack.html">Stack</a></li></ul><h3>Global</h3><ul><li><a href="global.html#assertThrowsAsync">assertThrowsAsync</a></li><li><a href="global.html#ConstrainedQueueCapacityPolicy">ConstrainedQueueCapacityPolicy</a></li><li><a href="global.html#deepCloneObject">deepCloneObject</a></li><li><a href="global.html#defer">defer</a></li><li><a href="global.html#deferMocha">deferMocha</a></li><li><a href="global.html#EvictionPolicy">EvictionPolicy</a></li><li><a href="global.html#formatError">formatError</a></li><li><a href="global.html#formatValue">formatValue</a></li><li><a href="global.html#getRandomNumber">getRandomNumber</a></li><li><a href="global.html#JobQueueCapacityPolicy">JobQueueCapacityPolicy</a></li><li><a href="global.html#mergeObjects">mergeObjects</a></li><li><a href="global.html#ProducerConsumerQueueCapacityPolicy">ProducerConsumerQueueCapacityPolicy</a></li><li><a href="global.html#ResourceSelectionStrategy">ResourceSelectionStrategy</a></li><li><a href="global.html#throwError">throwError</a></li><li><a href="global.html#timeout">timeout</a></li><li><a href="global.html#wrapError">wrapError</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a> on Sat May 15 2021 11:41:30 GMT+0200 (Central European Summer Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
