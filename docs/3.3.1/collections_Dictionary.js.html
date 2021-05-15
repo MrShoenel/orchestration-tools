@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: collections/Dictionary.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: collections/Dictionary.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>const { Collection, CollectionEvent } = require('./Collection')
+, { EqualityComparer } = require('./EqualityComparer')
+, { Resolve } = require('../tools/Resolve')
+, { Observable, fromEvent } = require('rxjs')
+, symbolDictionaryGet = Symbol('dictionaryGet')
+, symbolDictionarySet = Symbol('dictionarySet')
+, symbolDictionaryDelete = Symbol('dictionaryDelete')
+, util = require('util');
+
+
+
+/**
+ * @deprecated Use DictionaryMapBased instead. This Dictionary will be removed from version v3.0. Also, DictionaryMapBased will receive an alias of Dictionary.
+ * @template T
+ * @template TEq An extra template for the EqualityComparer, is it may be used for keys
+ * and/or values simultaneously.
+ * @extends {Collection&lt;T>}
+ * @author Sebastian Hönel &lt;development@hoenel.net>
+ */
+class Dictionary extends Collection {
+	/**
+	 * Creates a new, empty Dictionary&lt;T>.
+	 * 
+	 * @param {EqualityComparer&lt;TEq>} [eqComparer] Optional. Defaults To EqualityComparer&lt;TEq>.default.
+	 */
+	constructor(eqComparer = EqualityComparer.default) {
+		super(eqComparer);
+
+		/**
+		 * @type {Object&lt;String|Symbol, T>}
+		 * @protected
+		 */
+		this._dict = Object.create(null);
+
+		/**
+		 * @type {Number}
+		 * @protected
+		 */
+		this._size = 0;
+	};
+
+	/**
+	 * Asserts that a key is suitable for use in an object.
+	 * 
+	 * @protected
+	 * @param {String|Symbol} key The key to validate
+	 * @throws {Error} If the key is not a string and not a symbol.
+	 */
+	_validateKey(key) {
+		const type = typeof key;
+
+		if (type !== 'string' &amp;&amp; type !== 'symbol') {
+			throw new Error(`The given key is not a string and not a Symbol: '${util.inspect(key)}'`);
+		}
+		if (key === '__proto__') {
+			throw new Error(`You must not use a key with the name ${key}`);
+		}
+	};
+
+	/**
+	 * @param {String|Symbol} key
+	 * @returns {T} The value of the removed item
+	 */
+	delete(key) {
+		if (!this.hasKey(key)) {
+			throw new Error(`The key ${key.toString()} is not present.`);
+		}
+
+		const item = this._dict[key];
+		delete this._dict[key];
+		this._size--;
+		return item;
+	};
+
+	/**
+	 * @deprecated Use ::delete(key) instead. This will be removed in v3.0.
+	 * @param {String|Symbol} key The item's key.
+	 * @returns {T} The removed item.
+	 * @throws {Error} If the given key is not present.
+	 */
+	remove(key) {
+		return this.delete(key);
+	};
+
+	/**
+	 * Sets the item with the given key. If the key exists previously, its
+	 * value is overwritten.
+	 * 
+	 * @param {String|Symbol} key 
+	 * @param {T} val
+	 * @returns {this}
+	 */
+	set(key, val) {
+		const hadKey = this.hasKey(key);
+		this._dict[key] = val;
+		if (!hadKey) {
+			this._size++;
+		}
+		return this;
+	};
+
+	/**
+	 * @param {String|Symbol} key The item's key.
+	 * @returns {T} The item
+	 * @throws {Error} If the key is not present.
+	 */
+	get(key) {
+		if (this.hasKey(key)) {
+			return this._dict[key];
+		}
+		throw new Error(`The key '${key.toString()}' is not present.`);
+	};
+
+	/**
+	 * @param {String|Symbol} key The item's key.
+	 * @param {EqualityComparer&lt;TEq>} [eqComparer] an optional EqualityComparer to use. If not provided, will use the Collection's EqualityComparer.
+	 * @returns {Boolean} True, if the given key is present.
+	 */
+	hasKeyEq(key, eqComparer = null) {
+		this._validateKey(key);
+		eqComparer = eqComparer instanceof EqualityComparer ? eqComparer : this._eqComparer;
+		const allKeys = Array.from(this.keys())
+		, idx = allKeys.findIndex(value => eqComparer.equals(value, key));
+		return idx >= 0;
+	};
+
+	/**
+	 * Does not support an @see {EqualityComparer&lt;TEq>} and can therefore facilitate faster O(1) lookups.
+	 * 
+	 * @param {String|Symbol} key The item's key.
+	 * @returns {Boolean} True, if the given key is present.
+	 */
+	hasKey(key) {
+		this._validateKey(key);
+		return key in this._dict;
+	};
+
+	/**
+	 * @param {T} item The item to check for
+	 * @param {EqualityComparer&lt;TEq>} eqComparer An optional EqualityComparer to use. If not provided,
+	 * will use the Collection's EqualityComparer.
+	 * @returns {Boolean}
+	 */
+	has(item, eqComparer = null) {
+		eqComparer = eqComparer instanceof EqualityComparer ? eqComparer : this._eqComparer;
+		for (const value of this.values()) {
+			if (eqComparer.equals(value, item)) {
+				return true;
+			}
+		}
+		return false;
+	};
+
+	/**
+	 * @type {Number}
+	 */
+	get size() {
+		return this._size;
+	};
+
+	/**
+	 * Removes all items from this dictionary.
+	 * 
+	 * @override
+	 * @inheritdoc
+	 * @returns {this}
+	 */
+	clear() {
+		super.clear();
+		this._dict = Object.create(null);
+		this._size = 0;
+		return this;
+	};
+
+	/**
+	 * @returns {IterableIterator&lt;String|Symbol>}
+	 */
+	*keys() {
+		for (const key of Object.keys(this._dict)) {
+			yield key;
+		}
+		for (const key of Object.getOwnPropertySymbols(this._dict)) {
+			yield key;
+		}
+	};
+
+	/**
+	 * @returns {IterableIterator&lt;T>}
+	 */
+	*values() {
+		for (const key of this.keys()) {
+			yield this._dict[key];
+		}
+	};
+
+	/**
+	 * @protected
+	 * @param {Boolean} reverse True, if the entries should be returned in reverse order.
+	 * @returns {IterableIterator&lt;Object&lt;String|Symbol, T>>}
+	 */
+	*_entries(reverse = false) {
+		let keys = Array.from(this.keys());
+		if (reverse) {
+			keys = keys.reverse();
+		}
+		
+		for (const key of keys) {
+			const obj = {};
+			obj[key] = this._dict[key];
+			yield obj;
+		}
+	};
+
+	/**
+	 * Returns all entries of this dictionary. Note that the order is deterministic and
+	 * that therefore returning the entries in reverse order may also be of use.
+	 * @link {https://2ality.com/2015/10/property-traversal-order-es6.html#traversing-the-own-keys-of-an-object}
+	 * 
+	 * @returns {IterableIterator&lt;Object&lt;String|Symbol, T>>}
+	 */
+	*entries() {
+		for (const entry of this._entries()) {
+			yield entry;
+		}
+	};
+
+	/**
+	 * @returns {IterableIterator&lt;Object&lt;String|Symbol, T>>}
+	 */
+	*entriesReversed() {
+		for (const entry of this._entries(true)) {
+			yield entry;
+		}
+	};
+};
+
+
+
+/**
+ * @template TKey
+ * @template TVal
+ * @extends {Collection&lt;Array&lt;Tkey|TVal>>}
+ * @author Sebastian Hönel &lt;development@hoenel.net>
+ */
+class DictionaryMapBased extends Collection {
+	/**
+	 * @param {EqualityComparer&lt;TVal>} [eqComparer]
+	 */
+	constructor(eqComparer = EqualityComparer.default) {
+		super(eqComparer);
+
+		/**
+		 * @type {Map&lt;TKey, TVal>}
+		 * @protected
+		 */
+		this._map = new Map();
+
+		/** @type {Observable&lt;CollectionEvent&lt;[TKey, TVal]>>} */
+		this.observableSet = Object.freeze(fromEvent(this, symbolDictionarySet));
+		/** @type {Observable&lt;CollectionEvent&lt;[TKey, TVal]>>} */
+		this.observableGet = Object.freeze(fromEvent(this, symbolDictionaryGet));
+		/** @type {Observable&lt;CollectionEvent&lt;[TKey, TVal]>>} */
+		this.observableDelete = Object.freeze(fromEvent(this, symbolDictionaryDelete));
+	};
+
+	/**
+	 * Inverts this dictionary by using its values as keys, and storing
+	 * for each value a list of keys that previously pointed to that
+	 * value. Therefore, the values in the inverted dictionary are lists.
+	 * E.g., the dictionary {A=>5, B=>5, C=>2} inverts to the dictionary
+	 * {5=>[A,B], 2=>[C]}. Therefore, you also cannot invert an inverted
+	 * dictionary and obtain a dictionary equivalent to the original.
+	 * 
+	 * @param {EqualityComparer&lt;TVal>} [eqComparer] Optional. Uses the
+	 * default EqualityComparer if not given. You may also pass in this
+	 * dictionary's comparer. It may make sense to use a separate comparer,
+	 * as the values may be of different type than the keys.
+	 * @returns {DictionaryMapBased&lt;TVal, Array&lt;TKey>>}
+	 */
+	invert(eqComparer = EqualityComparer.default) {
+		/** @type {DictionaryMapBased&lt;TVal, Array&lt;TKey>>} */
+		const dict = new DictionaryMapBased(eqComparer);
+
+		for (const entry of this.entries()) {
+			const key = entry[0], val = entry[1];
+			if (dict.has(val)) {
+				dict.get(val).push(key);
+			} else {
+				dict.set(val, [key]);
+			}
+		}
+
+		return dict;
+	};
+
+	/**
+	 * @override
+	 * @inheritdoc
+	 * @returns {this}
+	 */
+	clear() {
+		super.clear();
+		this._map.clear();
+		return this;
+	};
+
+	/**
+	 * @param {TKey} key The key to check for
+	 * @returns {Boolean}
+	 */
+	has(key) {
+		return this._map.has(key);
+	};
+
+	/**
+	 * @returns {IterableIterator&lt;[TKey, TVal]>}
+	 */
+	*entries() {
+		yield* this._map.entries();
+	};
+
+	/**
+	 * @returns {IterableIterator&lt;TVal>}
+	 */
+	*values() {
+		yield* this._map.values();
+	};
+
+	/**
+	 * @returns {IterableIterator&lt;TKey>}
+	 */
+	*keys() {
+		yield* this._map.keys();
+	}
+
+	/**
+	 * @returns {IterableIterator&lt;[TKey, TVal]>}
+	 */
+	*entriesReversed() {
+		const entries = Array.from(this.entries());
+
+		for (const entry of entries.reverse()) {
+			yield entry;
+		}
+	};
+
+	/**
+	 * @param {TVal} value The value to check for
+	 * @param {EqualityComparer&lt;TVal>} [eqComparer] An optional @see {EqualityComparer}. Uses the internal comparer if not given.
+	 * @returns {Boolean}
+	 */
+	hasValue(value, eqComparer = null) {
+		eqComparer = eqComparer instanceof EqualityComparer ? eqComparer : this._eqComparer;
+		
+		for (const val of this.values()) { // Values are already unwrapped
+			if (eqComparer.equals(val, value)) {
+				return true;
+			}
+		}
+
+		return false;
+	};
+
+	/**
+	 * @type {Number}
+	 */
+	get size() {
+		return this._map.size;
+	};
+
+	/**
+	 * @param {TKey} key The key of the value to retrieve.
+	 * @throws {Error} If the key is not found.
+	 * @returns {TVal}
+	 */
+	get(key) {
+		if (!this.has(key)) {
+			throw new Error(`The key '${key}' is not present.`);
+		}
+		const value = this.__unwrapValue(this._map.get(key));
+		this.emit(symbolDictionaryGet, new CollectionEvent([key, value]));
+		return value;
+	};
+
+	/**
+	 * @param {TKey} key The of the entry to delete.
+	 * @returns {TVal} The deleted value
+	 * @throws {Error} If the key cannot be found or cannot be deleted.
+	 */
+	delete(key) {
+		const value = this.get(key); // throws if does not exist
+		this._map.delete(key); // returns true because key exists
+		this.emit(symbolDictionaryDelete, new CollectionEvent([key, value]));
+		return value; // this::get() already unwraps
+	};
+
+	/**
+	 * @param {consumerProducer4ArgHandler&lt;TVal, TKey, Number, Dictionary&lt;TKey, TVal>, any>} callbackFn receives the value, the key, the index, and the dictionary
+	 * @param {*} [thisArg] Optional. Defaults to undefined. 
+	 */
+	forEach(callbackFn, thisArg = void 0) {
+		if (!Resolve.isFunction(callbackFn)) {
+			throw new Error(`The value given as callback function is not a function: '${util.inspect(callbackFn)}'`);
+		}
+
+		const that = this
+		, withKey = callbackFn.length > 1
+		, withIdx = callbackFn.length > 2
+		, withDict = callbackFn.length > 3;
+
+		let idx = 0;
+		this._map.forEach((val, key, map) => {
+			const args = [this.__unwrapValue(val)];
+			if (withKey) { args.push(this.__unwrapKey(key)); }
+			if (withIdx) { args.push(idx++); }
+			if (withDict) { args.push(that); }
+			callbackFn.apply(thisArg, args);
+		});
+		
+		return this;
+	};
+
+	/**
+	 * Used for unwrapping values. This is useful for collections that wrap
+	 * the key in some way. The DictionaryMap's methods use this method, so
+	 * that deriving subclasses only need to override this method.
+	 * 
+	 * @see __unwrapValue
+	 * @private
+	 * @param {TKey} key The key to unwrap
+	 * @returns {TKey} In this base class, this is an identity function.
+	 * Sub-classes may override it.
+	 */
+	__unwrapKey(key) {
+		return key;
+	};
+
+	/**
+	 * Used for unwrapping values. This is useful for collections that wrap
+	 * the value in some way. The DictionaryMap's methods use this method,
+	 * so that deriving subclasses only need to override this method.
+	 * 
+	 * @see __unwrapKey
+	 * @private
+	 * @param {TVal} value The value to unwrap
+	 * @returns {TVal} In this base class, this is an identity function.
+	 * Sub-classes may override it.
+	 */
+	__unwrapValue(value) {
+		return value;
+	};
+
+	/**
+	 * Sets (upserts) a value with the given key.
+	 * 
+	 * @param {TKey} key The key of the value.
+	 * @param {TVal} value The value associated with the key.
+	 * @returns {this}
+	 */
+	set(key, value) {
+		this._map.set(key, value);
+		this.emit(symbolDictionarySet, new CollectionEvent([key, value]));
+		return this;
+	};
+};
+
+
+module.exports = Object.freeze({
+	Dictionary,
+	DictionaryMapBased,
+	symbolDictionaryGet,
+	symbolDictionarySet,
+	symbolDictionaryDelete
+});
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Cache.html">Cache</a></li><li><a href="CacheItem.html">CacheItem</a></li><li><a href="CacheItemWithLoad.html">CacheItemWithLoad</a></li><li><a href="CacheMapBased.html">CacheMapBased</a></li><li><a href="CacheWithLoad.html">CacheWithLoad</a></li><li><a href="Collection.html">Collection</a></li><li><a href="CollectionEvent.html">CollectionEvent</a></li><li><a href="Comparer.html">Comparer</a></li><li><a href="ConstrainedQueue.html">ConstrainedQueue</a></li><li><a href="ConstrainedStack.html">ConstrainedStack</a></li><li><a href="DefaultComparer.html">DefaultComparer</a></li><li><a href="DefaultEqualityComparer.html">DefaultEqualityComparer</a></li><li><a href="DeferredClass.html">DeferredClass</a></li><li><a href="Dictionary.html">Dictionary</a></li><li><a href="DictionaryMapBased.html">DictionaryMapBased</a></li><li><a href="EqualityComparer.html">EqualityComparer</a></li><li><a href="Interval.html">Interval</a></li><li><a href="IntervalEventSimple.html">IntervalEventSimple</a></li><li><a href="IntervalScheduler.html">IntervalScheduler</a></li><li><a href="ItemAndDeferred.html">ItemAndDeferred</a></li><li><a href="Job.html">Job</a></li><li><a href="JobEvent.html">JobEvent</a></li><li><a href="JobQueue.html">JobQueue</a></li><li><a href="JobQueueCapabilities.html">JobQueueCapabilities</a></li><li><a href="JobQueueEvent.html">JobQueueEvent</a></li><li><a href="LinkedList.html">LinkedList</a></li><li><a href="LinkedListEvent.html">LinkedListEvent</a></li><li><a href="LinkedListNode.html">LinkedListNode</a></li><li><a href="ManualSchedule.html">ManualSchedule</a></li><li><a href="ManualScheduleEventSimple.html">ManualScheduleEventSimple</a></li><li><a href="ManualScheduler.html">ManualScheduler</a></li><li><a href="PreliminaryScheduleEvent.html">PreliminaryScheduleEvent</a></li><li><a href="ProcessErrorResult.html">ProcessErrorResult</a></li><li><a href="ProcessExit.html">ProcessExit</a></li><li><a href="ProcessOutput.html">ProcessOutput</a></li><li><a href="ProcessResult.html">ProcessResult</a></li><li><a href="ProcessWrapper.html">ProcessWrapper</a></li><li><a href="ProducerConsumerQueue.html">ProducerConsumerQueue</a></li><li><a href="Progress.html">Progress</a></li><li><a href="ProgressNumeric.html">ProgressNumeric</a></li><li><a href="Queue.html">Queue</a></li><li><a href="Resolve.html">Resolve</a></li><li><a href="Resource.html">Resource</a></li><li><a href="ResourceSelector.html">ResourceSelector</a></li><li><a href="Schedule.html">Schedule</a></li><li><a href="ScheduleEvent.html">ScheduleEvent</a></li><li><a href="Scheduler.html">Scheduler</a></li><li><a href="Stack.html">Stack</a></li></ul><h3>Global</h3><ul><li><a href="global.html#assertThrowsAsync">assertThrowsAsync</a></li><li><a href="global.html#ConstrainedQueueCapacityPolicy">ConstrainedQueueCapacityPolicy</a></li><li><a href="global.html#deepCloneObject">deepCloneObject</a></li><li><a href="global.html#defer">defer</a></li><li><a href="global.html#deferMocha">deferMocha</a></li><li><a href="global.html#EvictionPolicy">EvictionPolicy</a></li><li><a href="global.html#formatError">formatError</a></li><li><a href="global.html#formatValue">formatValue</a></li><li><a href="global.html#getRandomNumber">getRandomNumber</a></li><li><a href="global.html#JobQueueCapacityPolicy">JobQueueCapacityPolicy</a></li><li><a href="global.html#mergeObjects">mergeObjects</a></li><li><a href="global.html#ProducerConsumerQueueCapacityPolicy">ProducerConsumerQueueCapacityPolicy</a></li><li><a href="global.html#ResourceSelectionStrategy">ResourceSelectionStrategy</a></li><li><a href="global.html#throwError">throwError</a></li><li><a href="global.html#timeout">timeout</a></li><li><a href="global.html#wrapError">wrapError</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a> on Sat May 15 2021 11:41:30 GMT+0200 (Central European Summer Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
