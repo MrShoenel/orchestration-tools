@@ -1,4 +1,32 @@
-const { defer } = require('./tools/Defer')
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: JobQueue.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: JobQueue.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>const { defer } = require('./tools/Defer')
 , { wrapError } = require('./tools/Error')
 , EventEmitter = require('events').EventEmitter
 , { Observable, Subscription, fromEvent } = require('rxjs')
@@ -37,11 +65,11 @@ class JobEvent {
  * 
  * @template T
  * @extends {EventEmitter}
- * @author Sebastian Hönel <development@hoenel.net>
+ * @author Sebastian Hönel &lt;development@hoenel.net>
  */
 class Job extends EventEmitter {
 	/**
-	 * @param {producerHandler<Promise<T>>} promiseProducer A function returning a Promise
+	 * @param {producerHandler&lt;Promise&lt;T>>} promiseProducer A function returning a Promise
 	 * or an async function (essentially the same). If you want to use a sync
 	 * function, call Job::fromSyncFunction(fn) instead.
 	 * @param {String} [name] Optional. Defaults to undefined. Give an optional
@@ -71,7 +99,7 @@ class Job extends EventEmitter {
 		 */
 		this._result = void 0;
 		/**
-		 * @type {Deferred<T>}
+		 * @type {Deferred&lt;T>}
 		 * @protected
 		 */
 		this._deferred = defer();
@@ -88,11 +116,11 @@ class Job extends EventEmitter {
 		 */
 		this._cost = void 0;
 
-		/** @type {Observable<JobEvent>} */
+		/** @type {Observable&lt;JobEvent>} */
 		this.observableRun = Object.freeze(fromEvent(this, symbolRun));
-		/** @type {Observable<JobEvent>} */
+		/** @type {Observable&lt;JobEvent>} */
 		this.observableDone = Object.freeze(fromEvent(this, symbolDone));
-		/** @type {Observable<JobEvent>} */
+		/** @type {Observable&lt;JobEvent>} */
 		this.observableFailed = Object.freeze(fromEvent(this, symbolFailed));
 
 		/** @protected */
@@ -109,7 +137,7 @@ class Job extends EventEmitter {
 		this._stopTime = null;
 
 		/**
-		 * @type {DictionaryMapBased<any, any>}
+		 * @type {DictionaryMapBased&lt;any, any>}
 		 * @protected
 		 */
 		this._properties = new DictionaryMapBased();
@@ -118,7 +146,7 @@ class Job extends EventEmitter {
 	/**
 	 * Returns a map with arbitrary properties or date associated with this Job.
 	 * 
-	 * @type {DictionaryMapBased<any, any>}
+	 * @type {DictionaryMapBased&lt;any, any>}
 	 */
 	get properties() {
 		return this._properties;
@@ -211,7 +239,7 @@ class Job extends EventEmitter {
 	 * @type {void}
 	 */
 	set name(value) {
-		if (value !== void 0 && typeof value !== 'string') {
+		if (value !== void 0 &amp;&amp; typeof value !== 'string') {
 			throw new Error(`The given value for name must be undefined or a string.`);
 		}
 		this._name = value;
@@ -254,7 +282,7 @@ class Job extends EventEmitter {
 	 * Returns the Progress-instance of type TProgress.
 	 * 
 	 * @template TProgress
-	 * @type {Progress<TProgress>}
+	 * @type {Progress&lt;TProgress>}
 	 */
 	get progress() {
 		return this._progressInstance;
@@ -275,7 +303,7 @@ class Job extends EventEmitter {
 	 * @type {Boolean}
 	 */
 	get hasCost() {
-		return !isNaN(this._cost) && this._cost > 0;
+		return !isNaN(this._cost) &amp;&amp; this._cost > 0;
 	};
 
 	/**
@@ -284,7 +312,7 @@ class Job extends EventEmitter {
 	 * @type {void}
 	 */
 	set cost(value = void 0) {
-		if (Object.prototype.toString.call(value) === '[object Number]' && !isNaN(value) && value > 0) {
+		if (Object.prototype.toString.call(value) === '[object Number]' &amp;&amp; !isNaN(value) &amp;&amp; value > 0) {
 			this._cost = value;
 		} else if (value === void 0) {
 			this._cost = void 0;
@@ -327,7 +355,7 @@ class Job extends EventEmitter {
 	 * returned by run() should only be used by the queue.
 	 * 
 	 * @template T
-	 * @type {Promise<T>}
+	 * @type {Promise&lt;T>}
 	 */
 	get donePromise() {
 		return this._deferred.promise;
@@ -345,7 +373,7 @@ class Job extends EventEmitter {
 	};
 
 	/**
-	 * @returns {Promise<T>} the Promise that will resolve with the
+	 * @returns {Promise&lt;T>} the Promise that will resolve with the
 	 * job's result.
 	 */
 	async run() {
@@ -400,13 +428,8 @@ class Job extends EventEmitter {
 			const subs = obs.subscribe(
 				procOut => progress.reportProgress(procOut),
 				procErr => {
-					const errs = [procErr];
-					try {
-						subs.unsubscribe();
-					} catch (e) {
-						errs.push(e);
-					}
-					reject(errs);
+					subs.unsubscribe();
+					reject(procErr);
 				},
 				() => resolve(processWrapper.result)
 			);
@@ -469,7 +492,7 @@ const JobQueueCapacityPolicy = {
  * same events as Job using the class JobQueueEvent.
  * 
  * @extends {EventEmitter}
- * @author Sebastian Hönel <development@hoenel.net>
+ * @author Sebastian Hönel &lt;development@hoenel.net>
  */
 class JobQueue extends EventEmitter {
 	/**
@@ -486,25 +509,25 @@ class JobQueue extends EventEmitter {
 	constructor(numParallel = 1, capacity = Number.MAX_SAFE_INTEGER, capacityPolicy = JobQueueCapacityPolicy.Ignore) {
 		super();
 
-		if (isNaN(numParallel) || !isFinite(numParallel) || numParallel < 1) {
+		if (isNaN(numParallel) || !isFinite(numParallel) || numParallel &lt; 1) {
 			throw new Error(`The value "${numParallel}" for the parameter numParallel is invalid. Only positive integers may be supplied.`);
 		}
-		/** @type {Queue<Job>} */
+		/** @type {Queue&lt;Job>} */
 		this.queue = new Queue();
-		/** @type {ConstrainedQueue<Job>} */
+		/** @type {ConstrainedQueue&lt;Job>} */
 		this.currentJobs = new ConstrainedQueue(numParallel);
 
 		this.numParallel = numParallel;
 		this.capacity = capacity;
 		this.capacityPolicy = capacityPolicy;
 
-		/** @type {Observable<JobQueueEvent>} */
+		/** @type {Observable&lt;JobQueueEvent>} */
 		this.observableRun = Object.freeze(fromEvent(this, symbolRun));
-		/** @type {Observable<JobQueueEvent>} */
+		/** @type {Observable&lt;JobQueueEvent>} */
 		this.observableDone = Object.freeze(fromEvent(this, symbolDone));
-		/** @type {Observable<JobQueueEvent>} */
+		/** @type {Observable&lt;JobQueueEvent>} */
 		this.observableFailed = Object.freeze(fromEvent(this, symbolFailed));
-		/** @type {Observable<JobQueueEvent>} */
+		/** @type {Observable&lt;JobQueueEvent>} */
 		this.observableIdle = Object.freeze(fromEvent(this, symbolIdle));
 
 		/** @protected */
@@ -577,7 +600,7 @@ class JobQueue extends EventEmitter {
 	pause() {
 		this._isPaused = true;
 		setTimeout(() => {
-			if (this.isPaused && this.isIdle) {
+			if (this.isPaused &amp;&amp; this.isIdle) {
 				this.emit(symbolIdle, new JobQueueEvent(this));
 			}
 		}, 0);
@@ -600,7 +623,7 @@ class JobQueue extends EventEmitter {
 	 * the queue was paused, it will be resumed. Adding more jobs while this call
 	 * is not resolved will defer it.
 	 * 
-	 * @returns {Promise<void>} That will resolve if the queue's current load
+	 * @returns {Promise&lt;void>} That will resolve if the queue's current load
 	 * is 0 (no jobs running and none in the backlog) or once it reaches 0 (if
 	 * all currently enqueued jobs are done). The Promise is rejected if any of
 	 * the jobs fails.
@@ -620,7 +643,7 @@ class JobQueue extends EventEmitter {
 				return;
 			}
 
-			/** @type {Array<Subscription>} */
+			/** @type {Array&lt;Subscription>} */
 			const subscriptions = [];
 
 			const unsubscribeAll = () => {
@@ -719,7 +742,7 @@ class JobQueue extends EventEmitter {
 	 * Removes all jobs from the backlog and returns them.
 	 * 
 	 * @template T
-	 * @returns {Array<Job<T>>} An array with all not yet run jobs.
+	 * @returns {Array&lt;Job&lt;T>>} An array with all not yet run jobs.
 	 */
 	clearBacklog() {
 		const backlogJobs = Array.from(this.queue.entries());
@@ -730,8 +753,8 @@ class JobQueue extends EventEmitter {
 	/**
 	 * Determines if a specific Job is on the backlog of this JobQueue.
 	 * 
-	 * @param {Job<T>} job The job to check for
-	 * @param {EqualityComparer<Job<T>>} [eqComparer] Optional. A comparer
+	 * @param {Job&lt;T>} job The job to check for
+	 * @param {EqualityComparer&lt;Job&lt;T>>} [eqComparer] Optional. A comparer
 	 * to use for checking for equality. Defaults to the DefaultEqualityComparer
 	 * which uses the identity operator.
 	 * @returns {Boolean} True, iff the Job is in the backlog.
@@ -743,8 +766,8 @@ class JobQueue extends EventEmitter {
 	/**
 	 * Determines if a specific Job is currently runnung on this JobQueue.
 	 * 
-	 * @param {Job<T>} job The Job to check for
-	 * @param {EqualityComparer<Job<T>>} [eqComparer] Optional. A comparer
+	 * @param {Job&lt;T>} job The Job to check for
+	 * @param {EqualityComparer&lt;Job&lt;T>>} [eqComparer] Optional. A comparer
 	 * to use for checking for equality. Defaults to the DefaultEqualityComparer
 	 * which uses the identity operator.
 	 * @returns {Boolean} True, iff this JobQueue is currently processing
@@ -756,8 +779,8 @@ class JobQueue extends EventEmitter {
 
 	/**
 	 * 
-	 * @param {Job<T>} job The Job to remove from the backlog.
-	 * @param {EqualityComparer<Job<T>>} [eqComparer] Optional. A comparer
+	 * @param {Job&lt;T>} job The Job to remove from the backlog.
+	 * @param {EqualityComparer&lt;Job&lt;T>>} [eqComparer] Optional. A comparer
 	 * to use for checking for equality. Defaults to the DefaultEqualityComparer
 	 * which uses the identity operator.
 	 * @returns {this}
@@ -769,7 +792,7 @@ class JobQueue extends EventEmitter {
 
 	/**
 	 * @template T
-	 * @param {producerHandler<T>} job A synchronous function to be used as a Job.
+	 * @param {producerHandler&lt;T>} job A synchronous function to be used as a Job.
 	 * @returns {this}
 	 */
 	addSyncJob(job) {
@@ -778,7 +801,7 @@ class JobQueue extends EventEmitter {
 
 	/**
 	 * @template T
-	 * @param {...(producerHandler<T>)} jobs Many synchronous functions to add as Jobs.
+	 * @param {...(producerHandler&lt;T>)} jobs Many synchronous functions to add as Jobs.
 	 * @returns {this}
 	 */
 	addSyncJobs(...jobs) {
@@ -791,7 +814,7 @@ class JobQueue extends EventEmitter {
 	 * async function.
 	 * 
 	 * @template T
-	 * @param {Job<T>|producerHandler<Promise<T>>} job
+	 * @param {Job&lt;T>|producerHandler&lt;Promise&lt;T>>} job
 	 * @returns {this}
 	 */
 	addJob(job) {
@@ -804,7 +827,7 @@ class JobQueue extends EventEmitter {
 		}
 		
 		// Let's check capacity:
-		if (this.capacityPolicy !== JobQueueCapacityPolicy.Ignore && (this.backlog + this.numJobsRunning) === this.capacity) {
+		if (this.capacityPolicy !== JobQueueCapacityPolicy.Ignore &amp;&amp; (this.backlog + this.numJobsRunning) === this.capacity) {
 			// This queue is currently operating at max capacity.
 			if (this.capacityPolicy === JobQueueCapacityPolicy.Discard) {
 				return this;
@@ -821,7 +844,7 @@ class JobQueue extends EventEmitter {
 
 	/**
 	 * @template T
-	 * @param {...(Job<T>|producerHandler<Promise<T>>)} jobs
+	 * @param {...(Job&lt;T>|producerHandler&lt;Promise&lt;T>>)} jobs
 	 * @returns {this}
 	 */
 	addJobs(...jobs) {
@@ -884,4 +907,26 @@ module.exports = Object.freeze({
 	JobQueueEvent,
 	JobQueue,
 	JobQueueCapacityPolicy
-});
+});</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Cache.html">Cache</a></li><li><a href="CacheItem.html">CacheItem</a></li><li><a href="CacheItemWithLoad.html">CacheItemWithLoad</a></li><li><a href="CacheMapBased.html">CacheMapBased</a></li><li><a href="CacheWithLoad.html">CacheWithLoad</a></li><li><a href="Collection.html">Collection</a></li><li><a href="CollectionEvent.html">CollectionEvent</a></li><li><a href="Comparer.html">Comparer</a></li><li><a href="ConstrainedQueue.html">ConstrainedQueue</a></li><li><a href="ConstrainedStack.html">ConstrainedStack</a></li><li><a href="DefaultComparer.html">DefaultComparer</a></li><li><a href="DefaultEqualityComparer.html">DefaultEqualityComparer</a></li><li><a href="DeferredClass.html">DeferredClass</a></li><li><a href="Dictionary.html">Dictionary</a></li><li><a href="DictionaryMapBased.html">DictionaryMapBased</a></li><li><a href="EqualityComparer.html">EqualityComparer</a></li><li><a href="Interval.html">Interval</a></li><li><a href="IntervalEventSimple.html">IntervalEventSimple</a></li><li><a href="IntervalScheduler.html">IntervalScheduler</a></li><li><a href="ItemAndDeferred.html">ItemAndDeferred</a></li><li><a href="Job.html">Job</a></li><li><a href="JobEvent.html">JobEvent</a></li><li><a href="JobQueue.html">JobQueue</a></li><li><a href="JobQueueCapabilities.html">JobQueueCapabilities</a></li><li><a href="JobQueueEvent.html">JobQueueEvent</a></li><li><a href="LinkedList.html">LinkedList</a></li><li><a href="LinkedListEvent.html">LinkedListEvent</a></li><li><a href="LinkedListNode.html">LinkedListNode</a></li><li><a href="ManualSchedule.html">ManualSchedule</a></li><li><a href="ManualScheduleEventSimple.html">ManualScheduleEventSimple</a></li><li><a href="ManualScheduler.html">ManualScheduler</a></li><li><a href="PreliminaryScheduleEvent.html">PreliminaryScheduleEvent</a></li><li><a href="ProcessErrorResult.html">ProcessErrorResult</a></li><li><a href="ProcessExit.html">ProcessExit</a></li><li><a href="ProcessOutput.html">ProcessOutput</a></li><li><a href="ProcessResult.html">ProcessResult</a></li><li><a href="ProcessWrapper.html">ProcessWrapper</a></li><li><a href="ProducerConsumerQueue.html">ProducerConsumerQueue</a></li><li><a href="Progress.html">Progress</a></li><li><a href="ProgressNumeric.html">ProgressNumeric</a></li><li><a href="Queue.html">Queue</a></li><li><a href="Resolve.html">Resolve</a></li><li><a href="Resource.html">Resource</a></li><li><a href="ResourceSelector.html">ResourceSelector</a></li><li><a href="Schedule.html">Schedule</a></li><li><a href="ScheduleEvent.html">ScheduleEvent</a></li><li><a href="Scheduler.html">Scheduler</a></li><li><a href="Stack.html">Stack</a></li></ul><h3>Global</h3><ul><li><a href="global.html#assertThrowsAsync">assertThrowsAsync</a></li><li><a href="global.html#ConstrainedQueueCapacityPolicy">ConstrainedQueueCapacityPolicy</a></li><li><a href="global.html#deepCloneObject">deepCloneObject</a></li><li><a href="global.html#defer">defer</a></li><li><a href="global.html#deferMocha">deferMocha</a></li><li><a href="global.html#EvictionPolicy">EvictionPolicy</a></li><li><a href="global.html#formatError">formatError</a></li><li><a href="global.html#formatValue">formatValue</a></li><li><a href="global.html#getRandomNumber">getRandomNumber</a></li><li><a href="global.html#JobQueueCapacityPolicy">JobQueueCapacityPolicy</a></li><li><a href="global.html#mergeObjects">mergeObjects</a></li><li><a href="global.html#ProducerConsumerQueueCapacityPolicy">ProducerConsumerQueueCapacityPolicy</a></li><li><a href="global.html#ResourceSelectionStrategy">ResourceSelectionStrategy</a></li><li><a href="global.html#throwError">throwError</a></li><li><a href="global.html#timeout">timeout</a></li><li><a href="global.html#wrapError">wrapError</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a> on Thu Jan 20 2022 15:44:24 GMT+0100 (Central European Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
