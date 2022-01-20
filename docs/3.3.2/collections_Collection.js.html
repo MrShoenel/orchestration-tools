@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: collections/Collection.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: collections/Collection.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>const { EqualityComparer } = require('./EqualityComparer')
+, { EventEmitter } = require('events')
+, { Observable, fromEvent } = require('rxjs')
+, util = require('util')
+, symbolCollectionClear = Symbol('collectionClear');
+
+
+
+/**
+ * @template T The type of the item (if passed)
+ */
+class CollectionEvent {
+	/**
+	 * @param {T} item An item associated with this event
+	 */
+	constructor(item = void 0) {
+		this.item = item;
+	};
+};
+
+
+
+/**
+ * A generic class that holds any kind of item and provides basic set-
+ * operations. This is a base class for other collections.
+ * 
+ * @template T
+ * @extends {EventEmitter}
+ * @author Sebastian Hönel &lt;development@hoenel.net>
+ */
+class Collection extends EventEmitter {
+	/**
+	 * Creates a new, empty Collection.
+	 * 
+	 * @param {EqualityComparer&lt;T>} [eqComparer] Optional. Defaults To EqualityComparer&lt;T>.default.
+	 */
+	constructor(eqComparer = EqualityComparer.default) {
+		super();
+		
+		/**
+		 * @type {EqualityComparer&lt;T>}
+		 * @protected
+		 */
+		this._eqComparer = null;
+		this.equalityComparer = eqComparer;
+
+		/**
+		 * @type {Array&lt;T>}
+		 * @protected
+		 */
+		this._items = [];
+		
+		/** @type {Observable&lt;CollectionEvent&lt;T>>} */
+		this.observableClear = Object.freeze(fromEvent(this, symbolCollectionClear));
+	};
+
+	/**
+	 * @protected
+	 * @param {EqualityComparer&lt;T>} eqComparer The comparer
+	 * @returns {EqualityComparer&lt;T>} The same comparer that was given
+	 * @throws {Error} If the given value is not of type EqualityComparer.
+	 */
+	_validateEqualityComparer(eqComparer) {
+		if (!(eqComparer instanceof EqualityComparer)) {
+			throw new Error(
+				`The value provided is not of type ${EqualityComparer.name}: ${util.inspect(eqComparer)}`);
+		}
+		return eqComparer;
+	};
+
+	/**
+	 * Returns the current EqualityComparer.
+	 * 
+	 * @type {EqualityComparer&lt;T>}
+	 */
+	get equalityComparer() {
+		return this._eqComparer;
+	};
+
+	/**
+	 * @param {EqualityComparer&lt;T>} value An EqualityComparer to use.
+	 * @type {void}
+	 */
+	set equalityComparer(value) {
+		this._eqComparer = this._validateEqualityComparer(value);
+	};
+
+	/**
+	 * Returns the amount of items in this Collection.
+	 * 
+	 * @type {Number}
+	 */
+	get size() {
+		return this._items.length;
+	};
+
+	/**
+	 * Returns true, iff this Collection is empty.
+	 * 
+	 * @type {Boolean}
+	 */
+	get isEmpty() {
+		return this.size === 0;
+	};
+
+	/**
+	 * Discards all items in this Collection.
+	 * 
+	 * @returns {this}
+	 */
+	clear() {
+		this.emit(symbolCollectionClear, new CollectionEvent());
+		this._items.splice(0, this._items.length);
+		return this;
+	};
+
+	/**
+	 * @returns {IterableIterator&lt;T>} An IterableIterator for
+	 * all items in this Collection.
+	 */
+	*entries() {
+		for (const item of this._items) {
+			yield item;
+		}
+	};
+
+	/**
+	 * @returns {IterableIterator&lt;T>} An IterableIterator for
+	 * all items in this collection in reversed order.
+	 */
+	*entriesReversed() {
+		let idx = this._items.length - 1;
+		for (; idx >= 0; idx--) {
+			yield this._items[idx];
+		}
+	};
+
+	/**
+	 * Returns all of the collection's items as array. Creates a new
+	 * Array on every call.
+	 * 
+	 * @type {Array&lt;T>}
+	 */
+	get asArray() {
+		return Array.from(this.entries());
+	};
+	
+	/**
+	 * Maps a callback to each of the items and returns an array.
+	 * 
+	 * @param {consumerProducer3ArgHandler&lt;T, Number, Array&lt;T>, any>} callback that gets the
+	 * value, the index, and the array of values
+	 * @returns {Array&lt;any>} The mapped items as array
+	 */
+	map(callback, thisArg = void 0) {
+		return this.asArray.map(callback.bind(thisArg));
+	};
+
+	/**
+	 * @param {T} item The item to check for
+	 * @param {EqualityComparer&lt;T>} [eqComparer] an optional EqualityComparer to use.
+	 * If not provided, will use the Collection's EqualityComparer.
+	 * @returns {Boolean}
+	 */
+	has(item, eqComparer = null) {
+		eqComparer = eqComparer instanceof EqualityComparer ? eqComparer : this._eqComparer;
+		const idx = this._items.findIndex(value => eqComparer.equals(value, item));
+		return idx >= 0;
+	};
+};
+
+
+module.exports = Object.freeze({
+	Collection,
+	CollectionEvent,
+	symbolCollectionClear
+});
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Cache.html">Cache</a></li><li><a href="CacheItem.html">CacheItem</a></li><li><a href="CacheItemWithLoad.html">CacheItemWithLoad</a></li><li><a href="CacheMapBased.html">CacheMapBased</a></li><li><a href="CacheWithLoad.html">CacheWithLoad</a></li><li><a href="Collection.html">Collection</a></li><li><a href="CollectionEvent.html">CollectionEvent</a></li><li><a href="Comparer.html">Comparer</a></li><li><a href="ConstrainedQueue.html">ConstrainedQueue</a></li><li><a href="ConstrainedStack.html">ConstrainedStack</a></li><li><a href="DefaultComparer.html">DefaultComparer</a></li><li><a href="DefaultEqualityComparer.html">DefaultEqualityComparer</a></li><li><a href="DeferredClass.html">DeferredClass</a></li><li><a href="Dictionary.html">Dictionary</a></li><li><a href="DictionaryMapBased.html">DictionaryMapBased</a></li><li><a href="EqualityComparer.html">EqualityComparer</a></li><li><a href="Interval.html">Interval</a></li><li><a href="IntervalEventSimple.html">IntervalEventSimple</a></li><li><a href="IntervalScheduler.html">IntervalScheduler</a></li><li><a href="ItemAndDeferred.html">ItemAndDeferred</a></li><li><a href="Job.html">Job</a></li><li><a href="JobEvent.html">JobEvent</a></li><li><a href="JobQueue.html">JobQueue</a></li><li><a href="JobQueueCapabilities.html">JobQueueCapabilities</a></li><li><a href="JobQueueEvent.html">JobQueueEvent</a></li><li><a href="LinkedList.html">LinkedList</a></li><li><a href="LinkedListEvent.html">LinkedListEvent</a></li><li><a href="LinkedListNode.html">LinkedListNode</a></li><li><a href="ManualSchedule.html">ManualSchedule</a></li><li><a href="ManualScheduleEventSimple.html">ManualScheduleEventSimple</a></li><li><a href="ManualScheduler.html">ManualScheduler</a></li><li><a href="PreliminaryScheduleEvent.html">PreliminaryScheduleEvent</a></li><li><a href="ProcessErrorResult.html">ProcessErrorResult</a></li><li><a href="ProcessExit.html">ProcessExit</a></li><li><a href="ProcessOutput.html">ProcessOutput</a></li><li><a href="ProcessResult.html">ProcessResult</a></li><li><a href="ProcessWrapper.html">ProcessWrapper</a></li><li><a href="ProducerConsumerQueue.html">ProducerConsumerQueue</a></li><li><a href="Progress.html">Progress</a></li><li><a href="ProgressNumeric.html">ProgressNumeric</a></li><li><a href="Queue.html">Queue</a></li><li><a href="Resolve.html">Resolve</a></li><li><a href="Resource.html">Resource</a></li><li><a href="ResourceSelector.html">ResourceSelector</a></li><li><a href="Schedule.html">Schedule</a></li><li><a href="ScheduleEvent.html">ScheduleEvent</a></li><li><a href="Scheduler.html">Scheduler</a></li><li><a href="Stack.html">Stack</a></li></ul><h3>Global</h3><ul><li><a href="global.html#assertThrowsAsync">assertThrowsAsync</a></li><li><a href="global.html#ConstrainedQueueCapacityPolicy">ConstrainedQueueCapacityPolicy</a></li><li><a href="global.html#deepCloneObject">deepCloneObject</a></li><li><a href="global.html#defer">defer</a></li><li><a href="global.html#deferMocha">deferMocha</a></li><li><a href="global.html#EvictionPolicy">EvictionPolicy</a></li><li><a href="global.html#formatError">formatError</a></li><li><a href="global.html#formatValue">formatValue</a></li><li><a href="global.html#getRandomNumber">getRandomNumber</a></li><li><a href="global.html#JobQueueCapacityPolicy">JobQueueCapacityPolicy</a></li><li><a href="global.html#mergeObjects">mergeObjects</a></li><li><a href="global.html#ProducerConsumerQueueCapacityPolicy">ProducerConsumerQueueCapacityPolicy</a></li><li><a href="global.html#ResourceSelectionStrategy">ResourceSelectionStrategy</a></li><li><a href="global.html#throwError">throwError</a></li><li><a href="global.html#timeout">timeout</a></li><li><a href="global.html#wrapError">wrapError</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a> on Thu Jan 20 2022 15:44:24 GMT+0100 (Central European Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

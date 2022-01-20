@@ -1,0 +1,2477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Class: Resolve</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Class: Resolve</h1>
+
+    
+
+
+
+
+<section>
+
+<header>
+    
+        <h2><span class="attribs"><span class="type-signature"></span></span>Resolve<span class="signature">()</span><span class="type-signature"></span></h2>
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+
+    
+
+    
+    <h4 class="name" id="Resolve"><span class="type-signature"></span>new Resolve<span class="signature">()</span><span class="type-signature"></span></h4>
+    
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-author">Author:</dt>
+    <dd class="tag-author">
+        <ul>
+            <li><a href="mailto:development@hoenel.net">Sebastian Hönel</a></li>
+        </ul>
+    </dd>
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="tools_Resolve.js.html">tools/Resolve.js</a>, <a href="tools_Resolve.js.html#line11">line 11</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Members</h3>
+
+        
+            
+<h4 class="name" id=".numberBinaryRegex"><span class="type-signature">(static) </span>numberBinaryRegex<span class="type-signature"> :RegExp</span></h4>
+
+
+
+
+<div class="description">
+    Gets a regular expression that can be used to match valid integers,in binary notation (base 2). Integers can be BigInts.
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">RegExp</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="tools_Resolve.js.html">tools/Resolve.js</a>, <a href="tools_Resolve.js.html#line98">line 98</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".numberHexRegex"><span class="type-signature">(static) </span>numberHexRegex<span class="type-signature"> :RegExp</span></h4>
+
+
+
+
+<div class="description">
+    Gets a regular expression that can be used to match valid integers,in hexadecimal notation (base 16). Integers can be BigInts.
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">RegExp</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="tools_Resolve.js.html">tools/Resolve.js</a>, <a href="tools_Resolve.js.html#line118">line 118</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".numberOctalRegex"><span class="type-signature">(static) </span>numberOctalRegex<span class="type-signature"> :RegExp</span></h4>
+
+
+
+
+<div class="description">
+    Gets a regular expression that can be used to match valid integers,in octal notation (base 8). Integers can be BigInts.
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">RegExp</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="tools_Resolve.js.html">tools/Resolve.js</a>, <a href="tools_Resolve.js.html#line108">line 108</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".numberRegex"><span class="type-signature">(static) </span>numberRegex<span class="type-signature"> :RegExp</span></h4>
+
+
+
+
+<div class="description">
+    Gets a regular expression that can be used to match valid integers,floats and floats in scientific notation. Integers are only recognizedif they are in Base 10 (i.e., not binary, octal or hexadecimal; you willhave to use the other regexes for that).
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">RegExp</span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="tools_Resolve.js.html">tools/Resolve.js</a>, <a href="tools_Resolve.js.html#line88">line 88</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id=".asNumber"><span class="type-signature">(static) </span>asNumber<span class="signature">(value)</span><span class="type-signature"> &rarr; {Number|BigInt}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Attempts conversion of a number in a string to a native number. Supportsliteral integers and floats, also in scientific notation. Also supportsintegers in literal base 2 (binary), 8 (octal) and 16 (hex) notation.Integers can be BigInts (ending in n).
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>value</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">A number (as int, float or scientific notation) tobe parsed to a native Number object. Also supports the literal 'NaN'.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="tools_Resolve.js.html">tools/Resolve.js</a>, <a href="tools_Resolve.js.html#line135">line 135</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Throws:</h5>
+
+        
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        if the value cannot be parsed as a number. Also throws anerror if a literal integer in base 2, 8 or 16 is attempted to be convertedto BigInt, in cases where it is larger than @see {Number.MAX_SAFE_INTEGER}.
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">Error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
+
+
+    
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    the value parsed as Number.
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Number</span>
+|
+
+<span class="param-type">BigInt</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id=".asyncFuncOrPromise"><span class="type-signature">(async, static) </span>asyncFuncOrPromise<span class="signature">(asyncFuncOrPromise)</span><span class="type-signature"> &rarr; {T}</span></h4>
+    
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>asyncFuncOrPromise</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">producerHandler.&lt;(T|Promise.&lt;T>)></span>
+|
+
+<span class="param-type">Promise.&lt;T></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">An (async)function or a Promise.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="tools_Resolve.js.html">tools/Resolve.js</a>, <a href="tools_Resolve.js.html#line332">line 332</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li>{<a href="Resolve.html#.toValue">Resolve.toValue</a>}</li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    The result of deeply resolving the given function or Promise.
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">T</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id=".isFunction"><span class="type-signature">(static) </span>isFunction<span class="signature">(value)</span><span class="type-signature"> &rarr; {Boolean}</span></h4>
+    
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>value</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">any</span>
+|
+
+<span class="param-type">function</span>
+|
+
+<span class="param-type">AsyncFunction</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="tools_Resolve.js.html">tools/Resolve.js</a>, <a href="tools_Resolve.js.html#line218">line 218</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    true, iff the given value is an (async) function
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Boolean</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id=".isNumber"><span class="type-signature">(static) </span>isNumber<span class="signature">(value, tryConvert<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {Boolean}</span></h4>
+    
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>value</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">any</span>
+|
+
+<span class="param-type">Number</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>tryConvert</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Boolean</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    false
+                
+                </td>
+            
+
+            <td class="description last">Optional. Default false. Whether to attemptconverting the given value to Number. Returns true should that succeed.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="tools_Resolve.js.html">tools/Resolve.js</a>, <a href="tools_Resolve.js.html#line72">line 72</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    true, iff the given number or NaN is of type Number,or if it was requested to be converted and that conversion succeeded.
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Boolean</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id=".isPrimitive"><span class="type-signature">(static) </span>isPrimitive<span class="signature">(value)</span><span class="type-signature"> &rarr; {Boolean}</span></h4>
+    
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>value</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">any</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="tools_Resolve.js.html">tools/Resolve.js</a>, <a href="tools_Resolve.js.html#line243">line 243</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    true, iff the value is primitive
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Boolean</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id=".isPromise"><span class="type-signature">(static) </span>isPromise<span class="signature">(value)</span><span class="type-signature"> &rarr; {Boolean}</span></h4>
+    
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>value</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">any</span>
+|
+
+<span class="param-type">Promise</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="tools_Resolve.js.html">tools/Resolve.js</a>, <a href="tools_Resolve.js.html#line226">line 226</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    true, iff the value is an instance of Promise
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Boolean</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id=".isSymbol"><span class="type-signature">(static) </span>isSymbol<span class="signature">(value)</span><span class="type-signature"> &rarr; {Boolean}</span></h4>
+    
+
+    
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>value</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Symbol</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="tools_Resolve.js.html">tools/Resolve.js</a>, <a href="tools_Resolve.js.html#line234">line 234</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Boolean</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id=".isTypeOf"><span class="type-signature">(static) </span>isTypeOf<span class="signature">(value, exampleOrTypeOrClassName)</span><span class="type-signature"> &rarr; {Boolean}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Check whether or not a value is of a specific type, that can be givenas an example, an actual Type/Class or the name of a class.
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>value</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">any</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">the value to check</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>exampleOrTypeOrClassName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">any</span>
+|
+
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">an examplary other value you'dexpect, a type (e.g. RegExp) or class or the name of a class or c'tor-function.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="tools_Resolve.js.html">tools/Resolve.js</a>, <a href="tools_Resolve.js.html#line21">line 21</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Boolean</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id=".optionalToValue"><span class="type-signature">(async, static) </span>optionalToValue<span class="signature">()</span><span class="type-signature"> &rarr; {T}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Similar to @see {toValue}, this method returns the default value for the givenvalue, should it be undefined. Other than that, this method returns the same as
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="tools_Resolve.js.html">tools/Resolve.js</a>, <a href="tools_Resolve.js.html#line257">line 257</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li>{toValue}.</li>
+        
+            <li>{toValue}</li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    the resolved-to value or its default, should it be undefined.
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">T</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id=".toValue"><span class="type-signature">(async, static) </span>toValue<span class="signature">(value, exampleOrTypeOrClassName<span class="signature-attributes">opt</span>, resolveFuncs<span class="signature-attributes">opt</span>, resolvePromises<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {T}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Resolve a literal value, a function or Promise to a value. If enabled, deeplyresolves functions or Promises. Attempts to resolve (to a) value until it matchesthe expected example, type/class or class name.
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>value</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">any</span>
+|
+
+<span class="param-type">T</span>
+|
+
+<span class="param-type">producerHandler.&lt;T></span>
+|
+
+<span class="param-type">Promise.&lt;T></span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">a literal value or an (async) functionor Promise that may produce a value of the expected type or exemplary value.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>exampleOrTypeOrClassName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">any</span>
+|
+
+<span class="param-type">string</span>
+|
+
+<span class="param-type">T</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last">Optional. If not given, will onlyresolve functions and promises to a value that is not a function and not a Promise.Otherwise, pass in an examplary other value you'd expect, a type (e.g. RegExp) orclass or the name of a class or c'tor-function.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>resolveFuncs</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Boolean</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    true
+                
+                </td>
+            
+
+            <td class="description last">Optional. Defaults to true. If true, then functionswill be called and their return value will be checked against the expected type orexemplary value. Note that this parameter applies recursively, until a function'sreturned value no longer is a function.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>resolvePromises</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Boolean</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    true
+                
+                </td>
+            
+
+            <td class="description last">Optional. Defaults to true. If true, then Promiseswill be awaited and their resolved value will be checked against the expected type orexemplary value. Note that this parameter applies recursively, until a Promise'sresolved value no longer is a Promise.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="tools_Resolve.js.html">tools/Resolve.js</a>, <a href="tools_Resolve.js.html#line290">line 290</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li>{<a href="Resolve.html#.isTypeOf">Resolve.isTypeOf</a>}</li>
+        </ul>
+    </dd>
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Throws:</h5>
+
+        
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        if the value cannot be resolved to the expected type or exemplaryvalue.
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">Error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
+
+
+    
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    the resolved-to value
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">T</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id=".tryAsNumber"><span class="type-signature">(static) </span>tryAsNumber<span class="signature">(value)</span><span class="type-signature"> &rarr; {T|String|Number|BigInt}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    Attempts conversion of a value to number, iff it is a valid number. Otherwisereturns the value as is. Uses @see {asNumber}.
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>value</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">T</span>
+|
+
+<span class="param-type">String</span>
+|
+
+<span class="param-type">Number</span>
+|
+
+<span class="param-type">BigInt</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">A value that is checked for whether it is avalid number or not. If the value is already a Number, it is returned as is.If it is a String, it is attempted to parse. Should that fail, the value isreturned as is. If the value is not a Number and not a String, it is alsoreturned as is.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="tools_Resolve.js.html">tools/Resolve.js</a>, <a href="tools_Resolve.js.html#line198">line 198</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">T</span>
+|
+
+<span class="param-type">String</span>
+|
+
+<span class="param-type">Number</span>
+|
+
+<span class="param-type">BigInt</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Cache.html">Cache</a></li><li><a href="CacheItem.html">CacheItem</a></li><li><a href="CacheItemWithLoad.html">CacheItemWithLoad</a></li><li><a href="CacheMapBased.html">CacheMapBased</a></li><li><a href="CacheWithLoad.html">CacheWithLoad</a></li><li><a href="Collection.html">Collection</a></li><li><a href="CollectionEvent.html">CollectionEvent</a></li><li><a href="Comparer.html">Comparer</a></li><li><a href="ConstrainedQueue.html">ConstrainedQueue</a></li><li><a href="ConstrainedStack.html">ConstrainedStack</a></li><li><a href="DefaultComparer.html">DefaultComparer</a></li><li><a href="DefaultEqualityComparer.html">DefaultEqualityComparer</a></li><li><a href="DeferredClass.html">DeferredClass</a></li><li><a href="Dictionary.html">Dictionary</a></li><li><a href="DictionaryMapBased.html">DictionaryMapBased</a></li><li><a href="EqualityComparer.html">EqualityComparer</a></li><li><a href="Interval.html">Interval</a></li><li><a href="IntervalEventSimple.html">IntervalEventSimple</a></li><li><a href="IntervalScheduler.html">IntervalScheduler</a></li><li><a href="ItemAndDeferred.html">ItemAndDeferred</a></li><li><a href="Job.html">Job</a></li><li><a href="JobEvent.html">JobEvent</a></li><li><a href="JobQueue.html">JobQueue</a></li><li><a href="JobQueueCapabilities.html">JobQueueCapabilities</a></li><li><a href="JobQueueEvent.html">JobQueueEvent</a></li><li><a href="LinkedList.html">LinkedList</a></li><li><a href="LinkedListEvent.html">LinkedListEvent</a></li><li><a href="LinkedListNode.html">LinkedListNode</a></li><li><a href="ManualSchedule.html">ManualSchedule</a></li><li><a href="ManualScheduleEventSimple.html">ManualScheduleEventSimple</a></li><li><a href="ManualScheduler.html">ManualScheduler</a></li><li><a href="PreliminaryScheduleEvent.html">PreliminaryScheduleEvent</a></li><li><a href="ProcessErrorResult.html">ProcessErrorResult</a></li><li><a href="ProcessExit.html">ProcessExit</a></li><li><a href="ProcessOutput.html">ProcessOutput</a></li><li><a href="ProcessResult.html">ProcessResult</a></li><li><a href="ProcessWrapper.html">ProcessWrapper</a></li><li><a href="ProducerConsumerQueue.html">ProducerConsumerQueue</a></li><li><a href="Progress.html">Progress</a></li><li><a href="ProgressNumeric.html">ProgressNumeric</a></li><li><a href="Queue.html">Queue</a></li><li><a href="Resolve.html">Resolve</a></li><li><a href="Resource.html">Resource</a></li><li><a href="ResourceSelector.html">ResourceSelector</a></li><li><a href="Schedule.html">Schedule</a></li><li><a href="ScheduleEvent.html">ScheduleEvent</a></li><li><a href="Scheduler.html">Scheduler</a></li><li><a href="Stack.html">Stack</a></li></ul><h3>Global</h3><ul><li><a href="global.html#assertThrowsAsync">assertThrowsAsync</a></li><li><a href="global.html#ConstrainedQueueCapacityPolicy">ConstrainedQueueCapacityPolicy</a></li><li><a href="global.html#deepCloneObject">deepCloneObject</a></li><li><a href="global.html#defer">defer</a></li><li><a href="global.html#deferMocha">deferMocha</a></li><li><a href="global.html#EvictionPolicy">EvictionPolicy</a></li><li><a href="global.html#formatError">formatError</a></li><li><a href="global.html#formatValue">formatValue</a></li><li><a href="global.html#getRandomNumber">getRandomNumber</a></li><li><a href="global.html#JobQueueCapacityPolicy">JobQueueCapacityPolicy</a></li><li><a href="global.html#mergeObjects">mergeObjects</a></li><li><a href="global.html#ProducerConsumerQueueCapacityPolicy">ProducerConsumerQueueCapacityPolicy</a></li><li><a href="global.html#ResourceSelectionStrategy">ResourceSelectionStrategy</a></li><li><a href="global.html#throwError">throwError</a></li><li><a href="global.html#timeout">timeout</a></li><li><a href="global.html#wrapError">wrapError</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a> on Thu Jan 20 2022 15:44:24 GMT+0100 (Central European Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
