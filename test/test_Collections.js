@@ -1053,7 +1053,7 @@ describe(Cache.name, function() {
 		c.set('k1', 43);
 
 		// The last item inserted has a larger timestamp
-		assert.isTrue(JSBI.subtract(c._dict['k0'].timeStamp, c._dict['k1'].timeStamp) < 0);
+		assert.isTrue(JSBI.toNumber(JSBI.subtract(c._dict['k0'].timeStamp, c._dict['k1'].timeStamp)) < 0);
 
 		// k1 is more recent right now, so k0 is evicted first in LRU
 		let evict = Array.from(c._evictNext());
@@ -1306,7 +1306,7 @@ describe(CacheMapBased.name, function() {
 		c.set('k1', 43);
 
 		// The last item inserted has a larger timestamp
-		assert.isTrue(JSBI.subtract(c._map.get('k0').timeStamp, c._map.get('k1').timeStamp) < 0);
+		assert.isTrue(JSBI.toNumber(JSBI.subtract(c._map.get('k0').timeStamp, c._map.get('k1').timeStamp)) < 0);
 
 		// k1 is more recent right now, so k0 is evicted first in LRU
 		let evict = Array.from(c._evictNext());
