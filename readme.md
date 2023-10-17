@@ -1,10 +1,10 @@
 # OrchestrationTools
 Collection of `orchestration-tools` that help building an infrastructure or to orchestrate resources through NodeJS. Also comes with universal tools such as collections.
 
-|Version|Coverage|Vulnerabilities|Master|Master-pre-v3.0.0|Master-pre-v2.0.0|
-|:-|:-|:-|:-|:-|:-|
-|[![Current Version](https://img.shields.io/npm/v/sh.orchestration-tools.svg)](https://www.npmjs.com/package/sh.orchestration-tools)|[![Coverage Status](https://coveralls.io/repos/github/MrShoenel/orchestration-tools/badge.svg?branch=master)](https://coveralls.io/github/MrShoenel/orchestration-tools?branch=master)|[![Vulnerabilities](https://snyk.io/test/github/MrShoenel/orchestration-tools/badge.svg)](https://snyk.io/test/github/MrShoenel/orchestration-tools)|[![Build Status](https://api.travis-ci.org/MrShoenel/orchestration-tools.svg?branch=master)](https://travis-ci.org/MrShoenel/orchestration-tools)|[![Build Status](https://api.travis-ci.org/MrShoenel/orchestration-tools.svg?branch=master-pre-v3.0.0)](https://travis-ci.org/MrShoenel/orchestration-tools)|[![Build Status](https://api.travis-ci.org/MrShoenel/orchestration-tools.svg?branch=master-pre-v2.0.0)](https://travis-ci.org/MrShoenel/orchestration-tools)|
-|[![Weekly Downloads](https://img.shields.io/npm/dt/sh.orchestration-tools)](https://www.npmjs.com/package/sh.orchestration-tools)|||[![Build Status](https://github.com/MrShoenel/orchestration-tools/workflows/Node.js%20CI/badge.svg?branch=master)](https://github.com/MrShoenel/orchestration-tools/actions?query=workflow%3A%22Node.js+CI%22)||
+|Version|Coverage|Master|Vulnerabilities|
+|:-|:-|:-|:-|
+|[![Current Version](https://img.shields.io/npm/v/sh.orchestration-tools.svg)](https://www.npmjs.com/package/sh.orchestration-tools) [![Weekly Downloads](https://img.shields.io/npm/dt/sh.orchestration-tools)](https://www.npmjs.com/package/sh.orchestration-tools)|[![Coverage Status](https://coveralls.io/repos/github/MrShoenel/orchestration-tools/badge.svg?branch=master)](https://coveralls.io/github/MrShoenel/orchestration-tools?branch=master)|[![Build Status](https://github.com/MrShoenel/orchestration-tools/workflows/Node.js%20CI/badge.svg?branch=master)](https://github.com/MrShoenel/orchestration-tools/actions?query=workflow%3A%22Node.js+CI%22)|[![Vulnerabilities](https://snyk.io/test/github/MrShoenel/orchestration-tools/badge.svg)](https://snyk.io/test/github/MrShoenel/orchestration-tools)|
+
 
 
 ## Install from npm
@@ -12,7 +12,7 @@ This package can be installed using the following command: `npm install sh.orche
 
 ## JSDoc
 
-The tools come fully typed in JSDoc, and the documentation for all released versions can also be found here: <https://mrshoenel.github.io/orchestration-tools/>.
+The tools come fully typed in JSDoc, and the documentation for all released versions can also be found here: <https://mrshoenel.github.io/rchestration-tools/>.
 
 ## Current list of included tools
 * __Job__ - a class that can encapsulate and represent any (asynchronous) work. Supports `Promise`-based work, enhanced states, simple eventing and progress. As of `v2.1.0`, __JobWithCost__ has been removed and cost is now supported by Job.
